@@ -24,4 +24,6 @@ class OptimizationBase(object):
 
         self.lens_system.update_kwargs_macro(new_kwargs)
 
-        self.lens_system.set_fit_lensmodel(lens_model_full, new_kwargs)
+        self.lens_system.update_light_centroid(new_kwargs[0]['center_x'], new_kwargs[0]['center_y'])
+
+        self.lens_system.update_background_quasar(source_centroid[0], source_centroid[1])

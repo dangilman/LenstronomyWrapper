@@ -4,8 +4,16 @@ class ReconstructBase(object):
         pass
 
     @property
+    def n_models(self):
+        return len(self.light_model_list)
+
+    @property
+    def light_model_list(self):
+        raise NotImplementedError('Source reconstruction not yet implemented for this source class.')
+
+    @property
     def fixed_models(self):
-        return [{}, {'ra_0': 0, 'dec_0': 0}, {'ra_0': 0, 'dec_0': 0}]
+        return NotImplementedError('Source reconstruction not yet implemented for this source class.')
 
     @property
     def param_init(self):

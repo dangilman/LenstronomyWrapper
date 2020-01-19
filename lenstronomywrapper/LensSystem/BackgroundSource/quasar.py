@@ -8,54 +8,80 @@ from lenstronomywrapper.LensSystem.light_reconstruct_base import LightReconstruc
 
 class Quasar(LightReconstructBase):
 
-    def __init__(self, kwargs_quasars, pc_per_arcsec_zsource, grid_resolution=None, grid_rmax=None):
+    def __init__(self, kwargs_quasars, grid_resolution=None, grid_rmax=None):
 
-        if not isinstance(kwargs_quasars, list):
-            kwargs_quasars = [kwargs_quasars]
-
-        source_sizes_pc = [kwargs_source['source_fwhm_pc'] for kwargs_source in kwargs_quasars]
-        min_source_size_parsec, max_source_size_parsec = min(source_sizes_pc), max(source_sizes_pc)
-
-        if grid_rmax is None:
-            grid_rmax = self._auto_grid_size(max_source_size_parsec)
-        self.grid_rmax = grid_rmax
-        if grid_resolution is None:
-            grid_resolution = self._auto_grid_resolution(min_source_size_parsec)
-        self.grid_resolution = grid_resolution
-
-        self._kwargs_light = self._kwargs_transform(kwargs_quasars, pc_per_arcsec_zsource)
-
-        self._sourcelight = LightModel(light_model_list=['GAUSSIAN'] * len(kwargs_quasars))
+        self._kwargs_init = kwargs_quasars
+        self._grid_resolution = grid_resolution
+        self._grid_rmax = grid_rmax
+        self._initialized = False
 
         super(Quasar, self).__init__()
 
+    def _check_initialized(self, with_error=True):
+
+        if self._initialized:
+            return True
+        else:
+            if with_error:
+                raise Exception('Must initialize quasar class before using it.')
+            return False
+
+    def setup(self, pc_per_arcsec_zsource):
+
+        if self._check_initialized(with_error=False):
+            return
+
+        self._initialized = True
+
+        source_size_pc = self._kwargs_init['source_fwhm_pc']
+
+        if self._grid_rmax is None:
+            grid_rmax = self._auto_grid_size(source_size_pc)
+            self.grid_rmax = grid_rmax
+        else:
+            self.grid_rmax = self._grid_rmax
+
+        if self._grid_resolution is None:
+            grid_resolution = self._auto_grid_resolution(source_size_pc)
+            self.grid_resolution = grid_resolution
+        else:
+            self.grid_resolution = self._grid_resolution
+
+        self._kwargs_light = self._kwargs_transform(self._kwargs_init, pc_per_arcsec_zsource)
+
+        self._sourcelight = LightModel(light_model_list=['GAUSSIAN'])
+
+    def update_position(self, x, y):
+
+        self._kwargs_light['center_x'] = x
+        self._kwargs_light['center_y'] = y
+
     def surface_brightness(self, xgrid, ygrid, lensmodel, lensmodel_kwargs):
+
+        self._check_initialized()
 
         try:
             beta_x, beta_y = lensmodel.ray_shooting(xgrid, ygrid, lensmodel_kwargs)
-            surf_bright = self._sourcelight.surface_brightness(beta_x, beta_y, self._kwargs_light)
+            surf_bright = self._sourcelight.surface_brightness(beta_x, beta_y, [self._kwargs_light])
 
         except:
             shape0 = xgrid.shape
             beta_x, beta_y = lensmodel.ray_shooting(xgrid.ravel(), ygrid.ravel(), lensmodel_kwargs)
-            surf_bright = self._sourcelight.surface_brightness(beta_x, beta_y, self._kwargs_light)
+            surf_bright = self._sourcelight.surface_brightness(beta_x, beta_y, [self._kwargs_light])
             surf_bright = surf_bright.reshape(shape0, shape0)
 
         return surf_bright
 
     def _kwargs_transform(self, kwargs, pc_per_arcsec_zsrc):
 
-        new_kwargs = []
-        for kw in kwargs:
-            newkw = deepcopy(kw)
-            fwhm_arcsec = newkw['source_fwhm_pc'] / pc_per_arcsec_zsrc
-            newkw['sigma'] = fwhm_arcsec/2.355
-            del newkw['source_fwhm_pc']
-            if 'amp' not in newkw.keys():
-                newkw['amp'] = 1
-            new_kwargs.append(newkw)
+        newkw = deepcopy(kwargs)
+        fwhm_arcsec = newkw['source_fwhm_pc'] / pc_per_arcsec_zsrc
+        newkw['sigma'] = fwhm_arcsec/2.355
+        del newkw['source_fwhm_pc']
+        if 'amp' not in newkw.keys():
+            newkw['amp'] = 1
 
-        return new_kwargs
+        return newkw
 
     def _ray_shooting_setup(self, xpos, ypos):
 
@@ -70,6 +96,8 @@ class Quasar(LightReconstructBase):
         return xgrids, ygrids
 
     def plot_images(self, xpos, ypos, lensModel, kwargs_lens, normed=True):
+
+        self._check_initialized()
 
         xgrids, ygrids = self._ray_shooting_setup(xpos, ypos)
 
@@ -95,6 +123,8 @@ class Quasar(LightReconstructBase):
             plt.show()
 
     def magnification(self, xpos, ypos, lensModel, kwargs_lens, normed=True):
+
+        self._check_initialized()
 
         flux = np.zeros_like(xpos)
         xgrids, ygrids = self._ray_shooting_setup(xpos, ypos)

@@ -20,7 +20,8 @@ class HierarchicalOptimization(BruteOptimization):
 
         super(HierarchicalOptimization, self).__init__(lens_system)
 
-    def optimize(self, data_to_fit, opt_routine='fixed_powerlaw_shear', constrain_params=None, verbose=False):
+    def optimize(self, data_to_fit, opt_routine='fixed_powerlaw_shear', constrain_params=None, verbose=False,
+                 include_substructure=True):
 
         self._check_routine(opt_routine, constrain_params)
 

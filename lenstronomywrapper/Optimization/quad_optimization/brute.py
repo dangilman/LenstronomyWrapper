@@ -28,7 +28,7 @@ class BruteOptimization(OptimizationBase):
         optimizer_kwargs = {}
 
         kwargs_lens_final, _, lens_model_full, _, images, source = self._fit(data_to_fit, self.n_particles, opt_routine,
-                                  constrain_params, self.n_iterations, optimizer_kwargs, verbose,
+                                  constrain_params, self.n_iterations, optimizer_kwargs, verbose, re_optimize=self.reoptimize,
                                           include_substructure=include_substructure)
 
         return_kwargs = {'info_array': None,
@@ -51,7 +51,7 @@ class BruteOptimization(OptimizationBase):
                       'simplex_n_iterations': simplex_n_iter, 'particle_swarm': particle_swarm,
                       're_optimize': re_optimize, 'tol_mag': tol_mag, 'multiplane': True,
                       'z_main': self.lens_system.zlens, 'z_source': self.lens_system.zsource,
-                      'astropy_instance': self.lens_system.astropy, 'verbose': verbose,
+                      'astropy_instance': self.lens_system.astropy, 'verbose': verbose, 'pso_convergence_mean': 20000,
                       'observed_convention_index': convention_index, 'optimizer_kwargs': optimizer_kwargs}
 
         opt = Optimizer(data_to_fit.x, data_to_fit.y, redshift_list, lens_model_list, kwargs_lens, numerical_alpha_class,

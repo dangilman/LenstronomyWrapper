@@ -1,33 +1,42 @@
 import numpy as np
-from copy import deepcopy
 import itertools
-from lenstronomywrapper.LensData.arc_plus_quad_util import LensedPointSource, SimulatedImage, DefaultDataSpecifics
+from lenstronomywrapper.LensData.settings import DefaultDataSpecifics
+from lenstronomywrapper.LensData.lensed_quasar import LensedQuasar
 import lenstronomy.Util.simulation_util as sim_util
 from lenstronomy.Data.imaging_data import ImageData
 from lenstronomy.Data.psf import PSF
+import lenstronomy.Util.image_util as image_util
+from lenstronomy.ImSim.image_model import ImageModel
 
 class ArcPlusQuad(object):
 
-    def __init__(self, x_image, y_image, magnifications, lensSystem, t_arrival=None, normed_magnifications=True,
-                 data_kwargs={}):
-
-        self.decimals_pos = 5
-        self.decimals_mag = 6
-        self.decimals_time = 1
-        self.decimals_src = 8
+    def __init__(self, x_image, y_image, magnifications, lensSystem, t_arrival=None, time_delay_sigma=None, image_sigma=None,
+                 normed_magnifications=True,
+                 data_kwargs={}, noiseless=True, no_bkg=True):
 
         assert len(x_image) == 4
         assert len(x_image) == len(y_image)
         assert len(magnifications) == len(x_image)
+
+        if image_sigma is None:
+            image_sigma = [0.0001]*len(x_image)
+        self.image_sigma = image_sigma
+
         if t_arrival is not None:
             assert len(t_arrival) == len(x_image)
-        self.x, self.y, self.m = np.array(x_image), np.array(y_image), np.array(magnifications)
+            assert len(time_delay_sigma) == len(t_arrival) - 1
+
+        self.x = np.array(x_image)
+        self.y = np.array(y_image)
+        self.m = np.array(magnifications)
         self.t_arrival = np.array(t_arrival)
+        self.time_delay_sigma = time_delay_sigma
+
         if t_arrival is not None:
             self.relative_arrival_times = self.t_arrival[1:] - self.t_arrival[0]
 
         if normed_magnifications:
-            rescale_mag = 10
+            rescale_mag = 30
         else:
             rescale_mag = 1
 
@@ -37,15 +46,31 @@ class ArcPlusQuad(object):
         data_class = ImageData(**kwargs_data)
         self.psf_class = PSF(**self.kwargs_psf)
 
-        self.image_sim = SimulatedImage(x_image, y_image, rescale_mag * magnifications, lensSystem,
-                                   data_class, self.psf_class, data_settings)
+        self.point_source = LensedQuasar(x_image, y_image, rescale_mag*magnifications)
 
-        kwargs_data['image_data'] = self.image_sim.get_image()
+        self._image_sim = _LensData(self.point_source, lensSystem,
+                                  data_class, self.psf_class, data_settings, noiseless, no_bkg)
+
+        kwargs_data['image_data'] = self._image_sim._get_image()
         data_class.update_data(kwargs_data['image_data'])
 
         self.kwargs_data = kwargs_data
         self.data_class = data_class
-        self.point_source = self.image_sim.point_source
+
+    def get_lensed_image(self):
+
+        return self._image_sim._get_image()
+
+    def flux_ratios(self, index=0):
+
+        ref_flux = self.m[index]
+        ratios = []
+        for i, mi in self.m:
+            if i==index:
+                continue
+            ratios.append(mi/ref_flux)
+
+        return np.array(ratios)
 
     def sort_by_pos(self, x, y):
 
@@ -72,35 +97,39 @@ class ArcPlusQuad(object):
             self.t_arrival = self.t_arrival[min_indexes]
             self.relative_arrival_times = self.t_arrival[1:] - self.t_arrival[0]
 
-    def flux_ratios(self, index=0):
+class _LensData(object):
 
-        ref_flux = self.m[index]
-        ratios = []
-        for i, mi in self.m:
-            if i==index:
-                continue
-            ratios.append(mi/ref_flux)
+    def __init__(self, point_source, lensSystem, data_class, psf_class, data_settings,
+                 noiseless, no_bkg):
 
-        return np.array(ratios)
+        self._point_source = point_source
+        lens_model, self._kwargs_lensmodel = lensSystem.get_lensmodel()
+        lens_light_model, self._kwargs_lens_light = lensSystem.get_lens_light()
+        source_model, self._kwargs_source_light = lensSystem.get_source_light()
 
-    def _sort_other(self, data):
+        self._kwargs_ps = self._point_source.kwargs_ps
 
-        data_copy = deepcopy(data)
-        data_copy.sort_by_pos(self.x, self.y)
-        return data_copy
+        self.imageModel = ImageModel(data_class, psf_class, lens_model, source_model,
+                                     lens_light_model, self._point_source.point_source_class,
+                                     kwargs_numerics=data_settings.kwargs_numerics)
 
-    def flux_anomaly(self, other_data=None, index=0, sum_in_quad=False):
+        self._datasettings = data_settings
+        self._noiseless = noiseless
+        self._nobkg = no_bkg
 
-        data_copy = self._sort_other(other_data)
-        other_ratios = data_copy.flux_ratios(index)
-        ratios = self.flux_ratios(index)
+    def _get_image(self):
 
-        if sum_in_quad:
+        image = self.imageModel.image(self._kwargs_lensmodel, self._kwargs_source_light, self._kwargs_lens_light,
+                                      self._kwargs_ps)
 
-            return np.sqrt((other_ratios - ratios) ** 2)
-
+        if self._noiseless:
+            poisson = 0
         else:
+            poisson = image_util.add_poisson(image, exp_time=self._datasettings.exp_time)
 
-            return other_ratios - ratios
+        if self._nobkg:
+            bkg = 0
+        else:
+            bkg = image_util.add_background(image, sigma_bkd=self._datasettings.background_rms)
 
-
+        return image + bkg + poisson

@@ -1,4 +1,4 @@
-from lenstronomywrapper.LensSystem.MacroLensComponents.macromodel_base import ComponentBase
+from lenstronomywrapper.LensSystem.LensComponents.macromodel_base import ComponentBase
 
 class BackgroundSIS(ComponentBase):
 

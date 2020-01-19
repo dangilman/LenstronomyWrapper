@@ -1,15 +1,15 @@
-from lenstronomy.LightModel.light_model import LightModel
 from lenstronomywrapper.LensSystem.light_reconstruct_base import LightReconstructBase
 
 class SersicSource(LightReconstructBase):
 
-    def __init__(self, kwargs_sersic, reoptimize=False):
+    def __init__(self, kwargs_sersic, reoptimize=False, prior=[], concentric_with_source=None):
 
         self._reoptimize = reoptimize
         self._kwargs = kwargs_sersic
-        self._source_x, self._source_y = kwargs_sersic['center_x'], kwargs_sersic['center_y']
+        self._prior = prior
+        self._source_x, self._source_y = kwargs_sersic[0]['center_x'], kwargs_sersic[0]['center_y']
 
-        super(SersicSource).__init__()
+        super(SersicSource, self).__init__(concentric_with_source=concentric_with_source)
 
     def surface_brightness(self, xgrid, ygrid, lensmodel, lensmodel_kwargs):
 
@@ -28,6 +28,18 @@ class SersicSource(LightReconstructBase):
         return surf_bright
 
     @property
+    def priors(self):
+
+        indexes = []
+        priors = []
+        for prior in self._prior:
+            idx = 0
+            indexes.append(idx)
+            priors.append(prior)
+
+        return indexes, priors
+
+    @property
     def fixed_models(self):
         return [{}]
 
@@ -42,11 +54,7 @@ class SersicSource(LightReconstructBase):
     @property
     def kwargs_light(self):
 
-        return [self._kwargs]
-
-    @property
-    def sourceLight(self):
-        return LightModel(self.light_model_list)
+        return self._kwargs
 
     @property
     def param_init(self):
@@ -71,13 +79,13 @@ class SersicSource(LightReconstructBase):
     @property
     def param_lower(self):
 
-        lower = [{'amp': 1, 'R_sersic': 0.01, 'n_sersic': 0.1, 'center_x': -2., 'center_y': -2.,
-                  'e1': -0.95, 'e2': -0.95}]
+        lower = [{'amp': 0.000000000001, 'R_sersic': 0.000001, 'n_sersic': 0.1, 'center_x': -2., 'center_y': -2.,
+                  'e1': -0.9, 'e2': -0.9}]
         return lower
 
     @property
     def param_upper(self):
 
         upper = [{'amp': 50000, 'R_sersic': 5, 'n_sersic': 9, 'center_x': 2., 'center_y': 2.,
-                  'e1': 0.95, 'e2': 0.95}]
+                  'e1': 0.9, 'e2': 0.9}]
         return upper

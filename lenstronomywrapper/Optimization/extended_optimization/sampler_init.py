@@ -1,7 +1,8 @@
 class SamplerInit(object):
 
     def __init__(self, lens_system_class, quad_lens_data_class,
-                 time_delay_likelihood=False, D_dt_true=None, dt_measured=None, dt_sigma=None):
+                 time_delay_likelihood=False, D_dt_true=None, dt_measured=None, dt_sigma=None,
+                 fix_D_dt=None):
 
         assert len(quad_lens_data_class.x == 4)
         self.system = lens_system_class
@@ -14,10 +15,12 @@ class SamplerInit(object):
             assert D_dt_true is not None
             assert dt_measured is not None
             assert dt_sigma is not None
+            assert fix_D_dt is not None
 
         self.D_dt_true = D_dt_true
         self.dt_measured = dt_measured
         self.dt_sigma = dt_sigma
+        self._fix_D_dt = fix_D_dt
 
         self.lens_data_class = quad_lens_data_class
 
@@ -25,10 +28,8 @@ class SamplerInit(object):
 
         kwargs_model = self.kwargs_model
         kwargs_numerics = self.kwargs_numerics
-        num_source_model = self.num_source_model
         kwargs_constraints = self.kwargs_constraints
         kwargs_likelihood = self.kwargs_likelihood
-        prior_lens = []
         image_band = [self.lens_data_class.kwargs_data, self.lens_data_class.kwargs_psf, kwargs_numerics]
         multi_band_list = [image_band]
 
@@ -85,10 +86,14 @@ class SamplerInit(object):
     def cosmo_params(self):
 
         fixed_cosmo = {}
+        if self._fix_D_dt:
+            minmax = 1e-9
+        else:
+            minmax = 0.9
         kwargs_cosmo_init = {'D_dt': self.D_dt_true}
-        kwargs_cosmo_sigma = {'D_dt': self.D_dt_true * 1e-9}
-        kwargs_lower_cosmo = {'D_dt': self.D_dt_true * 0.9999999999}
-        kwargs_upper_cosmo = {'D_dt': self.D_dt_true * 1.0000000001}
+        kwargs_cosmo_sigma = {'D_dt': self.D_dt_true * minmax}
+        kwargs_lower_cosmo = {'D_dt': self.D_dt_true * (1-minmax)}
+        kwargs_upper_cosmo = {'D_dt': self.D_dt_true * (1+minmax)}
         cosmo_params = [kwargs_cosmo_init, kwargs_cosmo_sigma, fixed_cosmo, kwargs_lower_cosmo, kwargs_upper_cosmo]
         return cosmo_params
 
@@ -135,7 +140,8 @@ class SamplerInit(object):
 
     @property
     def lens_priors(self):
-        return []
+        instance = self.system.macromodel
+        return instance.priors
 
     @property
     def kwargs_model(self):
@@ -144,6 +150,7 @@ class SamplerInit(object):
         source_light_model_list = self.sourcelight_instance.light_model_list
         point_source_model_list = self.pointsource_instance.point_source_list
         lens_light_model_list = self.lenslight_instance.light_model_list
+
         additional_images_list = [False]
         fixed_magnification_list = [False]
 
@@ -162,7 +169,7 @@ class SamplerInit(object):
         check_bounds = True
         force_no_add_image = False
         source_marg = False
-        image_position_uncertainty = 0.004
+        image_position_uncertainty = self.lens_data_class.image_sigma
         check_matched_source_position = True
         source_position_tolerance = 0.001
         source_position_sigma = 0.001

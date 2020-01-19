@@ -10,6 +10,8 @@ class ComponentBase(ReconstructBase):
         self.update_kwargs(kwargs)
         self.convention_index = convention_index
 
+        self.x_center, self.y_center = kwargs[0]['center_x'], kwargs[0]['center_y']
+
         super(ComponentBase).__init__()
 
     def lenstronomy_args(self):
@@ -23,4 +25,3 @@ class ComponentBase(ReconstructBase):
     @property
     def kwargs(self):
         return self._kwargs
-

@@ -1,19 +1,17 @@
-class MacroLensModel(object):
+from lenstronomy.LightModel.light_model import LightModel as LenstronomyLightModel
+
+class LightModel(object):
 
     def __init__(self, components):
 
         if not isinstance(components, list):
             components = [components]
         self.components = components
-        self.n_lens_models = self._count_models(components)
-
-    @property
-    def zlens(self):
-        return self.components[0].zlens
+        self.n_light_models = self._count_models(components)
 
     def update_kwargs(self, new_kwargs):
 
-        if len(new_kwargs) != self.n_lens_models:
+        if len(new_kwargs) != self.n_light_models:
             raise Exception('New and existing keyword arguments must be the same length.')
 
         count = 0
@@ -23,26 +21,13 @@ class MacroLensModel(object):
             model.update_kwargs(new)
             count += n
 
-    def get_lenstronomy_args(self):
+    @property
+    def lensLight(self):
+        return LenstronomyLightModel(self.light_model_list)
 
-        lens_model_list, redshift_list, kwargs, observed_convention_index_bool = [], [], [], []
-        for component in self.components:
-            model_names, model_redshifts, model_kwargs, model_convention_index = component.lenstronomy_args()
-            observed_convention_index_bool += model_convention_index
-
-            lens_model_list += model_names
-            redshift_list += model_redshifts
-            kwargs += model_kwargs
-
-        observed_convention_index = None
-        for i, value in enumerate(observed_convention_index_bool):
-            if value:
-                if observed_convention_index is None:
-                    observed_convention_index = [i]
-                else:
-                    observed_convention_index.append(i)
-
-        return lens_model_list, redshift_list, kwargs, observed_convention_index
+    @property
+    def sourceLight(self):
+        return LenstronomyLightModel(self.light_model_list)
 
     @staticmethod
     def _count_models(components):
@@ -103,16 +88,15 @@ class MacroLensModel(object):
         return param_upper
 
     @property
-    def lens_model_list(self):
-        lens_model_list, _, _, _ = self.get_lenstronomy_args()
-        return lens_model_list
+    def light_model_list(self):
+        light_model_list = []
+        for component in self.components:
+            light_model_list += component.light_model_list
+        return light_model_list
 
     @property
-    def redshift_list(self):
-        _, redshift_list, _, _ = self.get_lenstronomy_args()
-        return redshift_list
-
-    @property
-    def kwargs(self):
-        _, _, kwargs, _ = self.get_lenstronomy_args()
-        return kwargs
+    def kwargs_light(self):
+        kwargs_light = []
+        for component in self.components:
+            kwargs_light += component.kwargs_light
+        return kwargs_light

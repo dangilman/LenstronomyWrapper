@@ -1,7 +1,15 @@
 class LightReconstructBase(object):
 
-    def __init__(self):
+    def __init__(self, concentric_with_model=None, concentric_with_source=None):
+
+        self.concentric_with_model = concentric_with_model
+        self.concentric_with_source = concentric_with_source
+
         pass
+
+    @property
+    def n_models(self):
+        return len(self.light_model_list)
 
     @property
     def source_centroid(self):

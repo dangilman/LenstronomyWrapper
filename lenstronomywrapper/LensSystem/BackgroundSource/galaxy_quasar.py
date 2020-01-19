@@ -1,4 +1,3 @@
-from lenstronomy.LightModel.light_model import LightModel
 from lenstronomywrapper.LensSystem.light_reconstruct_base import LightReconstructBase
 
 class GalaxyQuasar(LightReconstructBase):
@@ -28,6 +27,10 @@ class GalaxyQuasar(LightReconstructBase):
         return surf_bright
 
     @property
+    def prior(self):
+        return [[], []]
+
+    @property
     def fixed_models(self):
         return [{}, {}]
 
@@ -43,10 +46,6 @@ class GalaxyQuasar(LightReconstructBase):
     def kwargs_light(self):
 
         return self._kwargs
-
-    @property
-    def sourceLight(self):
-        return LightModel(self.light_model_list)
 
     @property
     def param_init(self):

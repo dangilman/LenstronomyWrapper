@@ -1,11 +1,15 @@
-from lenstronomywrapper.LensSystem.MacroLensComponents.macromodel_base import ComponentBase
+from lenstronomywrapper.LensSystem.LensComponents.macromodel_base import ComponentBase
 
 class SISsatellite(ComponentBase):
 
-    def __init__(self, redshift, theta_E, center_x, center_y):
+    def __init__(self, redshift, kwargs_init=None, theta_E=None, center_x=None, center_y=None,
+                 prior=[]):
 
-        kwargs_init = [{'theta_E': theta_E, 'center_x': center_x, 'center_y': center_y}]
+        if kwargs_init is None:
+            kwargs_init = [{'theta_E': theta_E, 'center_x': center_x, 'center_y': center_y}]
         self._redshift = redshift
+        self._prior = prior
+
         super(SISsatellite, self).__init__(self.lens_model_list, [redshift], kwargs_init, False)
 
     @property
@@ -17,8 +21,20 @@ class SISsatellite(ComponentBase):
         self.physical_y = y
 
     @property
+    def priors(self):
+
+        indexes = []
+        priors = []
+        for prior in self._prior:
+            idx = 0
+            indexes.append(idx)
+            priors.append(prior)
+
+        return indexes, priors
+
+    @property
     def fixed_models(self):
-        raise NotImplementedError('Source reconstruction not yet implemented for this source class.')
+        return [{}]
 
     @property
     def param_init(self):
