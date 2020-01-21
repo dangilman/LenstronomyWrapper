@@ -19,7 +19,6 @@ class LensBase(object):
 
         self.update_realization(substructure_realization)
 
-        self.update_source_centroid(0, 0)
         self.update_light_centroid(0, 0)
 
         self._saved_lensmodel, self._saved_kwargs_lens = None, None
@@ -31,11 +30,6 @@ class LensBase(object):
             optimize(data_to_fit, verbose=verbose)
 
         return kwargs_lens_final, lens_model_full, return_kwargs
-
-    def update_source_centroid(self, source_x, source_y):
-
-        self.source_centroid_x = source_x
-        self.source_centroid_y = source_y
 
     def update_light_centroid(self, light_x, light_y):
 
@@ -94,16 +88,3 @@ class LensBase(object):
 
         kwargs_new = lensmodel.lens_model._convention(kwargs)
         return kwargs_new[idx]['center_x'], kwargs_new[idx]['center_y']
-
-    def get_saved_lensModel(self):
-
-        if self._saved_lensmodel is not None:
-            return self._saved_lensmodel, self._saved_kwargs_lens
-        else:
-            print('No lensmodel saved.')
-            return None, None
-
-    def set_saved_lensModel(self, model, kwargs):
-
-        self._saved_lensmodel = model
-        self._saved_kwargs_lens = kwargs

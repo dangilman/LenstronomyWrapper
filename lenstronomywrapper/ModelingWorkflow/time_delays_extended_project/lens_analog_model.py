@@ -85,6 +85,7 @@ class AnalogModel(object):
                                                                 time_delay_likelihood,
                                                                 fix_D_dt, **fit_smooth_kwargs)
 
+
             if n == 0:
                 baseline = tbaseline
                 flux_anomalies = f
