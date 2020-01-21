@@ -11,7 +11,10 @@ def create_directory(dirname=''):
     proc.wait()
 
 def run_mock(output_path, Nstart, N, SHMF_norm, LOS_norm, log_mlow, opening_angle, arrival_time_sigma,
-        fix_D_dt, time_delay_like=True):
+        fix_D_dt, time_delay_like=True, fit_smooth_kwargs=None):
+
+    if fit_smooth_kwargs is None:
+        fit_smooth_kwargs = {'n_particles': 50, 'n_iterations': 80, 'n_run': 10, 'walkerRatio': 4, 'n_burn': 6}
 
     mdef = 'TNFW'
     realization_kwargs = {'mdef_main': mdef, 'mdef_los': mdef,
@@ -23,12 +26,14 @@ def run_mock(output_path, Nstart, N, SHMF_norm, LOS_norm, log_mlow, opening_angl
                                   'LOS_normalization': LOS_norm}
     kwargs_cosmo = {'cosmo_kwargs':{'H0': 73.3}}
     model_sim = SimulatedModel('composite_powerlaw', realization_kwargs, kwargs_cosmology=kwargs_cosmo)
-    fit_smooth_kwargs = {'n_particles': 50, 'n_iterations': 80, 'n_run': 10, 'walkerRatio': 4, 'n_burn': 6}
+
     model_sim.run(output_path, Nstart, N, arrival_time_sigma, time_delay_like, fix_D_dt, **fit_smooth_kwargs)
 
 def run_real(lens_class, save_name_path, N, N_start, SHMF_norm, LOS_norm, log_mlow, opening_angle, arrival_time_sigma,
-        fix_D_dt, time_delay_like=True):
+        fix_D_dt, time_delay_like=True, fit_smooth_kwargs=None):
 
+    if fit_smooth_kwargs is None:
+        fit_smooth_kwargs = {'n_particles': 50, 'n_iterations': 80, 'n_run': 10, 'walkerRatio': 4, 'n_burn': 6}
 
     mdef = 'TNFW'
     realization_kwargs = {'mdef_main': mdef, 'mdef_los': mdef,
@@ -39,7 +44,6 @@ def run_real(lens_class, save_name_path, N, N_start, SHMF_norm, LOS_norm, log_ml
                           'subtract_subhalo_mass_sheet': True, 'subhalo_mass_sheet_scale': 1,
                           'LOS_normalization': LOS_norm}
 
-    fit_smooth_kwargs = {'n_particles': 50, 'n_iterations': 80, 'n_run': 10, 'walkerRatio': 4, 'n_burn': 6}
     kwargs_cosmo = {'cosmo_kwargs': {'H0': 73.3}}
     model = AnalogModel(lens_class, kwargs_cosmo)
     out = model.run(save_name_path, N_start, N, 'composite_powerlaw', realization_kwargs, arrival_time_sigma,
