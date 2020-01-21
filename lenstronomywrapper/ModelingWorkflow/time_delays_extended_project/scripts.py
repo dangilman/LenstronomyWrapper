@@ -41,7 +41,7 @@ def run_real(lens_class, save_name_path, N, N_start, SHMF_norm, LOS_norm, log_ml
 
     model = AnalogModel(lens_class, {})
     flux_anomalies, baseline, time_anomalies, time_anomalies_geo, time_anomalies_grav = \
-        model.run(N, 'composite_powerlaw', realization_kwargs, arrival_time_sigma, time_delay_like, fix_D_dt)
+        model.run(N, 'composite_powerlaw', realization_kwargs, arrival_time_sigma, time_delay_like, fix_D_dt, {})
 
     np.savetxt(save_name_path + 'tbaseline_' + str(N_start) + '.txt', X=baseline)
     np.savetxt(save_name_path + 'flux_anomaly_' + str(N_start) + '.txt', X=flux_anomalies)
