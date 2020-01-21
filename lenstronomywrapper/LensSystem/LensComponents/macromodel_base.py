@@ -2,7 +2,7 @@ from lenstronomywrapper.LensSystem.lens_reconstruct_base import ReconstructBase
 
 class ComponentBase(ReconstructBase):
 
-    def __init__(self, lens_model_names, redshifts, kwargs, convention_index, fixed):
+    def __init__(self, lens_model_names, redshifts, kwargs, convention_index, fixed, reoptimize):
 
         self.zlens = redshifts[0]
         self.redshifts = redshifts
@@ -10,6 +10,7 @@ class ComponentBase(ReconstructBase):
         self.update_kwargs(kwargs)
         self.convention_index = convention_index
         self.fixed = fixed
+        self._reoptimize = reoptimize
 
         self.x_center, self.y_center = kwargs[0]['center_x'], kwargs[0]['center_y']
 
@@ -33,3 +34,14 @@ class ComponentBase(ReconstructBase):
             return self.kwargs
         else:
             return [{}] * self.n_models
+
+    @property
+    def reoptimize_sigma(self):
+        kwargs = self.kwargs
+        kw_sigma = []
+        for kw in kwargs:
+            new = {}
+            for key in kw.keys():
+                new[key] = kw[key] * 0.15
+            kw_sigma.append(new)
+        return kw_sigma

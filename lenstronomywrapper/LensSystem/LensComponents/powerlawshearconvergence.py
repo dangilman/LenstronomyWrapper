@@ -18,7 +18,8 @@ class PowerLawShearConvergence(ComponentBase):
                             {'gamma1': gamma1, 'gamma2': gamma2}, {'kappa_ext': kappa_ext}]
 
         super(PowerLawShearConvergence, self).__init__(self.lens_model_list,
-                                                       [redshift]*self.n_models, kwargs_init, convention_index, False)
+                                                       [redshift]*self.n_models, kwargs_init,
+                                                       convention_index, False, reoptimize)
 
     @classmethod
     def from_cartesian(cls, redshifts, kwargs_init=None, theta_E=1, gamma=2, gamma1=0.05,
@@ -77,7 +78,7 @@ class PowerLawShearConvergence(ComponentBase):
     def param_init(self):
 
         if self._reoptimize:
-            return self.kwargs
+            return self.reoptimize_sigma
         else:
             # basically random
             return [{'theta_E': 1., 'center_x': 0.0, 'center_y': 0.0, 'e1': 0.2, 'e2': -0.2, 'gamma': 2.},

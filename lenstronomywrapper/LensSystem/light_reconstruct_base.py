@@ -12,6 +12,17 @@ class LightReconstructBase(object):
         return len(self.light_model_list)
 
     @property
+    def reoptimize_sigma(self):
+        kwargs = self.kwargs_light
+        kw_sigma = []
+        for kw in kwargs:
+            new = {}
+            for key in kw.keys():
+                new[key] = kw[key] * 0.15
+            kw_sigma.append(new)
+        return kw_sigma
+
+    @property
     def source_centroid(self):
         raise Exception('Source centroid not definied for this class as there might be possibly more '
                         'than one component non-concentric.')

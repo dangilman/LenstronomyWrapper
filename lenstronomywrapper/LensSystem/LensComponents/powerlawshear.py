@@ -6,7 +6,7 @@ class PowerLawShear(ComponentBase):
 
     def __init__(self, redshift, kwargs_init=None, theta_E=1., gamma=2.,
                  shear=0.03, shear_angle=0., center_x=0., center_y=0., ellip=0.1, ellip_angle=0., convention_index=False,
-                 reoptimize=False, prior=[]):
+                 reoptimize=True, prior=[]):
 
         self._reoptimize = reoptimize
         self._prior = prior
@@ -20,7 +20,7 @@ class PowerLawShear(ComponentBase):
         self.x_center, self.y_center = center_x, center_y
 
         super(PowerLawShear, self).__init__(self.lens_model_list, [redshift]*self.n_models,
-                                            kwargs_init, convention_index, fixed=False)
+                                            kwargs_init, convention_index, False, reoptimize)
 
     @classmethod
     def from_cartesian(cls, redshifts, kwargs_init=None, theta_E=1, gamma=2, gamma1=0.05,
@@ -69,7 +69,7 @@ class PowerLawShear(ComponentBase):
     def param_init(self):
 
         if self._reoptimize:
-            return self._kwargs
+            return self.reoptimize_sigma
         else:
             # basically random
             return [{'theta_E': 1., 'center_x': 0.0, 'center_y': 0.0, 'e1': 0.1, 'e2': -0.1, 'gamma': 2.},

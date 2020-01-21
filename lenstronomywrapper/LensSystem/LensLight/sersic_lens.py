@@ -3,7 +3,7 @@ import numpy as np
 
 class SersicLens(LightReconstructBase):
 
-    def __init__(self, kwargs_sersic, reoptimize=False, prior=[], concentric_with_model=None):
+    def __init__(self, kwargs_sersic, reoptimize=True, prior=[], concentric_with_model=None):
 
         self._reoptimize = reoptimize
         self._kwargs = kwargs_sersic
@@ -59,8 +59,10 @@ class SersicLens(LightReconstructBase):
 
     @property
     def param_sigma(self):
-
-        return [{'amp': 500, 'R_sersic': 0.2, 'n_sersic': 0.5, 'center_x': 0.05, 'center_y': 0.05}]
+        if self._reoptimize:
+            return self.reoptimize_sigma
+        else:
+            return [{'amp': 500, 'R_sersic': 0.2, 'n_sersic': 0.5, 'center_x': 0.05, 'center_y': 0.05}]
 
     @property
     def param_lower(self):

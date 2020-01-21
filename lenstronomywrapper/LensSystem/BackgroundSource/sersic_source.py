@@ -2,7 +2,7 @@ from lenstronomywrapper.LensSystem.light_reconstruct_base import LightReconstruc
 
 class SersicSource(LightReconstructBase):
 
-    def __init__(self, kwargs_sersic, reoptimize=False, prior=[], concentric_with_source=None):
+    def __init__(self, kwargs_sersic, reoptimize=True, prior=[], concentric_with_source=None):
 
         self._reoptimize = reoptimize
         self._kwargs = kwargs_sersic
@@ -70,8 +70,7 @@ class SersicSource(LightReconstructBase):
     def param_sigma(self):
 
         if self._reoptimize:
-            return [{'amp': 500, 'R_sersic': 0.2, 'n_sersic': 0.5, 'center_x': 0.05, 'center_y': 0.05,
-                     'e1': 0.1, 'e2': 0.1}]
+            return self.reoptimize_sigma
         else:
             return [{'amp': 1000, 'R_sersic': 0.8, 'n_sersic': 1.5, 'center_x': 0.2, 'center_y': 0.2,
                      'e1': 0.25, 'e2': 0.25}]
