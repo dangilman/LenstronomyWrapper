@@ -21,9 +21,10 @@ def run_mock(output_path, Nstart, N, SHMF_norm, LOS_norm, log_mlow, opening_angl
                                   'sigma_sub': SHMF_norm,
                                   'subtract_subhalo_mass_sheet': True, 'subhalo_mass_sheet_scale': 1,
                                   'LOS_normalization': LOS_norm}
-
-    sim = SimulatedModel('composite_powerlaw', realization_kwargs)
-    sim.run_and_save(output_path, Nstart, N, arrival_time_sigma, time_delay_like, fix_D_dt)
+    kwargs_cosmo = {'cosmo_kwargs':{'H0': 73.3}}
+    model_sim = SimulatedModel('composite_powerlaw', realization_kwargs, kwargs_cosmology=kwargs_cosmo)
+    fit_smooth_kwargs = {'n_particles': 50, 'n_iterations': 80, 'n_run': 10, 'walkerRatio': 4, 'n_burn': 6}
+    model_sim.run(output_path, Nstart, N, arrival_time_sigma, time_delay_like, fix_D_dt, **fit_smooth_kwargs)
 
 def run_real(lens_class, save_name_path, N, N_start, SHMF_norm, LOS_norm, log_mlow, opening_angle, arrival_time_sigma,
         fix_D_dt, time_delay_like=True):
@@ -38,16 +39,12 @@ def run_real(lens_class, save_name_path, N, N_start, SHMF_norm, LOS_norm, log_ml
                           'subtract_subhalo_mass_sheet': True, 'subhalo_mass_sheet_scale': 1,
                           'LOS_normalization': LOS_norm}
 
-
-    model = AnalogModel(lens_class, {})
-    flux_anomalies, baseline, time_anomalies, time_anomalies_geo, time_anomalies_grav = \
-        model.run(N, 'composite_powerlaw', realization_kwargs, arrival_time_sigma, time_delay_like, fix_D_dt, {})
-
-    np.savetxt(save_name_path + 'tbaseline_' + str(N_start) + '.txt', X=baseline)
-    np.savetxt(save_name_path + 'flux_anomaly_' + str(N_start) + '.txt', X=flux_anomalies)
-    np.savetxt(save_name_path + 'time_anomaly_' + str(N_start) + '.txt', X=time_anomalies)
-    np.savetxt(save_name_path + 'time_anomaly_grav_' + str(N_start) + '.txt', X=time_anomalies_grav)
-    np.savetxt(save_name_path + 'time_anomaly_geo_' + str(N_start) + '.txt', X=time_anomalies_geo)
+    fit_smooth_kwargs = {'n_particles': 50, 'n_iterations': 80, 'n_run': 10, 'walkerRatio': 4, 'n_burn': 6}
+    kwargs_cosmo = {'cosmo_kwargs': {'H0': 73.3}}
+    model = AnalogModel(lens_class, kwargs_cosmo)
+    out = model.run(save_name_path, N_start, N, 'composite_powerlaw', realization_kwargs, arrival_time_sigma,
+                       time_delay_like,
+                       fix_D_dt, fit_smooth_kwargs)
 
 
 # output_path = os.getenv('HOME') + '/data/mock_data/simulated_time_delays/extended_sim_control/'

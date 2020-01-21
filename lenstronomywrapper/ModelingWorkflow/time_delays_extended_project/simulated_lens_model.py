@@ -22,62 +22,77 @@ class Mock(object):
 class SimulatedModel(object):
 
     def __init__(self, realization_type, realization_kwargs, kwargs_cosmology={},
-                 kwargs_quasar=None, zlens=None, zsource=None, makeplots=True):
+                 kwargs_quasar=None, zlens=None, zsource=None):
 
-        if zlens is None:
+        self._realization_type = realization_type
+        self._realization_kwargs = realization_kwargs
+        self._zlens = zlens
+        self._zsource = zsource
+        self.kwargs_cosmology = kwargs_cosmology
+        self.kwargs_quasar = kwargs_quasar
+
+    def setup(self):
+
+        if self._zlens is None:
             zlens = np.round(max(0.2, np.random.normal(0.5, 0.1)), 2)
-        if zsource is None:
+        if self._zsource is None:
             zsource = np.random.normal(zlens + 1.5, 0.5)
             zsource = np.round(max(zlens + 0.3, zsource), 2)
 
-        self.zlens, self.zsource = zlens, zsource
+        if self.kwargs_quasar is None:
+            self.kwargs_quasar = {'center_x': 0, 'center_y': 0, 'source_fwhm_pc': 25}
 
-        if kwargs_quasar is None:
-            kwargs_quasar = {'center_x': 0, 'center_y': 0, 'source_fwhm_pc': 25}
+        pyhalo = pyHalo(zlens, zsource, cosmology_kwargs=self.kwargs_cosmology)
 
-        self.pyhalo = pyHalo(self.zlens, self.zsource, cosmology_kwargs=kwargs_cosmology)
+        mock_lens_class, realization, dtgeo, dtgrav, arrival_times = \
+            self.gen_mock_data(self._realization_type, self._realization_kwargs, pyhalo)
 
-        self.kwargs_quasar = kwargs_quasar
+        return realization, mock_lens_class, realization, pyhalo, zlens, zsource
 
-        mock_lens_class, realization, dtgeo, dtgrav, arrival_times = self.gen_mock_data(realization_type, realization_kwargs)
-        self._mock_lens = mock_lens_class
-        self.realization = realization
-        self._realization_args = realization_kwargs
-        self._analog_model = AnalogModel(mock_lens_class, kwargs_cosmology, kwargs_quasar, makeplots,
-                                         self.pyhalo)
-
-        self._dtgeo_baseline = dtgeo[1:] - dtgeo[0]
-        self._dtgrav_baseline = dtgrav[1:] - dtgrav[0]
-        self._time_delay_baseline = arrival_times[1:] - arrival_times[0]
-
-    def run_and_save(self, save_name_path, N_start, N, arrival_time_sigma, time_delay_likelihood, fix_D_dt, **fit_smooth_kwargs):
+    def run(self, save_name_path, N_start, N, arrival_time_sigma, time_delay_likelihood, fix_D_dt, **fit_smooth_kwargs):
 
         assert os.path.exists(save_name_path)
 
+        h0 = []
+        h0_sigma = []
         for n in range(0, N):
-            tbaseline, flux_anomaly, time_anomaly, time_anomaly_geo, time_anomaly_grav, return_kwargs_fit, return_kwargs_setup = \
-                self.run_once(arrival_time_sigma, time_delay_likelihood, fix_D_dt, **fit_smooth_kwargs)
 
-            h0 = return_kwargs_fit['H0_inferred']
-            ddt_samples = return_kwargs_fit['ddt_samples']
+            realization, mock_lens_class, realization, pyhalo, zlens, zsource = self.setup()
 
-            zlens, zsource, x_image, y_image = self.zlens, self.zsource, self._mock_lens.x, self._mock_lens.y
+            self._analog_model = AnalogModel(mock_lens_class, self.kwargs_cosmology, self.kwargs_quasar, False,
+                                             pyhalo)
+
+            tbaseline, flux_anomaly, time_anomaly, time_anomaly_geo, time_anomaly_grav, return_kwargs_fit, \
+            return_kwargs_setup = self._analog_model.run_once(None, self._realization_kwargs, arrival_time_sigma,
+                 time_delay_likelihood, fix_D_dt, realization, **fit_smooth_kwargs)
+
+            h0.append(np.mean(return_kwargs_fit['H0_inferred']))
+            h0_sigma.append(np.std(return_kwargs_fit['H0_inferred']))
+
+            x_image, y_image = mock_lens_class.x, mock_lens_class.y
             info = [zlens, zsource, x_image[0], x_image[1], x_image[2], x_image[3], y_image[0], y_image[1], y_image[2], y_image[3]]
-            np.savetxt(save_name_path + 'tbaseline_' + str(n + N_start) + '.txt', X=tbaseline)
-            np.savetxt(save_name_path + 'flux_anomaly_' + str(n + N_start) + '.txt', X=flux_anomaly)
-            np.savetxt(save_name_path + 'time_anomaly_' + str(n + N_start) + '.txt', X=time_anomaly)
-            np.savetxt(save_name_path + 'time_anomaly_grav_' + str(n + N_start) + '.txt', X=time_anomaly_grav)
-            np.savetxt(save_name_path + 'time_anomaly_geo_' + str(n + N_start) + '.txt', X=time_anomaly_geo)
-            np.savetxt(save_name_path + 'geometry_' + str(n + N_start) + '.txt', X=np.array(info))
-            np.savetxt(save_name_path + 'h0_inferred_'+str(n+N_start) + '.txt', X=np.array(h0))
-            np.savetxt(save_name_path + 'ddt_samples_' + str(n + N_start) + '.txt', X=np.array(ddt_samples))
 
-    def run_once(self, arrival_time_sigma, time_delay_likelihood, fix_D_dt, **fit_smooth_kwargs):
+            fnames = ['tbaseline_', 'flux_anomaly_', 'time_anomaly_', 'time_anomaly_grav_',
+                      'time_anomaly_geo_', 'geometry_']
+            arrays = [tbaseline, flux_anomaly, time_anomaly, time_anomaly_grav, time_anomaly_geo, np.array(info)]
 
-        tbaseline, flux_anomaly, time_anomaly, time_anomaly_geo, time_anomaly_grav, return_kwargs_fit, return_kwargs_setup = self._analog_model.run_once(None, self._realization_args, arrival_time_sigma,
-                 time_delay_likelihood, fix_D_dt, self.realization, **fit_smooth_kwargs)
+            for fname, arr in zip(fnames, arrays):
+                self.save_append(save_name_path + fname + str(N_start) + '.txt', arr)
 
-        return tbaseline, flux_anomaly, time_anomaly, time_anomaly_geo, time_anomaly_grav, return_kwargs_fit, return_kwargs_setup
+        for fname, arr in zip(['h0_inferred_', 'h0_inferred_sigma'], [h0, h0_sigma]):
+            self.save_append(save_name_path + fname + str(N_start) + '.txt', arr)
+
+    def save_append(self, filename, array_to_save):
+
+        if os.path.exists(filename):
+
+            x = np.loadtxt(filename)
+            try:
+                array_to_save = np.vstack((x, array_to_save))
+            except:
+                array_to_save = np.append(x, array_to_save)
+
+        np.savetxt(filename, X=array_to_save, fmt='%.5f')
 
     def sample_source(self, config):
 
@@ -97,12 +112,12 @@ class SimulatedModel(object):
 
         return Quasar(self.kwargs_quasar)
 
-    def gen_realization(self, realization_type, realization_kwargs):
+    def gen_realization(self, pyhalo, realization_type, realization_kwargs):
 
-        realization = self.pyhalo.render(realization_type, realization_kwargs)[0]
+        realization = pyhalo.render(realization_type, realization_kwargs)[0]
         return realization
 
-    def gen_mock_data(self, realization_type, realization_kwargs):
+    def gen_mock_data(self, realization_type, realization_kwargs, pyhalo):
 
         if np.random.rand() < 0.5:
             config = 'cusp_fold'
@@ -113,10 +128,13 @@ class SimulatedModel(object):
 
             kwargs_macro = self.macromodel_kwargs()
 
+            zlens = pyhalo.zlens
+            zsource = pyhalo.zsource
+
             srcx, srcy = self.sample_source(config)
-            realization = self.gen_realization(realization_type, realization_kwargs)
-            macromodel = MacroLensModel([PowerLawShearConvergence(self.zlens, kwargs_macro)])
-            lens_system = QuadLensSystem(macromodel, self.zsource, self.background_quasar_class(),
+            realization = self.gen_realization(pyhalo, realization_type, realization_kwargs)
+            macromodel = MacroLensModel([PowerLawShearConvergence(zlens, kwargs_macro)])
+            lens_system = QuadLensSystem(macromodel, zsource, self.background_quasar_class(),
                                          realization)
 
             lens_system.update_source_centroid(srcx, srcy)
@@ -144,7 +162,7 @@ class SimulatedModel(object):
 
             mags, arrival_times, dtgeo, dtgrav = self.compute_observables(lens_system, x_image, y_image)
 
-            lens = Mock(x_image, y_image, mags, self.zlens, self.zsource)
+            lens = Mock(x_image, y_image, mags, zlens, zsource)
             # plt.scatter(x_image, y_image)
             # plt.show()
             # a=input('continue')
