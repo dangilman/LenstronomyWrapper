@@ -43,7 +43,7 @@ setup(
     include_package_data=True,
     keywords='lenstronomywrapper',
     name='lenstronomywrapper',
-    packages=find_packages(include=['lenstronomywrapper', 'lenstronomywrapper.*']),
+    packages=find_packages(include=['lenstronomywrapper', 'lenstronomywrapper.*', 'lenstronomy', 'pyHalo', 'colossus']),
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
