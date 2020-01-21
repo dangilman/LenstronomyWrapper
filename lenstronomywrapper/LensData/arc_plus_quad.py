@@ -36,10 +36,10 @@ class ArcPlusQuad(object):
             self.relative_arrival_times = self.t_arrival[1:] - self.t_arrival[0]
 
         if normed_magnifications:
-            rescale_mag = 30
+            rescale_mag = 25
         else:
             rescale_mag = 1
-
+        print(magnifications)
         data_settings = DefaultDataSpecifics(**data_kwargs)
         self.kwargs_psf, args_data = data_settings()
         kwargs_data = sim_util.data_configure_simple(*args_data)

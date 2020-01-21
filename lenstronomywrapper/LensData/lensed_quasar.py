@@ -20,7 +20,7 @@ class LensedQuasar(object):
         else:
             raise Exception(str(self._nimg)+' lenses not yet incorporated.')
 
-        point_amp = mag * 100  # multiply by intrinsic quasar brightness (in counts/s)
+        point_amp = mag * 200  # multiply by intrinsic quasar brightness (in counts/s)
 
         self.kwargs_ps = [{'ra_image': self.x, 'dec_image': self.y,
                            'point_amp': point_amp}]  # quasar point source position in the source plane and intrinsic brightness

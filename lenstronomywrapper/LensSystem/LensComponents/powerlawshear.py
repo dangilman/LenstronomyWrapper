@@ -19,7 +19,8 @@ class PowerLawShear(ComponentBase):
 
         self.x_center, self.y_center = center_x, center_y
 
-        super(PowerLawShear, self).__init__(self.lens_model_list, [redshift]*self.n_models, kwargs_init, convention_index)
+        super(PowerLawShear, self).__init__(self.lens_model_list, [redshift]*self.n_models,
+                                            kwargs_init, convention_index, fixed=False)
 
     @classmethod
     def from_cartesian(cls, redshifts, kwargs_init=None, theta_E=1, gamma=2, gamma1=0.05,
@@ -59,7 +60,10 @@ class PowerLawShear(ComponentBase):
 
     @property
     def fixed_models(self):
-        return [{}, {'ra_0': 0, 'dec_0': 0}]
+        if self.fixed:
+            return self.kwargs
+        else:
+            return [{}, {'ra_0': 0, 'dec_0': 0}]
 
     @property
     def param_init(self):

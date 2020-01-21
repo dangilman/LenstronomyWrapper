@@ -39,14 +39,7 @@ class SourceReconstruction(object):
 
         self._lens_system.update_light_centroid(light_x, light_y)
         self._lens_system.update_source_centroid(source_x, source_y)
-
         self._data_class.point_source.update_kwargs_ps(kwargs_ps)
-
-        # done with update source light
-        #self._lens_system.update_background_quasar(source_x, source_y)
-
-        lensmodel = self._lens_system.get_lensmodel()[0]
-        self._lens_system.set_saved_lensModel(lensmodel, kwargs_lens)
 
     def _fit(self, pso_kwargs, mcmc_kwargs):
 

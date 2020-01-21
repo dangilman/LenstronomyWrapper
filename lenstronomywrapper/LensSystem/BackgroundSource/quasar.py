@@ -2,7 +2,7 @@ import numpy as np
 from lenstronomywrapper.Utilities.data_util import image_separation_vectors_quad
 from copy import deepcopy
 import matplotlib.pyplot as plt
-from lenstronomywrapper.Utilities.raytracing_util import RayShootingGrid
+from lenstronomywrapper.Utilities.lensing_util import RayShootingGrid
 from lenstronomy.LightModel.light_model import LightModel
 from lenstronomywrapper.LensSystem.light_reconstruct_base import LightReconstructBase
 
@@ -47,14 +47,14 @@ class Quasar(LightReconstructBase):
         else:
             self.grid_resolution = self._grid_resolution
 
-        self._kwargs_light = self._kwargs_transform(self._kwargs_init, pc_per_arcsec_zsource)
+        self._kwargs_quasar = self._kwargs_transform(self._kwargs_init, pc_per_arcsec_zsource)
 
         self._sourcelight = LightModel(light_model_list=['GAUSSIAN'])
 
     def update_position(self, x, y):
 
-        self._kwargs_light['center_x'] = x
-        self._kwargs_light['center_y'] = y
+        self._kwargs_quasar['center_x'] = x
+        self._kwargs_quasar['center_y'] = y
 
     def surface_brightness(self, xgrid, ygrid, lensmodel, lensmodel_kwargs):
 
@@ -62,12 +62,12 @@ class Quasar(LightReconstructBase):
 
         try:
             beta_x, beta_y = lensmodel.ray_shooting(xgrid, ygrid, lensmodel_kwargs)
-            surf_bright = self._sourcelight.surface_brightness(beta_x, beta_y, [self._kwargs_light])
+            surf_bright = self._sourcelight.surface_brightness(beta_x, beta_y, [self._kwargs_quasar])
 
         except:
             shape0 = xgrid.shape
             beta_x, beta_y = lensmodel.ray_shooting(xgrid.ravel(), ygrid.ravel(), lensmodel_kwargs)
-            surf_bright = self._sourcelight.surface_brightness(beta_x, beta_y, [self._kwargs_light])
+            surf_bright = self._sourcelight.surface_brightness(beta_x, beta_y, [self._kwargs_quasar])
             surf_bright = surf_bright.reshape(shape0, shape0)
 
         return surf_bright
@@ -164,7 +164,7 @@ class Quasar(LightReconstructBase):
 
     def _auto_grid_size(self, max_source_size_parsec):
 
-        grid_size_0 = 0.0002
+        grid_size_0 = 0.00015
         size_0 = 0.1
         power = 1.15
         grid_size = grid_size_0 * (max_source_size_parsec / size_0) ** power

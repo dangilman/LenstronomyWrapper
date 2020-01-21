@@ -17,7 +17,8 @@ class PowerLawShearConvergence(ComponentBase):
             kwargs_init = [{'theta_E': theta_E, 'center_x': center_x, 'center_y': center_y, 'e1': e1, 'e2': e2, 'gamma': gamma},
                             {'gamma1': gamma1, 'gamma2': gamma2}, {'kappa_ext': kappa_ext}]
 
-        super(PowerLawShearConvergence, self).__init__(self.lens_model_list, [redshift]*self.n_models, kwargs_init, convention_index)
+        super(PowerLawShearConvergence, self).__init__(self.lens_model_list,
+                                                       [redshift]*self.n_models, kwargs_init, convention_index, False)
 
     @classmethod
     def from_cartesian(cls, redshifts, kwargs_init=None, theta_E=1, gamma=2, gamma1=0.05,
@@ -60,7 +61,17 @@ class PowerLawShearConvergence(ComponentBase):
 
     @property
     def fixed_models(self):
-        return [{}, {'ra_0': 0, 'dec_0': 0}, {'ra_0': 0, 'dec_0': 0}]
+        if self.fixed:
+            return self.kwargs
+        else:
+            return [{}] * self.n_models
+
+    @property
+    def fixed_models(self):
+        if self.fixed:
+            return self.kwargs
+        else:
+            return [{}, {'ra_0': 0, 'dec_0': 0}, {'ra_0': 0, 'dec_0': 0}]
 
     @property
     def param_init(self):

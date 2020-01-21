@@ -1,4 +1,5 @@
 from lenstronomywrapper.LensSystem.light_reconstruct_base import LightReconstructBase
+import numpy as np
 
 class SersicLens(LightReconstructBase):
 
@@ -7,7 +8,6 @@ class SersicLens(LightReconstructBase):
         self._reoptimize = reoptimize
         self._kwargs = kwargs_sersic
         self._prior = prior
-        self._light_x, self._light_y = kwargs_sersic[0]['center_x'], kwargs_sersic[0]['center_y']
 
         super(SersicLens, self).__init__(concentric_with_model=concentric_with_model)
 
@@ -55,29 +55,23 @@ class SersicLens(LightReconstructBase):
     @property
     def param_init(self):
 
-        if self._reoptimize:
-            return self.kwargs_light
-        else:
-            # basically random
-            return [{'amp': 1000, 'R_sersic': 0.3, 'n_sersic': 4.0, 'center_x': 0., 'center_y': 0.}]
+        return self.kwargs_light
 
     @property
     def param_sigma(self):
 
-        if self._reoptimize:
-            return [
-                {'amp': 500, 'R_sersic': 0.2, 'n_sersic': 0.5, 'center_x': 0.05, 'center_y': 0.05}]
-        else:
-            return [{'amp': 1000, 'R_sersic': 0.8, 'n_sersic': 1.5, 'center_x': 0.2, 'center_y': 0.2}]
+        return [{'amp': 500, 'R_sersic': 0.2, 'n_sersic': 0.5, 'center_x': 0.05, 'center_y': 0.05}]
 
     @property
     def param_lower(self):
 
-        lower = [{'amp': 0.0000001, 'R_sersic': 0.0001, 'n_sersic': 0.1, 'center_x': -2., 'center_y': -2.}]
+        lower_x, lower_y = -10, -10
+        lower = [{'amp': 0.0000001, 'R_sersic': 0.0001, 'n_sersic': 0.1, 'center_x': lower_x, 'center_y': lower_y}]
         return lower
 
     @property
     def param_upper(self):
 
-        upper = [{'amp': 500000, 'R_sersic': 5, 'n_sersic': 9, 'center_x': 2., 'center_y': 2.}]
+        upper_x, upper_y = 10, 10
+        upper = [{'amp': 500000, 'R_sersic': 5, 'n_sersic': 9, 'center_x': upper_x, 'center_y': upper_y}]
         return upper

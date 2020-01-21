@@ -24,9 +24,7 @@ class QuadLensSystem(LensBase):
         kwargs_lens_final, lens_model_full, _ = optimizer.optimize(data_to_fit, opt_routine, constrain_params,
                                                                    verbose, False)
 
-        self.set_saved_lensModel(lens_model_full, kwargs_lens_final)
-
-        if include_substructure:
+        if include_substructure and self.realization is not None:
 
             realization = self.realization
 
@@ -37,20 +35,20 @@ class QuadLensSystem(LensBase):
             kwargs_lens_final, lens_model_full, _ = optimizer.optimize(data_to_fit, opt_routine, constrain_params,
                                                                        verbose, True)
 
-            self.set_saved_lensModel(lens_model_full, kwargs_lens_final)
-
         return
 
-    def update_background_quasar(self, source_x, source_y):
+    def update_source_centroid(self, source_x, source_y):
 
+        self.source_centroid_x = source_x
+        self.source_centroid_y = source_y
         self.background_quasar.update_position(source_x, source_y)
 
-    def quasar_magnification(self, x, y, lens_model=None, kwargs_lensmodel=None):
+    def quasar_magnification(self, x, y, lens_model=None, kwargs_lensmodel=None, normed=True):
 
         if lens_model is None or kwargs_lensmodel is None:
             lens_model, kwargs_lensmodel = self.get_lensmodel()
 
-        return self.background_quasar.magnification(x, y, lens_model, kwargs_lensmodel)
+        return self.background_quasar.magnification(x, y, lens_model, kwargs_lensmodel, normed)
 
     def plot_images(self, x, y, lens_model=None, kwargs_lensmodel=None):
 

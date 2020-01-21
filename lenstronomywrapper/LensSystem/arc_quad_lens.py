@@ -35,13 +35,10 @@ class ArcQuadLensSystem(LensBase):
 
         arclens_smooth_component._set_concentric()
 
-        lensModel, kwargs = arclens_smooth_component.get_lensmodel(False)
-        arclens_smooth_component.set_saved_lensModel(lensModel, kwargs)
-
         return arclens_smooth_component
 
     @classmethod
-    def fromQuad(cls, quad_lens_system, lens_light_model, source_light_model, inherit_substructure_realization=False):
+    def fromQuad(cls, quad_lens_system, lens_light_model, source_light_model, inherit_substructure_realization=True):
 
         if inherit_substructure_realization:
             pass_realization = quad_lens_system.realization
@@ -58,15 +55,6 @@ class ArcQuadLensSystem(LensBase):
         arcquadlens.update_light_centroid(light_x, light_y)
 
         arcquadlens._set_concentric()
-
-        if inherit_substructure_realization:
-            lensModel, kwargs = quad_lens_system.get_saved_lensModel()
-            if lensModel is None:
-                lensModel, kwargs = quad_lens_system.get_lensmodel(True)
-        else:
-            lensModel, kwargs = quad_lens_system.get_lensmodel(False)
-
-        arcquadlens.set_saved_lensModel(lensModel, kwargs)
 
         return arcquadlens
 
@@ -104,14 +92,11 @@ class ArcQuadLensSystem(LensBase):
 
         return
 
-    def update_background_quasar(self, source_x, source_y):
-
-        self.background_quasar.update_position(source_x, source_y)
-
     def update_source_centroid(self, source_x, source_y):
 
         self.source_centroid_x = source_x
         self.source_centroid_y = source_y
+        self.background_quasar.update_position(source_x, source_y)
 
     def update_light_centroid(self, light_x, light_y):
 
@@ -146,12 +131,12 @@ class ArcQuadLensSystem(LensBase):
         instance, kwargs = self.source_light_model.sourceLight, self.source_light_model.kwargs_light
         return instance, kwargs
 
-    def quasar_magnification(self, x, y, lens_model=None, kwargs_lensmodel=None):
+    def quasar_magnification(self, x, y, lens_model=None, kwargs_lensmodel=None, normed=True):
 
         if lens_model is None or kwargs_lensmodel is None:
             lens_model, kwargs_lensmodel = self.get_lensmodel()
 
-        return self.background_quasar.magnification(x, y, lens_model, kwargs_lensmodel)
+        return self.background_quasar.magnification(x, y, lens_model, kwargs_lensmodel, normed)
 
     def plot_images(self, x, y, lens_model=None, kwargs_lensmodel=None):
 
