@@ -27,6 +27,10 @@ def run_mock(output_path, Nstart, N, SHMF_norm, LOS_norm, log_mlow, opening_angl
     kwargs_cosmo = {'cosmo_kwargs':{'H0': 73.3}}
     model_sim = SimulatedModel('composite_powerlaw', realization_kwargs, kwargs_cosmology=kwargs_cosmo)
 
+    arrival_time_sigma = [np.random.normal(0, arrival_time_sigma),
+                          np.random.normal(0, arrival_time_sigma),
+                          np.random.normal(0, arrival_time_sigma)]
+    
     model_sim.run(output_path, Nstart, N, arrival_time_sigma, time_delay_like, fix_D_dt, **fit_smooth_kwargs)
 
 def run_real(lens_class, save_name_path, N, N_start, SHMF_norm, LOS_norm, log_mlow, opening_angle, arrival_time_sigma,
@@ -44,12 +48,18 @@ def run_real(lens_class, save_name_path, N, N_start, SHMF_norm, LOS_norm, log_ml
                           'subtract_subhalo_mass_sheet': True, 'subhalo_mass_sheet_scale': 1,
                           'LOS_normalization': LOS_norm}
 
+    if hasattr(lens_class, 'delta_time_delay'):
+        arrival_time_sigma = lens_class.delta_time_delay
+    else:
+        arrival_time_sigma = [np.random.normal(0, arrival_time_sigma),
+                              np.random.normal(0, arrival_time_sigma),
+                              np.random.normal(0, arrival_time_sigma)]
+
     kwargs_cosmo = {'cosmo_kwargs': {'H0': 73.3}}
     model = AnalogModel(lens_class, kwargs_cosmo)
     out = model.run(save_name_path, N_start, N, 'composite_powerlaw', realization_kwargs, arrival_time_sigma,
                        time_delay_like,
                        fix_D_dt, fit_smooth_kwargs)
-
 
 # output_path = os.getenv('HOME') + '/data/mock_data/simulated_time_delays/extended_sim_control/'
 # if not os.path.exists(output_path):
@@ -63,4 +73,8 @@ def run_real(lens_class, save_name_path, N, N_start, SHMF_norm, LOS_norm, log_ml
 # N = 20
 # Nstart = 1 + N * (int(sys.argv[1]) - 1)
 # print(Nstart)
-# run(output_path, Nstart, N, SHMF_norm, LOS_norm, log_mlow, opening_angle, arrival_time_sigma, fix_d_dt)
+# fix_d_dt = True
+# from MagniPy.Workflow.grism_lenses.rxj1131 import Lens1131
+# lens_class = Lens1131()
+# run_real(lens_class, output_path, 2, 1, SHMF_norm, LOS_norm, log_mlow, opening_angle, arrival_time_sigma,
+#         fix_D_dt, time_delay_like=True, fit_smooth_kwargs=None)

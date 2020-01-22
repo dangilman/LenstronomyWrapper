@@ -1,6 +1,7 @@
 from lenstronomywrapper.Optimization.quad_optimization.brute import BruteOptimization
 from lenstronomywrapper.LensSystem.lens_base import LensBase
 from pyHalo.Cosmology.cosmology import Cosmology
+from lenstronomywrapper.LensSystem.BackgroundSource.quasar import Quasar
 
 class QuadLensSystem(LensBase):
 
@@ -10,6 +11,10 @@ class QuadLensSystem(LensBase):
             # the default cosmology in pyHalo, currently WMAP9
             pyhalo_cosmology = Cosmology()
 
+        if background_quasar_class is None:
+            kwargs_default = {'center_x': 0, 'center_y': 0, 'source_fwhm_pc': 30.}
+            background_quasar_class = Quasar(kwargs_default)
+
         self.background_quasar = background_quasar_class
         pc_per_arcsec_zsource = 1000 * pyhalo_cosmology.astropy.arcsec_per_kpc_proper(z_source).value ** -1
         self.background_quasar.setup(pc_per_arcsec_zsource)
@@ -17,12 +22,12 @@ class QuadLensSystem(LensBase):
         super(QuadLensSystem, self).__init__(macromodel, z_source, substructure_realization, pyhalo_cosmology)
 
     def initialize(self, data_to_fit, opt_routine='fixed_powerlaw_shear', constrain_params=None, verbose=False,
-                   include_substructure=False):
+                   include_substructure=False, kwargs_optimizer={}):
 
         optimizer = BruteOptimization(self)
 
         kwargs_lens_final, lens_model_full, _ = optimizer.optimize(data_to_fit, opt_routine, constrain_params,
-                                                                   verbose, False)
+                                                                   verbose, False, kwargs_optimizer)
 
         if include_substructure and self.realization is not None:
 
@@ -33,7 +38,7 @@ class QuadLensSystem(LensBase):
             optimizer = BruteOptimization(self, reoptimize=True)
 
             kwargs_lens_final, lens_model_full, _ = optimizer.optimize(data_to_fit, opt_routine, constrain_params,
-                                                                       verbose, True)
+                                                                       verbose, True, kwargs_optimizer)
 
         return
 

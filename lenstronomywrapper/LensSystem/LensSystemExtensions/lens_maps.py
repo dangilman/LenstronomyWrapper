@@ -91,14 +91,14 @@ class ResidualLensMaps(object):
 
         return residual
 
-    def time_delay_surface(self, rmin_max, npix, xref, yref):
+    def time_delay_surface(self, rmin_max, npix, xref, yref, x_point_eval=[], y_point_eval=[]):
 
         arrival_time_1 = self.map1.time_delay_surface(rmin_max, npix, xref, yref)
         arrival_time_2 = self.map2.time_delay_surface(rmin_max, npix, xref, yref)
 
         return arrival_time_1 - arrival_time_2
 
-    def time_delay_surface_geoshapiro(self, rmin_max, npix, xref, yref):
+    def time_delay_surface_geoshapiro(self, rmin_max, npix, xref, yref, x_point_eval=[], y_point_eval=[]):
 
         dtgeo1, dtgrav1 = self.map1.geo_shapiro_delay(rmin_max, npix, xref, yref)
         dtgeo2, dtgrav2 = self.map2.geo_shapiro_delay(rmin_max, npix, xref, yref)

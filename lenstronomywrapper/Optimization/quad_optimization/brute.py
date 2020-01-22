@@ -21,15 +21,14 @@ class BruteOptimization(OptimizationBase):
         super(BruteOptimization, self).__init__(lens_system)
 
     def optimize(self, data_to_fit, opt_routine='fixed_powerlaw_shear', constrain_params=None, verbose=False,
-                 include_substructure=True):
+                 include_substructure=True, kwargs_optimizer={}):
 
         self._check_routine(opt_routine, constrain_params)
 
-        optimizer_kwargs = {}
-
         kwargs_lens_final, _, lens_model_full, _, images, source = self._fit(data_to_fit, self.n_particles, opt_routine,
-                                  constrain_params, self.n_iterations, optimizer_kwargs, verbose, re_optimize=self.reoptimize,
-                                          include_substructure=include_substructure)
+                                  constrain_params, self.n_iterations, {}, verbose, particle_swarm=True,
+                                      re_optimize=self.reoptimize, tol_mag=None,
+                                          include_substructure=include_substructure, kwargs_optimizer=kwargs_optimizer)
 
         return_kwargs = {'info_array': None,
                          'lens_model_raytracing': lens_model_full}
@@ -37,7 +36,8 @@ class BruteOptimization(OptimizationBase):
         return self._return_results(source, kwargs_lens_final, lens_model_full, return_kwargs)
 
     def _fit(self, data_to_fit, nparticles, opt_routine, constrain_params, simplex_n_iter, optimizer_kwargs, verbose,
-                            particle_swarm=True, re_optimize=False, tol_mag=None, include_substructure=True):
+                            particle_swarm=True, re_optimize=False, tol_mag=None, include_substructure=True,
+                                            kwargs_optimizer={}):
 
         """
         run_kwargs: {'optimizer_routine', 'constrain_params', 'simplex_n_iter'}
@@ -52,7 +52,12 @@ class BruteOptimization(OptimizationBase):
                       're_optimize': re_optimize, 'tol_mag': tol_mag, 'multiplane': True,
                       'z_main': self.lens_system.zlens, 'z_source': self.lens_system.zsource,
                       'astropy_instance': self.lens_system.astropy, 'verbose': verbose, 'pso_convergence_mean': 20000,
-                      'observed_convention_index': convention_index, 'optimizer_kwargs': optimizer_kwargs}
+                      'observed_convention_index': convention_index, 'optimizer_kwargs': optimizer_kwargs,
+                      }
+
+
+        for key in kwargs_optimizer.keys():
+            run_kwargs[key] = kwargs_optimizer[key]
 
         opt = Optimizer(data_to_fit.x, data_to_fit.y, redshift_list, lens_model_list, kwargs_lens, numerical_alpha_class,
                  magnification_target=data_to_fit.m, **run_kwargs)
