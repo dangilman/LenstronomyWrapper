@@ -25,7 +25,7 @@ class SimulatedModel(object):
                  kwargs_quasar=None, zlens=None, zsource=None, free_convergence=False):
 
         self._realization_type = realization_type
-        self.free_convergence  free_convergence
+        self.free_convergence = free_convergence
         self._realization_kwargs = realization_kwargs
         self._zlens = zlens
         self._zsource = zsource
