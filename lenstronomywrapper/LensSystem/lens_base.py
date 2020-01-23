@@ -81,7 +81,10 @@ class LensBase(object):
         lens_model_names, macro_redshifts, macro_kwargs, convention_index = self.macromodel.get_lenstronomy_args()
         realization = self.realization
         if realization is not None and include_substructure:
-            log_mlow = realization._logmlow
+            if hasattr(realization, '_logmlow'):
+                log_mlow = realization._logmlow
+            else:
+                log_mlow = None
             halo_names, halo_redshifts, kwargs_halos, kwargs_lenstronomy = realization.lensing_quantities(log_mlow, log_mlow)
         else:
             halo_names, halo_redshifts, kwargs_halos, kwargs_lenstronomy = [], [], [], None

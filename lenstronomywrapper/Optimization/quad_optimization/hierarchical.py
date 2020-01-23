@@ -1,22 +1,27 @@
 from lenstronomywrapper.Optimization.quad_optimization.brute import BruteOptimization
 import numpy as np
+from lenstronomywrapper.Optimization.quad_optimization.settings import *
 
 class HierarchicalOptimization(BruteOptimization):
 
-    def __init__(self, lens_system, n_particles=None, simplex_n_iter=None, settings=None):
+    def __init__(self, lens_system, n_particles=None, simplex_n_iter=None, settings_class='default'):
 
-        if settings is None:
-            settings = HierarchicalSettingsDefault()
+        if settings_class == 'default':
+            settings_class = HierarchicalSettingsDefault()
+        elif settings_class == 'black_hole_lensing':
+            settings_class = HierarchicalSettingsLowMass()
+        else:
+            raise Exception('settings class not recognized')
 
         if n_particles is None:
-            n_particles = settings.n_particles
+            n_particles = settings_class.n_particles
         if simplex_n_iter is None:
-            n_iterations = settings.n_iterations
+            n_iterations = settings_class.n_iterations
 
         self._n_particles = n_particles
         self._n_iterations = n_iterations
 
-        self.settings = settings
+        self.settings = settings_class
 
         super(HierarchicalOptimization, self).__init__(lens_system)
 
@@ -245,60 +250,4 @@ class HierarchicalOptimization(BruteOptimization):
         info_array = (backx, backy, background_Tzs, background_zs, reoptimized_realizations)
 
         return kwargs_lens_final, lens_model_raytracing, lens_model_full, info_array, [source_x, source_y]
-
-class HierarchicalSettingsDefault(object):
-
-    @property
-    def n_particles(self):
-        return 30
-
-    @property
-    def n_iterations(self):
-        return 250
-
-    @property
-    def n_iterations_background(self):
-        return 3
-
-    @property
-    def n_iterations_foreground(self):
-        return 3
-
-    @property
-    def foreground_settings(self):
-        # add this only within the window
-        aperture_masses = [8, 7, 0]
-        # add this everywhere
-        globalmin_masses = [8, 8, 8]
-        # window size
-        window_sizes = [20, 0.4, 0.15]
-        # controls starting points for re-optimizations
-        scale = [1, 0.5, 0.1]
-        # determines whether to use PSO for re-optimizations
-        particle_swarm_reopt = [True, False, False]
-        # wheter to actually re-fit the lens model
-        optimize_iteration = [True, True, True]
-        # whether to re-optimize (aka start from a model very close to input model)
-        re_optimize_iteration = [False, False, True]
-
-        return aperture_masses, globalmin_masses, window_sizes, scale, optimize_iteration, particle_swarm_reopt, re_optimize_iteration
-
-    @property
-    def background_settings(self):
-        # add this only within the window
-        aperture_masses = [8, 7, 0]
-        # add this everywhere
-        globalmin_masses = [8, 8, 8]
-        # window size
-        window_sizes = [20, 0.4, 0.1]
-        # controls starting points for re-optimizations
-        scale = [1, 0.5, 0.1]
-        # determines whether to use PSO for re-optimizations
-        particle_swarm_reopt = [True, False, False]
-        # wheter to actually re-fit the lens model
-        optimize_iteration = [True, True, False]
-        # whether to re-optimize (aka start from a model very close to input model)
-        re_optimize_iteration = [True, True, True]
-
-        return aperture_masses, globalmin_masses, window_sizes, scale, optimize_iteration, particle_swarm_reopt, re_optimize_iteration
 

@@ -21,6 +21,18 @@ class QuadLensSystem(LensBase):
 
         super(QuadLensSystem, self).__init__(macromodel, z_source, substructure_realization, pyhalo_cosmology)
 
+    @classmethod
+    def addRealization(cls, quad_lens_system, realization):
+
+        macromodel = quad_lens_system.macromodel
+        z_source = quad_lens_system.zsource
+        background_quasar = quad_lens_system.background_quasar
+        pyhalo_cosmo = quad_lens_system.pyhalo_cosmology
+        new_quad = QuadLensSystem(macromodel, z_source, background_quasar, realization, pyhalo_cosmo)
+        source_x, source_y = quad_lens_system.source_centroid_x, quad_lens_system.source_centroid_y
+        new_quad.update_source_centroid(source_x, source_y)
+        return new_quad
+
     def initialize(self, data_to_fit, opt_routine='fixed_powerlaw_shear', constrain_params=None, verbose=False,
                    include_substructure=False, kwargs_optimizer={}):
 
