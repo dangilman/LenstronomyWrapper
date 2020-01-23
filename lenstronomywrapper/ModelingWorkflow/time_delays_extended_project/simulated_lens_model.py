@@ -50,7 +50,8 @@ class SimulatedModel(object):
 
         return realization, mock_lens_class, realization, pyhalo, zlens, zsource
 
-    def run(self, save_name_path, N_start, N, arrival_time_sigma, time_delay_likelihood, fix_D_dt, **fit_smooth_kwargs):
+    def run(self, save_name_path, N_start, N, arrival_time_sigma, image_positions_sigma,
+            time_delay_likelihood, fix_D_dt, **fit_smooth_kwargs):
 
         assert os.path.exists(save_name_path)
 
@@ -65,7 +66,7 @@ class SimulatedModel(object):
 
             tbaseline, flux_anomaly, time_anomaly, time_anomaly_geo, time_anomaly_grav, return_kwargs_fit, \
             return_kwargs_setup = self._analog_model.run_once(None, self._realization_kwargs, arrival_time_sigma,
-                 time_delay_likelihood, fix_D_dt, realization, **fit_smooth_kwargs)
+                       image_positions_sigma, time_delay_likelihood, fix_D_dt, realization, **fit_smooth_kwargs)
 
             h0.append(np.mean(return_kwargs_fit['H0_inferred']))
             h0_sigma.append(np.std(return_kwargs_fit['H0_inferred']))
