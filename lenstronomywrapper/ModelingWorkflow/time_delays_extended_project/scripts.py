@@ -11,7 +11,8 @@ def create_directory(dirname=''):
     proc.wait()
 
 def run_mock(output_path, Nstart, N, SHMF_norm, LOS_norm, log_mlow, opening_angle,
-             arrival_time_sigma, image_positions_sigma, fix_D_dt, time_delay_like=True, fit_smooth_kwargs=None):
+             arrival_time_sigma, image_positions_sigma, fix_D_dt, time_delay_like=True,
+             fit_smooth_kwargs=None, subtract_exact_mass_sheets=False):
 
     if fit_smooth_kwargs is None:
         fit_smooth_kwargs = {'n_particles': 50, 'n_iterations': 80, 'n_run': 10, 'walkerRatio': 4, 'n_burn': 6}
@@ -21,7 +22,7 @@ def run_mock(output_path, Nstart, N, SHMF_norm, LOS_norm, log_mlow, opening_angl
                                   'log_mlow': log_mlow, 'log_mhigh': 10., 'power_law_index': -1.9,
                                   'parent_m200': 10**13, 'r_tidal': '0.5Rs',
                                   'cone_opening_angle': opening_angle, 'opening_angle_factor': 10,
-                                  'sigma_sub': SHMF_norm,
+                                  'sigma_sub': SHMF_norm, 'subtract_exact_mass_sheets': subtract_exact_mass_sheets,
                                   'subtract_subhalo_mass_sheet': True, 'subhalo_mass_sheet_scale': 1,
                                   'LOS_normalization': LOS_norm}
     kwargs_cosmo = {'cosmo_kwargs':{'H0': 73.3}}
@@ -35,7 +36,7 @@ def run_mock(output_path, Nstart, N, SHMF_norm, LOS_norm, log_mlow, opening_angl
                   time_delay_like, fix_D_dt, **fit_smooth_kwargs)
 
 def run_real(lens_class, save_name_path, N, N_start, SHMF_norm, LOS_norm, log_mlow, opening_angle, arrival_time_sigma,
-            image_positions_sigma, fix_D_dt, time_delay_like=True, fit_smooth_kwargs=None):
+            image_positions_sigma, fix_D_dt, time_delay_like=True, fit_smooth_kwargs=None, subtract_exact_mass_sheets=False):
 
     if fit_smooth_kwargs is None:
         fit_smooth_kwargs = {'n_particles': 50, 'n_iterations': 80, 'n_run': 10, 'walkerRatio': 4, 'n_burn': 6}
@@ -45,7 +46,7 @@ def run_real(lens_class, save_name_path, N, N_start, SHMF_norm, LOS_norm, log_ml
                           'log_mlow': log_mlow, 'log_mhigh': 10., 'power_law_index': -1.9,
                           'parent_m200': 10 ** 13, 'r_tidal': '0.5Rs',
                           'cone_opening_angle': opening_angle, 'opening_angle_factor': 10,
-                          'sigma_sub': SHMF_norm,
+                          'sigma_sub': SHMF_norm, 'subtract_exact_mass_sheets': subtract_exact_mass_sheets,
                           'subtract_subhalo_mass_sheet': True, 'subhalo_mass_sheet_scale': 1,
                           'LOS_normalization': LOS_norm}
 
