@@ -1,9 +1,11 @@
 import numpy as np
+from lenstronomywrapper.LensSystem.BackgroundSource.source_base import surface_brightness
+
 
 def _rayshoot_pixels(xcoords, ycoords, lens_model,
                     kwargs_lens_model, light_model, kwargs_light_model):
     bx, by = lens_model.ray_shooting(xcoords, ycoords, kwargs_lens_model)
-    light = light_model.surface_brightness(bx, by, kwargs_light_model)
+    light = surface_brightness(light_model.sourceLight, light_model.kwargs_light, bx, by, kwargs_light_model)
     return light
 
 def _get_new_estimate(image, xi, yi, xgrid, ygrid):

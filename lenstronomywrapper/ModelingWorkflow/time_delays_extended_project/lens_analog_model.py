@@ -5,6 +5,7 @@ from lenstronomywrapper.LensData.arc_plus_quad import ArcPlusQuad
 from lenstronomywrapper.LensData.lensed_quasar import LensedQuasar
 from lenstronomywrapper.LensSystem.macrolensmodel import MacroLensModel
 from lenstronomywrapper.LensSystem.LensComponents.powerlawshearconvergence import PowerLawShearConvergence
+from lenstronomywrapper.LensSystem.LensComponents.powerlawshear import PowerLawShear
 from lenstronomywrapper.LensSystem.quad_lens import QuadLensSystem
 from lenstronomywrapper.LensSystem.LensComponents.satellite import SISsatellite
 from lenstronomywrapper.LensSystem.light_model import LightModel
@@ -22,11 +23,13 @@ import matplotlib.pyplot as plt
 class AnalogModel(object):
 
     def __init__(self, lens_class_instance, kwargs_cosmology,
-                 kwargs_quasar=None, makeplots=False, pyhalo=None):
+                 kwargs_quasar=None, makeplots=False, pyhalo=None,
+                 free_convergence=False):
 
         if kwargs_quasar is None:
             kwargs_quasar = {'center_x': 0, 'center_y': 0, 'source_fwhm_pc': 25}
 
+        self.free_convergence = free_convergence
         self._makeplots = makeplots
         self.lens = lens_class_instance
         self.kwargs_cosmology = kwargs_cosmology
@@ -176,7 +179,11 @@ class AnalogModel(object):
 
         data_to_fit = LensedQuasar(self.lens.x, self.lens.y, self.lens.m)
         background_quasar = self.background_quasar_class()
-        deflector_list = [PowerLawShearConvergence(self.zlens)]
+
+        if self.free_convergence:
+            deflector_list = [PowerLawShearConvergence(self.zlens)]
+        else:
+            deflector_list = [PowerLawShear(self.zlens)]
 
         source_ellip = np.random.uniform(0.05, 0.4)
         source_phi = np.random.uniform(-np.pi, np.pi)

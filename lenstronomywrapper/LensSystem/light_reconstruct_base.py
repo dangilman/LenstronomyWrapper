@@ -1,11 +1,6 @@
+from lenstronomy.LightModel.light_model import LightModel
+
 class LightReconstructBase(object):
-
-    def __init__(self, concentric_with_model=None, concentric_with_source=None):
-
-        self.concentric_with_model = concentric_with_model
-        self.concentric_with_source = concentric_with_source
-
-        pass
 
     @property
     def n_models(self):
@@ -23,11 +18,7 @@ class LightReconstructBase(object):
         return kw_sigma
 
     @property
-    def source_centroid(self):
-        raise Exception('Source centroid not definied for this class as there might be possibly more '
-                        'than one component non-concentric.')
-    @property
-    def fixed_models(self):
+    def lensLight(self):
         raise NotImplementedError('Source reconstruction not yet implemented for this source class.')
 
     @property
@@ -36,10 +27,6 @@ class LightReconstructBase(object):
 
     @property
     def kwargs_light(self):
-        raise NotImplementedError('Source reconstruction not yet implemented for this source class.')
-
-    @property
-    def sourceLight(self):
         raise NotImplementedError('Source reconstruction not yet implemented for this source class.')
 
     @property

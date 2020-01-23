@@ -56,6 +56,8 @@ class ArcQuadLensSystem(LensBase):
 
         arcquadlens._set_concentric()
 
+        arcquadlens.position_convention_halo = quad_lens_system.position_convention_halo
+
         return arcquadlens
 
     def _set_concentric(self):

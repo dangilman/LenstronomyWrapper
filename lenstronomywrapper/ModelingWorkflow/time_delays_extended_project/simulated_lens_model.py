@@ -22,9 +22,10 @@ class Mock(object):
 class SimulatedModel(object):
 
     def __init__(self, realization_type, realization_kwargs, kwargs_cosmology={},
-                 kwargs_quasar=None, zlens=None, zsource=None):
+                 kwargs_quasar=None, zlens=None, zsource=None, free_convergence=False):
 
         self._realization_type = realization_type
+        self.free_convergence  free_convergence
         self._realization_kwargs = realization_kwargs
         self._zlens = zlens
         self._zsource = zsource
@@ -60,7 +61,7 @@ class SimulatedModel(object):
             realization, mock_lens_class, realization, pyhalo, zlens, zsource = self.setup()
 
             self._analog_model = AnalogModel(mock_lens_class, self.kwargs_cosmology, self.kwargs_quasar, False,
-                                             pyhalo)
+                                             pyhalo, self.free_convergence)
 
             tbaseline, flux_anomaly, time_anomaly, time_anomaly_geo, time_anomaly_grav, return_kwargs_fit, \
             return_kwargs_setup = self._analog_model.run_once(None, self._realization_kwargs, arrival_time_sigma,

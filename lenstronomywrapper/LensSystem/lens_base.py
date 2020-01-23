@@ -21,7 +21,7 @@ class LensBase(object):
 
         self.update_light_centroid(0, 0)
 
-        self._saved_lensmodel, self._saved_kwargs_lens = None, None
+        self.position_convention_halo = []
 
     def fit(self, data_to_fit, optimization_class, verbose=False):
 
@@ -44,6 +44,13 @@ class LensBase(object):
 
         self.substructure_realization = realization
 
+    def set_position_convention_halo(self, idx_list):
+
+        assert isinstance(idx_list, list)
+        for idx in idx_list:
+            assert idx > self.macromodel.n_lens_models - 1
+        self.position_convention_halo = idx_list
+
     def update_kwargs_macro(self, new_kwargs):
 
         self.macromodel.update_kwargs(new_kwargs[0:self.macromodel.n_lens_models])
@@ -55,6 +62,15 @@ class LensBase(object):
     def get_lensmodel(self, include_substructure=True):
 
         names, redshifts, kwargs, numercial_alpha_class, convention_index = self.get_lenstronomy_args(include_substructure)
+
+        if convention_index is None:
+            if self.position_convention_halo is None:
+                pass
+            else:
+                convention_index = self.position_convention_halo
+        else:
+            convention_index += self.position_convention_halo
+
         lensModel = LensModel(names, lens_redshift_list=redshifts, z_lens=self.zlens, z_source=self.zsource,
                               multi_plane=True, numerical_alpha_class=numercial_alpha_class,
                               observed_convention_index=convention_index, cosmo=self.astropy)
