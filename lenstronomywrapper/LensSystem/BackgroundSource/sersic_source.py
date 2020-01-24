@@ -36,11 +36,8 @@ class SersicSource(SourceBase):
     @property
     def param_sigma(self):
 
-        if self._reoptimize:
-            return self.reoptimize_sigma
-        else:
-            return [{'amp': 1000, 'R_sersic': 0.8, 'n_sersic': 1.5, 'center_x': 0.2, 'center_y': 0.2,
-                     'e1': 0.25, 'e2': 0.25}]
+        return [{'amp': 10000, 'R_sersic': 1., 'n_sersic': 2.5, 'center_x': 0.3, 'center_y': 0.3,
+                     'e1': 0.5, 'e2': 0.5}]
 
     @property
     def param_lower(self):

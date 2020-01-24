@@ -68,35 +68,26 @@ class PowerLawShear(ComponentBase):
     @property
     def param_init(self):
 
-        if self._reoptimize:
-            return self.reoptimize_sigma
-        else:
-            # basically random
-            return [{'theta_E': 1., 'center_x': 0.0, 'center_y': 0.0, 'e1': 0.1, 'e2': -0.1, 'gamma': 2.},
-                    {'gamma1': 0.04, 'gamma2': 0.01}]
+        return self.kwargs
 
     @property
     def param_sigma(self):
 
-        if self._reoptimize:
-            return [{'theta_E': 0.1, 'center_x': 0.05, 'center_y': 0.05, 'e1': 0.1, 'e2': 0.1, 'gamma': 0.05},
-                    {'gamma1': 0.02, 'gamma2': 0.02}]
-        else:
-            return [{'theta_E': 0.3, 'center_x': 0.2, 'center_y': 0.2, 'e1': 0.3, 'e2': 0.3, 'gamma': 0.2},
-                    {'gamma1': 0.1, 'gamma2': 0.1}]
+        return [{'theta_E': 0.5, 'center_x': 0.2, 'center_y': 0.2, 'e1': 0.4, 'e2': 0.4, 'gamma': 0.25},
+                {'gamma1': 0.1, 'gamma2': 0.1}]
 
     @property
     def param_lower(self):
 
-        lower = [{'theta_E': 0.05, 'center_x': -2., 'center_y': -2., 'e1': -0.5, 'e2': -0.5, 'gamma': 1.5},
-                 {'gamma1': -0.4, 'gamma2': -0.4}]
+        lower = [{'theta_E': 0.05, 'center_x': -2., 'center_y': -2., 'e1': -0.8, 'e2': -0.8, 'gamma': 1.5},
+                 {'gamma1': -0.6, 'gamma2': -0.6}]
         return lower
 
     @property
     def param_upper(self):
 
-        upper = [{'theta_E': 3., 'center_x': 2., 'center_y': 2., 'e1': 0.5, 'e2': 0.5, 'gamma': 2.5},
-                 {'gamma1': 0.4, 'gamma2': 0.4}]
+        upper = [{'theta_E': 4., 'center_x': 2., 'center_y': 2., 'e1': 0.8, 'e2': 0.8, 'gamma': 2.5},
+                 {'gamma1': 0.6, 'gamma2': 0.6}]
         return upper
 
     @property

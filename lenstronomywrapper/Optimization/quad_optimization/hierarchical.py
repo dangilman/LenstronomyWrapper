@@ -4,12 +4,13 @@ from lenstronomywrapper.Optimization.quad_optimization.settings import *
 
 class HierarchicalOptimization(BruteOptimization):
 
-    def __init__(self, lens_system, n_particles=None, simplex_n_iter=None, settings_class='default'):
+    def __init__(self, lens_system, n_particles=None, simplex_n_iter=None, settings_class='default',
+                 settings_kwargs={}):
 
         if settings_class == 'default':
             settings_class = HierarchicalSettingsDefault()
-        elif settings_class == 'black_hole_lensing':
-            settings_class = HierarchicalSettingsLowMass()
+        elif settings_class == 'delta_function':
+            settings_class = HierarchicalSettingsDeltaFunction(**settings_kwargs)
         else:
             raise Exception('settings class not recognized')
 

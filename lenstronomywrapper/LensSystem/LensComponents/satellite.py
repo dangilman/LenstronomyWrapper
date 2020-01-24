@@ -39,10 +39,7 @@ class SISsatellite(ComponentBase):
 
     @property
     def param_sigma(self):
-        if self._reoptimize:
-            return self.reoptimize_sigma
-        else:
-            return [{'theta_E': 0.3, 'center_x': 0.3, 'center_y': 0.3}]
+        return [{'theta_E': 0.3, 'center_x': 0.3, 'center_y': 0.3}]
 
     @property
     def param_lower(self):

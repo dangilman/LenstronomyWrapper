@@ -1,7 +1,12 @@
-class HierarchicalSettingsLowMass(object):
+class HierarchicalSettingsDeltaFunction(object):
     """
     Good for dealing with large numbers of tiny dark matter halos below 10^6
     """
+
+    def __init__(self, delta_function_logmass, window_sizes):
+
+        self.delta_function_logmass = delta_function_logmass
+        self.window_sizes = window_sizes
 
     @property
     def n_particles(self):
@@ -13,47 +18,51 @@ class HierarchicalSettingsLowMass(object):
 
     @property
     def n_iterations_background(self):
-        return 3
+        return 1
 
     @property
     def n_iterations_foreground(self):
-        return 3
+        return 1
 
     @property
     def foreground_settings(self):
         # add this only within the window
-        aperture_masses = [8, 5.7, 5., 0]
+        aperture_masses = [self.delta_function_logmass]
         # add this everywhere
-        globalmin_masses = [10., 7., 7., 7.]
+        globalmin_masses = [self.delta_function_logmass+1.]
         # window size
-        window_sizes = [20, 0.3, 0.15, 0.1]
+        window_sizes = self.window_sizes
         # controls starting points for re-optimizations
-        scale = [1, 0.5, 0.5, 0.5]
+        scale = [1.0] * len(aperture_masses)
         # determines whether to use PSO for re-optimizations
-        particle_swarm_reopt = [True, True, False, False]
+        particle_swarm_reopt = [True]
         # wheter to actually re-fit the lens model
-        optimize_iteration = [True, True, True, False]
+        optimize_iteration = [True] * len(aperture_masses)
         # whether to re-optimize (aka start from a model very close to input model)
-        re_optimize_iteration = [False, True, True, False]
+        re_optimize_iteration = [True] * len(aperture_masses)
+        if len(aperture_masses) > 1:
+            particle_swarm_reopt += [False] * (len(aperture_masses) - 1)
 
         return aperture_masses, globalmin_masses, window_sizes, scale, optimize_iteration, particle_swarm_reopt, re_optimize_iteration
 
     @property
     def background_settings(self):
         # add this only within the window
-        aperture_masses = [8., 5.8, 5.5, 5.25, 5., 4.5, 0]
+        aperture_masses = [self.delta_function_logmass]
         # add this everywhere
-        globalmin_masses = [10] * (len(aperture_masses) - 1)
+        globalmin_masses = [self.delta_function_logmass+1.]
         # window size
-        window_sizes = [20, 0.35, 0.2, 0.1, 0.05, 0.025, 0.01]
+        window_sizes = self.window_sizes
         # controls starting points for re-optimizations
-        scale = [1] + [0.4] * (len(aperture_masses)-1)
+        scale = [1.0] * len(aperture_masses)
         # determines whether to use PSO for re-optimizations
-        particle_swarm_reopt = [True, True, False, False]
+        particle_swarm_reopt = [True]
         # wheter to actually re-fit the lens model
-        optimize_iteration = [True, True, True, False]
+        optimize_iteration = [True] * len(aperture_masses)
         # whether to re-optimize (aka start from a model very close to input model)
-        re_optimize_iteration = [False, True, True, False]
+        re_optimize_iteration = [True] * len(aperture_masses)
+        if len(aperture_masses) > 1:
+            particle_swarm_reopt += [False] * (len(aperture_masses)-1)
 
         return aperture_masses, globalmin_masses, window_sizes, scale, optimize_iteration, particle_swarm_reopt, re_optimize_iteration
 

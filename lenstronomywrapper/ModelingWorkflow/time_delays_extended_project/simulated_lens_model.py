@@ -64,7 +64,7 @@ class SimulatedModel(object):
             self._analog_model = AnalogModel(mock_lens_class, self.kwargs_cosmology, self.kwargs_quasar, False,
                                              pyhalo, self.free_convergence)
 
-            tbaseline, flux_anomaly, time_anomaly, time_anomaly_geo, time_anomaly_grav, return_kwargs_fit, \
+            tbaseline, flux_anomaly, time_anomaly, time_anomaly_geo, time_anomaly_grav, macromodel_parameters, return_kwargs_fit, \
             return_kwargs_setup = self._analog_model.run_once(None, self._realization_kwargs, arrival_time_sigma,
                        image_positions_sigma, time_delay_likelihood, fix_D_dt, realization, **fit_smooth_kwargs)
 

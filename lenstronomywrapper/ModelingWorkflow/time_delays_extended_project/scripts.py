@@ -39,7 +39,7 @@ def run_real(lens_class, save_name_path, N, N_start, SHMF_norm, LOS_norm, log_ml
             image_positions_sigma, fix_D_dt, time_delay_like=True, fit_smooth_kwargs=None, subtract_exact_mass_sheets=False):
 
     if fit_smooth_kwargs is None:
-        fit_smooth_kwargs = {'n_particles': 50, 'n_iterations': 80, 'n_run': 10, 'walkerRatio': 4, 'n_burn': 6}
+        fit_smooth_kwargs = {'n_particles': 50, 'n_iterations': 200, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 25}
 
     mdef = 'TNFW'
     realization_kwargs = {'mdef_main': mdef, 'mdef_los': mdef,

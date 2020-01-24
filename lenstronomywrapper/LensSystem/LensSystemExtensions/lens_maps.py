@@ -9,7 +9,8 @@ class LensMaps(object):
 
     def _get_grids(self, rmin_max, npix):
 
-        x = y = np.linspace(-rmin_max, rmin_max, npix)
+        x = np.linspace(-rmin_max, rmin_max, npix)
+        y = np.linspace(rmin_max, -rmin_max, npix)
         xx, yy = np.meshgrid(x, y)
         return xx.ravel(), yy.ravel(), xx.shape
 

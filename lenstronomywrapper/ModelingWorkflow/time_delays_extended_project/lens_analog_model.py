@@ -72,19 +72,19 @@ class AnalogModel(object):
     def flux_anomaly(self, mags1, mags2):
 
         f1, f2 = mags1[1:]/mags1[0], mags2[1:]/mags2[0]
-        return np.array(f1 - f2)
+        return np.array(f1 - f2).reshape(1, 3)
 
     def time_anomaly(self, t1, t2):
 
         dt1 = t1[1:] - t1[0]
         dt2 = t2[1:] - t2[0]
-        return np.array(dt1 - dt2)
+        return np.array(dt1 - dt2).reshape(1, 3)
 
     def run(self, save_name_path, N_start, N, realization_type, realization_kwargs, arrival_time_sigma,
             image_positions_sigma, time_delay_likelihood, fix_D_dt, fit_smooth_kwargs):
 
         for n in range(0, N):
-            tbaseline, f, t, tgeo, tgrav, kw_fit, kw_setup = self.run_once(realization_type,
+            tbaseline, f, t, tgeo, tgrav, macro_params, kw_fit, kw_setup = self.run_once(realization_type,
                                                                 realization_kwargs,
                                                                 arrival_time_sigma,
                                                                 image_positions_sigma,
@@ -105,6 +105,7 @@ class AnalogModel(object):
                 time_anomalies_grav = tgrav
                 h0_inferred = h0_inf
                 h0_sigma = h0_inf_sigma
+                macromodel_parameters = macro_params
             else:
                 baseline = np.vstack((baseline, tbaseline))
                 flux_anomalies = np.vstack((flux_anomalies, f))
@@ -113,11 +114,12 @@ class AnalogModel(object):
                 time_anomalies_grav = np.vstack((time_anomalies_grav, tgrav))
                 h0_inferred = np.vstack((h0_inferred, h0_inf))
                 h0_sigma = np.vstack((h0_sigma, h0_inf_sigma))
+                macromodel_parameters = np.vstack((macromodel_parameters, macro_params))
 
         fnames = ['tbaseline_', 'flux_anomaly_', 'time_anomaly_', 'time_anomaly_grav_',
-                  'time_anomaly_geo_', 'geometry_', 'h0_inferred_', 'h0_sigma_']
+                  'time_anomaly_geo_', 'geometry_', 'h0_inferred_', 'h0_sigma_', 'macroparams_']
         arrays = [baseline, flux_anomalies, time_anomalies, time_anomalies_grav, time_anomalies_geo, np.array(info),
-                  np.array(h0_inferred), np.array(h0_sigma)]
+                  np.array(h0_inferred), np.array(h0_sigma), macromodel_parameters]
 
         for fname, arr in zip(fnames, arrays):
             self.save_append(save_name_path + fname + str(N_start) + '.txt', arr)
@@ -144,12 +146,24 @@ class AnalogModel(object):
         return_kwargs_fit, kwargs_data_fit = self.fit_smooth(lens_system, data_class,
                                                              time_delay_likelihood, fix_D_dt, **fit_smooth_kwargs)
 
+        macromodel_kwargs = return_kwargs_fit['kwargs_lens_macro_fit']
+        macromodel_params = []
+        for kwargs_set in macromodel_kwargs:
+            for key in kwargs_set.keys():
+                macromodel_params.append(kwargs_set[key])
+
+        macromodel_params = np.array(macromodel_params)
+        L = len(macromodel_params)
+        macromodel_params = macromodel_params.reshape(1, int(L))
+
         key = 'mags'
         flux_anomaly = self.flux_anomaly(kwargs_data_fit[key], kwargs_data_setup[key])
 
         key = 'arrival_times'
         time_anomaly = self.time_anomaly(kwargs_data_fit[key], kwargs_data_setup[key])
+
         time_delay_baseline = kwargs_data_fit[key][1:] - kwargs_data_fit[key][0]
+        time_delay_baseline = time_delay_baseline.reshape(1,3)
 
         key = 'geo_delay'
         time_anomaly_geo = self.time_anomaly(kwargs_data_fit[key], kwargs_data_setup[key])
@@ -164,7 +178,8 @@ class AnalogModel(object):
 
         return_kwargs_fit['H0_inferred'] = np.array(h0)
 
-        return time_delay_baseline, flux_anomaly, time_anomaly, time_anomaly_geo, time_anomaly_grav, return_kwargs_fit, return_kwargs_setup
+        return time_delay_baseline, flux_anomaly, time_anomaly, time_anomaly_geo, \
+               time_anomaly_grav, macromodel_params, return_kwargs_fit, return_kwargs_setup
 
     def compute_observables(self, lens_system):
 
@@ -254,7 +269,7 @@ class AnalogModel(object):
         lens_system = ArcQuadLensSystem.fromQuad(lens_system_quad, light_model,
                                                  source_model)
 
-        data_kwargs = {'psf_type': 'GAUSSIAN', 'window_size': 2*window_size, 'deltaPix': 0.025}
+        data_kwargs = {'psf_type': 'GAUSSIAN', 'window_size': 2*window_size, 'deltaPix': 0.025, 'fwhm': 0.1}
         data_class = ArcPlusQuad(data_to_fit.x, data_to_fit.y, magnifications, lens_system, arrival_times,
                            arrival_time_sigma, image_sigma, data_kwargs=data_kwargs, no_bkg=False, noiseless=False,
                                  normed_magnifications=False)

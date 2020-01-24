@@ -87,12 +87,8 @@ class PowerLawShearConvergence(ComponentBase):
     @property
     def param_sigma(self):
 
-        if self._reoptimize:
-            return [{'theta_E': 0.1, 'center_x': 0.05, 'center_y': 0.05, 'e1': 0.1, 'e2': 0.1, 'gamma': 0.05},
-                    {'gamma1': 0.02, 'gamma2': 0.02}, {'kappa_ext': 0.02}]
-        else:
-            return [{'theta_E': 0.3, 'center_x': 0.2, 'center_y': 0.2, 'e1': 0.3, 'e2': 0.3, 'gamma': 0.2},
-                    {'gamma1': 0.1, 'gamma2': 0.1}, {'kappa_ext': 0.05}]
+        return [{'theta_E': 0.5, 'center_x': 0.2, 'center_y': 0.2, 'e1': 0.4, 'e2': 0.4, 'gamma': 0.25},
+                {'gamma1': 0.1, 'gamma2': 0.1}]
 
     @property
     def param_lower(self):

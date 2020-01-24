@@ -39,17 +39,14 @@ class Shapelet(SourceBase):
     @property
     def param_sigma(self):
 
-        if self._reoptimize:
-            return self.reoptimize_sigma
-        else:
-            return [{'amp': 1000., 'beta': 0.01, 'n_mnax': int(0), 'center_x': 0.1, 'center_y': 0.1}]
+        return [{'amp': 10000., 'beta': 0.1, 'n_max': int(self._nmax), 'center_x': 0.1, 'center_y': 0.1}]
 
     @property
     def param_lower(self):
 
-        return [{'amp': 0, 'beta': 0, 'n_max': int(0), 'center_x': -100, 'center_y': -100}]
+        return [{'amp': 0, 'beta': 0, 'n_max': 0, 'center_x': -100, 'center_y': -100}]
 
     @property
     def param_upper(self):
 
-        return [{'amp': 100, 'beta': 100, 'n_max': int(150), 'center_x': 100, 'center_y': 100}]
+        return [{'amp': 100, 'beta': 100, 'n_max': 150, 'center_x': 100, 'center_y': 100}]

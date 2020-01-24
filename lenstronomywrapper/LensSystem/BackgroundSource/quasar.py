@@ -164,7 +164,7 @@ class Quasar(LightReconstructBase):
 
     def _auto_grid_size(self, max_source_size_parsec):
 
-        grid_size_0 = 0.00015
+        grid_size_0 = 0.000175
         size_0 = 0.1
         power = 1.15
         grid_size = grid_size_0 * (max_source_size_parsec / size_0) ** power
