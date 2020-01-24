@@ -51,13 +51,6 @@ def run_real(lens_class, save_name_path, N, N_start, SHMF_norm, LOS_norm, log_ml
                           'subtract_subhalo_mass_sheet': True, 'subhalo_mass_sheet_scale': 1,
                           'LOS_normalization': LOS_norm}
 
-    if hasattr(lens_class, 'delta_time_delay'):
-        arrival_time_sigma = lens_class.delta_time_delay
-    else:
-        arrival_time_sigma = [np.random.normal(0, arrival_time_sigma),
-                              np.random.normal(0, arrival_time_sigma),
-                              np.random.normal(0, arrival_time_sigma)]
-
     kwargs_cosmo = {'cosmo_kwargs': {'H0': 73.3}}
     model = AnalogModel(lens_class, kwargs_cosmo)
     out = model.run(save_name_path, N_start, N, 'composite_powerlaw', realization_kwargs, arrival_time_sigma,
