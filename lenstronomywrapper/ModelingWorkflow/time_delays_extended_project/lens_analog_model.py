@@ -13,6 +13,7 @@ from lenstronomy.Util.param_util import phi_q2_ellipticity
 from lenstronomywrapper.Utilities.data_util import approx_theta_E
 from lenstronomywrapper.Utilities.lensing_util import solve_H0_from_Ddt
 from lenstronomywrapper.LensSystem.BackgroundSource.quasar import Quasar
+from lenstronomy.Analysis.lens_profile import LensProfileAnalysis
 
 import numpy as np
 from pyHalo.pyhalo import pyHalo
@@ -201,9 +202,8 @@ class AnalogModel(object):
 
         kwargs_macro = [{'theta_E': 1., 'center_x': 0., 'center_y': 0, 'e1': 0.1, 'e2': 0.1, 'gamma': 2.},
                         {'gamma1': 0.02, 'gamma2': 0.01}]
-        macromodel_priors = [['gamma', kwargs_macro[0]['gamma'], gamma_prior_scale*kwargs_macro[0]['gamma']]]
 
-        deflector_list = [PowerLawShear(self.zlens, kwargs_macro, prior=macromodel_priors)]
+        deflector_list = [PowerLawShear(self.zlens, kwargs_macro)]
 
         source_ellip = np.random.uniform(0.05, 0.4)
         source_phi = np.random.uniform(-np.pi, np.pi)
@@ -258,6 +258,12 @@ class AnalogModel(object):
         lens_system_quad.initialize(data_to_fit, include_substructure=True, verbose=False)
         magnifications, arrival_times, dtgeo, dtgrav = self.compute_observables(lens_system_quad)
 
+        lensModel, kwargs_lens = lens_system_quad.get_lensmodel()
+        lens_analysis = LensProfileAnalysis(lensModel)
+        gamma_effective = lens_analysis.profile_slope(kwargs_lens, kwargs_lens[0]['theta_E'])
+
+        macromodel_prior = [['gamma', gamma_effective, gamma_prior_scale * gamma_effective]]
+        lens_system_quad.macromodel.components[0].update_prior(macromodel_prior)
         window_size_macro = 2. * lens_system_quad.macromodel.kwargs[0]['theta_E']
 
         if self.lens.has_satellite:

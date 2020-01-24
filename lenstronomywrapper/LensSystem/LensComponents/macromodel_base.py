@@ -16,6 +16,10 @@ class ComponentBase(ReconstructBase):
 
         super(ComponentBase).__init__()
 
+    def update_prior(self, new_prior):
+
+        self._prior = new_prior
+
     def lenstronomy_args(self):
 
         return self.lens_model_names, self.redshifts, self._kwargs, [self.convention_index]*len(self.lens_model_names)
