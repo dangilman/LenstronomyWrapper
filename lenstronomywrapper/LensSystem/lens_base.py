@@ -59,7 +59,7 @@ class LensBase(object):
 
         return self.get_lenstronomy_args(include_substructure)[2]
 
-    def get_lensmodel(self, include_substructure=True):
+    def get_lensmodel(self, include_substructure=True, set_multiplane=True):
 
         names, redshifts, kwargs, numercial_alpha_class, convention_index = self.get_lenstronomy_args(include_substructure)
 
@@ -72,7 +72,7 @@ class LensBase(object):
             convention_index += self.position_convention_halo
 
         lensModel = LensModel(names, lens_redshift_list=redshifts, z_lens=self.zlens, z_source=self.zsource,
-                              multi_plane=True, numerical_alpha_class=numercial_alpha_class,
+                              multi_plane=set_multiplane, numerical_alpha_class=numercial_alpha_class,
                               observed_convention_index=convention_index, cosmo=self.astropy)
         return lensModel, kwargs
 

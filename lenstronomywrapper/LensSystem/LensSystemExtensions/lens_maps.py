@@ -2,10 +2,10 @@ import numpy as np
 
 class LensMaps(object):
 
-    def __init__(self, system):
+    def __init__(self, system, multi_plane=True):
 
         self.system = system
-        self.lensModel, self.kwargs_lens = self.system.get_lensmodel()
+        self.lensModel, self.kwargs_lens = self.system.get_lensmodel(set_multiplane=multi_plane)
 
     def _get_grids(self, rmin_max, npix):
 
