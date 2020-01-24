@@ -81,13 +81,14 @@ class AnalogModel(object):
         return np.array(dt1 - dt2).reshape(1, 3)
 
     def run(self, save_name_path, N_start, N, realization_type, realization_kwargs, arrival_time_sigma,
-            image_positions_sigma, time_delay_likelihood, fix_D_dt, fit_smooth_kwargs):
+            image_positions_sigma, gamma_prior_scale, time_delay_likelihood, fix_D_dt, fit_smooth_kwargs):
 
         for n in range(0, N):
             tbaseline, f, t, tgeo, tgrav, macro_params, kw_fit, kw_setup = self.run_once(realization_type,
                                                                 realization_kwargs,
                                                                 arrival_time_sigma,
                                                                 image_positions_sigma,
+                                                                gamma_prior_scale,
                                                                 time_delay_likelihood,
                                                                 fix_D_dt, **fit_smooth_kwargs)
 
@@ -137,11 +138,12 @@ class AnalogModel(object):
 
         np.savetxt(filename, X=array_to_save, fmt='%.5f')
 
-    def run_once(self, realization_type, realization_kwargs, arrival_time_sigma, image_sigma,
+    def run_once(self, realization_type, realization_kwargs, arrival_time_sigma, image_sigma, gamma_prior_scale,
             time_delay_likelihood, fix_D_dt, realization=None, **fit_smooth_kwargs):
 
         lens_system, data_class, return_kwargs_setup, kwargs_data_setup = \
-            self.model_setup(realization_type,realization_kwargs, arrival_time_sigma, image_sigma, realization)
+            self.model_setup(realization_type,realization_kwargs, arrival_time_sigma, image_sigma, gamma_prior_scale,
+                             realization)
 
         return_kwargs_fit, kwargs_data_fit = self.fit_smooth(lens_system, data_class,
                                                              time_delay_likelihood, fix_D_dt, **fit_smooth_kwargs)
@@ -191,15 +193,17 @@ class AnalogModel(object):
 
         return magnifications, arrival_times, dtgeo, dtgrav
 
-    def model_setup(self, realization_type, realization_kwargs, arrival_time_sigma, image_sigma, realization=None):
+    def model_setup(self, realization_type, realization_kwargs, arrival_time_sigma, image_sigma, gamma_prior_scale,
+                    realization=None):
 
         data_to_fit = LensedQuasar(self.lens.x, self.lens.y, self.lens.m)
         background_quasar = self.background_quasar_class()
 
-        if self.free_convergence:
-            deflector_list = [PowerLawShearConvergence(self.zlens)]
-        else:
-            deflector_list = [PowerLawShear(self.zlens)]
+        kwargs_macro = [{'theta_E': 1., 'center_x': 0., 'center_y': 0, 'e1': 0.1, 'e2': 0.1, 'gamma': 2.},
+                        {'gamma1': 0.02, 'gamma2': 0.01}]
+        macromodel_priors = [['gamma', kwargs_macro[0]['gamma'], gamma_prior_scale*kwargs_macro[0]['gamma']]]
+
+        deflector_list = [PowerLawShear(self.zlens, kwargs_macro, prior=macromodel_priors)]
 
         source_ellip = np.random.uniform(0.05, 0.4)
         source_phi = np.random.uniform(-np.pi, np.pi)
@@ -228,8 +232,8 @@ class AnalogModel(object):
                 r_sat = np.sqrt(xsat ** 2 + ysat ** 2)
                 r_sat_max = max(r_sat, r_sat_max)
                 satellite_redshift = self.lens.satellite_redshift[n]
-                priors = [['theta_E', rein_sat, 0.02 * rein_sat], ['center_x', xsat, 0.05 * xsat],
-                          ['center_y', ysat, 0.05 * ysat]]
+                priors = [['theta_E', rein_sat, 0.1 * rein_sat], ['center_x', xsat, 0.05],
+                          ['center_y', ysat, 0.05]]
                 kwargs_init = [self.lens.satellite_kwargs[n]]
 
                 satellite_galaxy = SISsatellite(satellite_redshift, kwargs_init=kwargs_init,

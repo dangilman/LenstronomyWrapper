@@ -11,7 +11,7 @@ def create_directory(dirname=''):
     proc.wait()
 
 def run_mock(output_path, Nstart, N, SHMF_norm, LOS_norm, log_mlow, opening_angle,
-             arrival_time_sigma, image_positions_sigma, fix_D_dt, time_delay_like=True,
+             arrival_time_sigma, image_positions_sigma, gamma_prior_scale, fix_D_dt, time_delay_like=True,
              fit_smooth_kwargs=None, subtract_exact_mass_sheets=False):
 
     if fit_smooth_kwargs is None:
@@ -32,11 +32,12 @@ def run_mock(output_path, Nstart, N, SHMF_norm, LOS_norm, log_mlow, opening_angl
                           np.random.normal(0, arrival_time_sigma),
                           np.random.normal(0, arrival_time_sigma)]
 
-    model_sim.run(output_path, Nstart, N, arrival_time_sigma, image_positions_sigma,
+    model_sim.run(output_path, Nstart, N, arrival_time_sigma, image_positions_sigma, gamma_prior_scale,
                   time_delay_like, fix_D_dt, **fit_smooth_kwargs)
 
 def run_real(lens_class, save_name_path, N, N_start, SHMF_norm, LOS_norm, log_mlow, opening_angle, arrival_time_sigma,
-            image_positions_sigma, fix_D_dt, time_delay_like=True, fit_smooth_kwargs=None, subtract_exact_mass_sheets=False):
+            image_positions_sigma, gamma_prior_scale,
+             fix_D_dt, time_delay_like=True, fit_smooth_kwargs=None, subtract_exact_mass_sheets=False):
 
     if fit_smooth_kwargs is None:
         fit_smooth_kwargs = {'n_particles': 50, 'n_iterations': 200, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 25}
@@ -60,7 +61,7 @@ def run_real(lens_class, save_name_path, N, N_start, SHMF_norm, LOS_norm, log_ml
     kwargs_cosmo = {'cosmo_kwargs': {'H0': 73.3}}
     model = AnalogModel(lens_class, kwargs_cosmo)
     out = model.run(save_name_path, N_start, N, 'composite_powerlaw', realization_kwargs, arrival_time_sigma,
-                    image_positions_sigma, time_delay_like, fix_D_dt, fit_smooth_kwargs)
+                    image_positions_sigma, gamma_prior_scale, time_delay_like, fix_D_dt, fit_smooth_kwargs)
 
 # output_path = os.getenv('HOME') + '/data/mock_data/simulated_time_delays/extended_sim_control/'
 # if not os.path.exists(output_path):

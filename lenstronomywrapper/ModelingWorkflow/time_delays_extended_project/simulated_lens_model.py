@@ -50,7 +50,7 @@ class SimulatedModel(object):
 
         return realization, mock_lens_class, realization, pyhalo, zlens, zsource
 
-    def run(self, save_name_path, N_start, N, arrival_time_sigma, image_positions_sigma,
+    def run(self, save_name_path, N_start, N, arrival_time_sigma, image_positions_sigma, gamma_prior_scale,
             time_delay_likelihood, fix_D_dt, **fit_smooth_kwargs):
 
         assert os.path.exists(save_name_path)
@@ -66,7 +66,7 @@ class SimulatedModel(object):
 
             tbaseline, flux_anomaly, time_anomaly, time_anomaly_geo, time_anomaly_grav, macromodel_parameters, return_kwargs_fit, \
             return_kwargs_setup = self._analog_model.run_once(None, self._realization_kwargs, arrival_time_sigma,
-                       image_positions_sigma, time_delay_likelihood, fix_D_dt, realization, **fit_smooth_kwargs)
+                       image_positions_sigma, gamma_prior_scale, time_delay_likelihood, fix_D_dt, realization, **fit_smooth_kwargs)
 
             h0.append(np.mean(return_kwargs_fit['H0_inferred']))
             h0_sigma.append(np.std(return_kwargs_fit['H0_inferred']))
@@ -135,7 +135,9 @@ class SimulatedModel(object):
 
             srcx, srcy = self.sample_source(config)
             realization = self.gen_realization(pyhalo, realization_type, realization_kwargs)
-            macromodel = MacroLensModel([PowerLawShearConvergence(zlens, kwargs_macro)])
+
+            prior_gamma = [['gamma', kwargs_macro[0]['gamma'], 0.05*kwargs_macro[0]['gamma']]]
+            macromodel = MacroLensModel([PowerLawShear(zlens, kwargs_macro, prior=prior_gamma)])
             lens_system = QuadLensSystem(macromodel, zsource, self.background_quasar_class(),
                                          realization)
 
