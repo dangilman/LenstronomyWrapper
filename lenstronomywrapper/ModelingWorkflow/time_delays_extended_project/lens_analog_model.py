@@ -279,7 +279,7 @@ class AnalogModel(object):
         lens_system = ArcQuadLensSystem.fromQuad(lens_system_quad, light_model,
                                                  source_model)
 
-        data_kwargs = {'psf_type': 'GAUSSIAN', 'window_size': 2*window_size, 'deltaPix': 0.025, 'fwhm': 0.1}
+        data_kwargs = {'psf_type': 'GAUSSIAN', 'window_size': 2*window_size, 'deltaPix': 0.05, 'fwhm': 0.1}
         data_class = ArcPlusQuad(data_to_fit.x, data_to_fit.y, magnifications, lens_system, arrival_times,
                            arrival_time_sigma, image_sigma, data_kwargs=data_kwargs, no_bkg=False, noiseless=False,
                                  normed_magnifications=False)
