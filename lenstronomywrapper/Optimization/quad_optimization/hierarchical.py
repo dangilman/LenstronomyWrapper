@@ -25,6 +25,8 @@ class HierarchicalOptimization(BruteOptimization):
 
         self.settings = settings_class
 
+        self.realization_initial = self.lens_system.realization
+
         super(HierarchicalOptimization, self).__init__(lens_system)
 
     def optimize(self, data_to_fit, opt_routine='fixed_powerlaw_shear', constrain_params=None, verbose=False,
@@ -47,7 +49,9 @@ class HierarchicalOptimization(BruteOptimization):
                                  opt_routine, lens_model_raytracing, lens_model_full, source_x, source_y,
                                  constrain_params, verbose)
 
-        return_kwargs = {'info_array': info_array, 'lens_model_raytracing': lens_model_raytracing}
+        return_kwargs = {'info_array': info_array,
+                         'lens_model_raytracing': lens_model_raytracing,
+                         'realization_initial': self.realization_initial}
 
         return self._return_results(source, kwargs_lens_final, lens_model_full, return_kwargs)
 

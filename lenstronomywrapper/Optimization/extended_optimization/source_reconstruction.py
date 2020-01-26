@@ -45,6 +45,10 @@ class SourceReconstruction(object):
 
         kwargs_data_joint, kwargs_model, kwargs_constraints, kwargs_likelihood, kwargs_params, multi_band_list = \
             self._init.sampler_inputs()
+
+        print(kwargs_constraints)
+        a=input('continue')
+
         fitting_seq = FittingSequence(kwargs_data_joint, kwargs_model, kwargs_constraints, kwargs_likelihood,
                                       kwargs_params)
         if pso_kwargs is None:
