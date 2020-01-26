@@ -25,8 +25,6 @@ class HierarchicalOptimization(BruteOptimization):
 
         self.settings = settings_class
 
-        self.realization_initial = self.lens_system.realization
-
         super(HierarchicalOptimization, self).__init__(lens_system)
 
     def optimize(self, data_to_fit, opt_routine='fixed_powerlaw_shear', constrain_params=None, verbose=False,
@@ -34,7 +32,7 @@ class HierarchicalOptimization(BruteOptimization):
 
         self._check_routine(opt_routine, constrain_params)
 
-        realization = self.lens_system.realization
+        realization = self.realization_initial
 
         if realization is not None:
             foreground_realization, background_realization = realization.split_at_z(self.lens_system.zlens)
@@ -74,14 +72,15 @@ class HierarchicalOptimization(BruteOptimization):
 
             filter_kwargs = {'aperture_radius_front': window_sizes[run],
                              'aperture_radius_back': 0.,
-                             'aperture_front_min_logmass': aperture_masses[run],
-                             'aperture_back_min_logmass': 12,
-                             'global_front_min_logmass': globalmin_masses[run],
-                             'global_back_min_logmass': 10.,
+                             'mass_allowed_in_apperture_front': aperture_masses[run],
+                             'mass_allowed_in_apperture_back': 12,
+                             'mass_allowed_global_front': globalmin_masses[run],
+                             'mass_allowed_global_back': 10.,
                              'interpolated_x_angle': ray_x_interp,
                              'interpolated_y_angle': ray_y_interp,
                              'zmax': self.lens_system.zlens
                              }
+
 
             if run == 0:
                 if realization_foreground is not None:
@@ -126,7 +125,7 @@ class HierarchicalOptimization(BruteOptimization):
                 kwargs_lens_final, lens_model_raytracing, lens_model_full, foreground_rays, images, [source_x, source_y] = \
                     self._fit(data_to_fit, self._n_particles, opt_routine, constrain_params, self._n_iterations,
                               optimizer_kwargs, verbose, particle_swarm=particle_swarm_reopt[run],
-                              re_optimize=re_optimize_iteration[run], tol_mag=None)
+                              re_optimize=re_optimize_iteration[run], tol_mag=None, realization=realization_filtered)
 
                 N_foreground_halos_last = N_foreground_halos
 
@@ -157,10 +156,10 @@ class HierarchicalOptimization(BruteOptimization):
 
             filter_kwargs = {'aperture_radius_front': 10.,
                              'aperture_radius_back': window_sizes[run],
-                             'aperture_front_min_logmass': 10.,
-                             'aperture_back_min_logmass': aperture_masses[run],
-                             'global_front_min_logmass': 10.,
-                             'global_back_min_logmass': globalmin_masses[run],
+                             'mass_allowed_in_apperture_front': 10.,
+                             'mass_allowed_in_apperture_back': aperture_masses[run],
+                             'mass_allowed_global_front': 10.,
+                             'mass_allowed_global_back': globalmin_masses[run],
                              'interpolated_x_angle': ray_x_interp,
                              'interpolated_y_angle': ray_y_interp,
                              'zmin': self.lens_system.zlens
@@ -225,7 +224,8 @@ class HierarchicalOptimization(BruteOptimization):
                 kwargs_lens_final, lens_model_raytracing, lens_model_full, foreground_rays, images, [source_x, source_y] = \
                     self._fit(data_to_fit, self._n_particles, opt_routine, constrain_params,
                               self._n_iterations, optimizer_kwargs, verbose,
-                              particle_swarm=particle_swarm_reopt[run], re_optimize=re_optimize_iteration[run], tol_mag=None)
+                              particle_swarm=particle_swarm_reopt[run],
+                              re_optimize=re_optimize_iteration[run], tol_mag=None, realization=realization_filtered)
 
 
                 reoptimized_realizations.append(realization_filtered)

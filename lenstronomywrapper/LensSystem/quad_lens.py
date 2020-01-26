@@ -48,18 +48,9 @@ class QuadLensSystem(LensBase):
         optimizer = BruteOptimization(self)
 
         kwargs_lens_final, lens_model_full, _ = optimizer.optimize(data_to_fit, opt_routine, constrain_params,
-                                                                   verbose, False, kwargs_optimizer)
+                                                                   verbose, include_substructure, kwargs_optimizer,
+                                                                   )
 
-        if include_substructure and self.realization is not None:
-
-            realization = self.realization
-
-            realization.shift_background_to_source(self.source_centroid_x, self.source_centroid_y)
-
-            optimizer = BruteOptimization(self, reoptimize=True)
-
-            kwargs_lens_final, lens_model_full, _ = optimizer.optimize(data_to_fit, opt_routine, constrain_params,
-                                                                       verbose, True, kwargs_optimizer)
 
         return
 

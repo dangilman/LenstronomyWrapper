@@ -1,5 +1,6 @@
 from lenstronomy.LensModel.Optimizer.optimizer import Optimizer
 from lenstronomywrapper.Optimization.quad_optimization.optimization_base import OptimizationBase
+from lenstronomywrapper.Utilities.lensing_util import interpolate_ray_paths
 
 class BruteOptimization(OptimizationBase):
 
@@ -18,6 +19,13 @@ class BruteOptimization(OptimizationBase):
         self.n_iterations = n_iterations
         self.reoptimize = reoptimize
 
+        # shoot a ray through the center to determine any global shifts in path
+        ray_interp_x, ray_interp_y = interpolate_ray_paths([0.], [0.], lens_system,
+                                                           include_substructure=False, realization=None)
+
+        self.realization_initial = lens_system.realization.shift_background_to_source(ray_interp_x[0],
+                                                                              ray_interp_y[0])
+
         super(BruteOptimization, self).__init__(lens_system)
 
     def optimize(self, data_to_fit, opt_routine='fixed_powerlaw_shear', constrain_params=None, verbose=False,
@@ -28,7 +36,8 @@ class BruteOptimization(OptimizationBase):
         kwargs_lens_final, _, lens_model_full, _, images, source = self._fit(data_to_fit, self.n_particles, opt_routine,
                                   constrain_params, self.n_iterations, {}, verbose, particle_swarm=True,
                                       re_optimize=self.reoptimize, tol_mag=None,
-                                          include_substructure=include_substructure, kwargs_optimizer=kwargs_optimizer)
+                                          include_substructure=include_substructure,
+                                        kwargs_optimizer=kwargs_optimizer, realization=self.realization_initial)
 
         return_kwargs = {'info_array': None,
                          'lens_model_raytracing': lens_model_full}
@@ -37,7 +46,7 @@ class BruteOptimization(OptimizationBase):
 
     def _fit(self, data_to_fit, nparticles, opt_routine, constrain_params, simplex_n_iter, optimizer_kwargs, verbose,
                             particle_swarm=True, re_optimize=False, tol_mag=None, include_substructure=True,
-                                            kwargs_optimizer={}):
+                                            kwargs_optimizer={}, realization=None):
 
         """
         run_kwargs: {'optimizer_routine', 'constrain_params', 'simplex_n_iter'}
@@ -45,7 +54,7 @@ class BruteOptimization(OptimizationBase):
         """
 
         lens_model_list, redshift_list, kwargs_lens, numerical_alpha_class, convention_index = \
-            self.lens_system.get_lenstronomy_args(include_substructure)
+            self.lens_system.get_lenstronomy_args(include_substructure, realization=realization)
 
         run_kwargs = {'optimizer_routine': opt_routine, 'constrain_params': constrain_params,
                       'simplex_n_iterations': simplex_n_iter, 'particle_swarm': particle_swarm,
