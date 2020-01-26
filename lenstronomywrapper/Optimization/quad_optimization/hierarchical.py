@@ -25,7 +25,9 @@ class HierarchicalOptimization(BruteOptimization):
 
         self.settings = settings_class
 
-        super(HierarchicalOptimization, self).__init__(lens_system)
+        super(HierarchicalOptimization, self).__init__(lens_system,
+                                                       log_mass_sheet_front=settings_class.log_mass_cut_global,
+                                                       log_mass_sheet_back=settings_class.log_mass_cut_global)
 
     def optimize(self, data_to_fit, opt_routine='fixed_powerlaw_shear', constrain_params=None, verbose=False,
                  include_substructure=True):
@@ -226,7 +228,6 @@ class HierarchicalOptimization(BruteOptimization):
                               self._n_iterations, optimizer_kwargs, verbose,
                               particle_swarm=particle_swarm_reopt[run],
                               re_optimize=re_optimize_iteration[run], tol_mag=None, realization=realization_filtered)
-
 
                 reoptimized_realizations.append(realization_filtered)
                 N_background_halos_last = N_background_halos

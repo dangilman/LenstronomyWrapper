@@ -9,6 +9,10 @@ class HierarchicalSettingsDeltaFunction(object):
         self.window_sizes = window_sizes
 
     @property
+    def log_mass_cut_global(self):
+        return self.delta_function_logmass
+
+    @property
     def n_particles(self):
         return 30
 
@@ -74,6 +78,10 @@ class HierarchicalSettingsDefault(object):
     """
 
     @property
+    def log_mass_cut_global(self):
+        return 8.
+
+    @property
     def n_particles(self):
         return 30
 
@@ -94,7 +102,7 @@ class HierarchicalSettingsDefault(object):
         # add this only within the window
         aperture_masses = [8, 7, 0]
         # add this everywhere
-        globalmin_masses = [8, 8, 8]
+        globalmin_masses = [self.log_mass_cut_global, 8, 8]
         # window size
         window_sizes = [20, 0.4, 0.15]
         # controls starting points for re-optimizations
@@ -113,11 +121,11 @@ class HierarchicalSettingsDefault(object):
         # add this only within the window
         aperture_masses = [8, 7, 0]
         # add this everywhere
-        globalmin_masses = [8, 8, 8]
+        globalmin_masses = [self.log_mass_cut_global, 8, 8]
         # window size
-        window_sizes = [20, 0.25, 0.1]
+        window_sizes = [20, 0.3, 0.125]
         # controls starting points for re-optimizations
-        scale = [1, 0.5, 0.1]
+        scale = [1, 0.25, 0.1]
         # determines whether to use PSO for re-optimizations
         particle_swarm_reopt = [True, True, False]
         # wheter to actually re-fit the lens model

@@ -37,7 +37,7 @@ class LensedQuasar(object):
 
         ref_flux = self.m[index]
         ratios = []
-        for i, mi in self.m:
+        for i, mi in enumerate(self.m):
             if i == index:
                 continue
             ratios.append(mi / ref_flux)

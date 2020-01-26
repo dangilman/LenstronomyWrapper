@@ -56,20 +56,3 @@ def run_real(lens_class, save_name_path, N, N_start, SHMF_norm, LOS_norm, log_ml
     out = model.run(save_name_path, N_start, N, 'composite_powerlaw', realization_kwargs, arrival_time_sigma,
                     image_positions_sigma, gamma_prior_scale, time_delay_like, fix_D_dt, fit_smooth_kwargs)
 
-# output_path = os.getenv('HOME') + '/data/mock_data/simulated_time_delays/extended_sim_control/'
-# if not os.path.exists(output_path):
-#     create_directory(output_path)
-# arrival_time_sigma = [0.01] * 3
-# fix_d_dt = True
-# SHMF_norm = 0.
-# LOS_norm = 0.
-# log_mlow = 7.
-# opening_angle = 12.
-# N = 20
-# Nstart = 1 + N * (int(sys.argv[1]) - 1)
-# print(Nstart)
-# fix_d_dt = True
-# from MagniPy.Workflow.grism_lenses.rxj1131 import Lens1131
-# lens_class = Lens1131()
-# run_real(lens_class, output_path, 2, 1, SHMF_norm, LOS_norm, log_mlow, opening_angle, arrival_time_sigma,
-#         fix_D_dt, time_delay_like=True, fit_smooth_kwargs=None)

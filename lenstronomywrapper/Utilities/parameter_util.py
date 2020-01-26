@@ -30,10 +30,10 @@ def kwargs_gamma1gamma2_to_polar(kwargs):
     shear_PA = phi * 180 / np.pi
 
     for key in kwargs:
-        if key == 'e1':
-            out['gamma1'] = shear
-        elif key == 'e2':
-            out['gamma2'] = shear_PA
+        if key == 'gamma1':
+            out['shear'] = shear
+        elif key == 'gamma2':
+            out['shear_PA'] = shear_PA
         else:
             out[key] = kwargs[key]
 

@@ -4,7 +4,8 @@ from lenstronomywrapper.Utilities.lensing_util import interpolate_ray_paths
 
 class BruteOptimization(OptimizationBase):
 
-    def __init__(self, lens_system, n_particles=None, simplex_n_iter=None, reoptimize=None):
+    def __init__(self, lens_system, n_particles=None, simplex_n_iter=None, reoptimize=None,
+                 log_mass_sheet_front=None, log_mass_sheet_back=None):
 
         settings = BruteSettingsDefault()
 
@@ -18,6 +19,9 @@ class BruteOptimization(OptimizationBase):
         self.n_particles = n_particles
         self.n_iterations = n_iterations
         self.reoptimize = reoptimize
+
+        self._log_mass_sheet_front = log_mass_sheet_front
+        self._log_mass_sheet_back = log_mass_sheet_back
 
         # shoot a ray through the center to determine any global shifts in path
         ray_interp_x, ray_interp_y = interpolate_ray_paths([0.], [0.], lens_system,
@@ -54,7 +58,9 @@ class BruteOptimization(OptimizationBase):
         """
 
         lens_model_list, redshift_list, kwargs_lens, numerical_alpha_class, convention_index = \
-            self.lens_system.get_lenstronomy_args(include_substructure, realization=realization)
+            self.lens_system.get_lenstronomy_args(include_substructure, realization=realization,
+                                                  log_mass_sheet_front=self._log_mass_sheet_front,
+                                                  log_mass_sheet_back=self._log_mass_sheet_back)
 
         run_kwargs = {'optimizer_routine': opt_routine, 'constrain_params': constrain_params,
                       'simplex_n_iterations': simplex_n_iter, 'particle_swarm': particle_swarm,

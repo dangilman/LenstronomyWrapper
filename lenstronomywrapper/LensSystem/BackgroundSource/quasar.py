@@ -122,6 +122,7 @@ class Quasar(LightReconstructBase):
                          xycoords='axes fraction')
             plt.show()
 
+
     def magnification(self, xpos, ypos, lensModel, kwargs_lens, normed=True):
 
         self._check_initialized()

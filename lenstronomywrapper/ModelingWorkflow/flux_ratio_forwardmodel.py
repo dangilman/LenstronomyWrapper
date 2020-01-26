@@ -5,8 +5,11 @@ from lenstronomywrapper.LensData.lensed_quasar import LensedQuasar
 from lenstronomywrapper.Utilities.parameter_util import *
 
 def forward_model(x_image, y_image, magnfications, macromodel_class, source_size_pc,
-                  pyhalo_instance, pyhalo_kwargs, realization_type):
+                  pyhalo_instance, pyhalo_kwargs, realization_type, opt_routine, constrain_params,
+                  verbose):
 
+    kwargs_optimizer = {'opt_routine': opt_routine,
+                        'constrain_params': constrain_params}
     data_class = LensedQuasar(x_image, y_image, magnfications)
     flux_ratios_observed = data_class.flux_ratios(0)
 
@@ -22,7 +25,7 @@ def forward_model(x_image, y_image, magnfications, macromodel_class, source_size
     lens_system.initialize(data_class)
 
     kwargs_lens_final, lens_model_full, return_kwargs = lens_system.fit(data_class, HierarchicalOptimization,
-                                                                        verbose=False)
+                                                                        verbose=verbose, **kwargs_optimizer)
 
     magnifications_fit = lens_system.quasar_magnification(data_class.x, data_class.y,
                                       lens_model_full, kwargs_lens_final, normed=True)
@@ -34,12 +37,14 @@ def forward_model(x_image, y_image, magnfications, macromodel_class, source_size
     lens_model_names_macro, lens_redshift_list_macro, kwargs_lens_macro, _, _ = lens_system.get_lenstronomy_args(False)
 
     macromodel_params = None
+
     for i, kwarg_set in enumerate(kwargs_lens_macro):
 
         if lens_model_names[i] == 'SPEMD':
             kwarg_set = kwargs_e1e2_to_polar(kwarg_set)
         elif lens_model_names[i] == 'SHEAR':
-            kwarg_set = kwargs_e1e2_to_polar(kwarg_set)
+            kwarg_set = kwargs_gamma1gamma2_to_polar(kwarg_set)
+            external_shear = kwarg_set['shear']
 
         if macromodel_params is None:
             macromodel_params = kwargs_to_array(kwarg_set)
@@ -47,11 +52,14 @@ def forward_model(x_image, y_image, magnfications, macromodel_class, source_size
             new = kwargs_to_array(kwarg_set)
             macromodel_params = np.append(macromodel_params, new)
 
-    out_kwargs = {'initial_realization': realization,
-                  'summary_stat': summary_statistic,
+    lens_system.update_realization(realization)
+
+    out_kwargs = {'summary_stat': summary_statistic,
                   'macromodel_parameters': macromodel_params,
-                  'flux_ratios_fit': flux_ratios_fit,
-                  'flux_ratios_observed': flux_ratios_observed}
+                  'flux_ratios_fit': np.round(flux_ratios_fit, 4),
+                  'flux_ratios_observed': np.round(flux_ratios_observed, 4),
+                  'magnifications_fit': np.round(magnifications_fit, 4),
+                  'external_shear': external_shear,
+                  'lens_system_optimized': lens_system}
 
     return out_kwargs
-

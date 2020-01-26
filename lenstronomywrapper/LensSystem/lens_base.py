@@ -23,11 +23,11 @@ class LensBase(object):
 
         self.position_convention_halo = []
 
-    def fit(self, data_to_fit, optimization_class, verbose=False):
+    def fit(self, data_to_fit, optimization_class, verbose=False, **kwargs_optimizer):
 
         optimizer = optimization_class(self)
         kwargs_lens_final, lens_model_full, return_kwargs = optimizer.\
-            optimize(data_to_fit, verbose=verbose)
+            optimize(data_to_fit, verbose=verbose, **kwargs_optimizer)
 
         return kwargs_lens_final, lens_model_full, return_kwargs
 
@@ -77,18 +77,27 @@ class LensBase(object):
                               observed_convention_index=convention_index, cosmo=self.astropy)
         return lensModel, kwargs
 
-    def get_lenstronomy_args(self, include_substructure=True, realization=None):
+    def get_lenstronomy_args(self, include_substructure=True, realization=None, log_mass_sheet_front=None,
+                             log_mass_sheet_back=None):
 
         lens_model_names, macro_redshifts, macro_kwargs, convention_index = self.macromodel.get_lenstronomy_args()
 
         if realization is None:
             realization = self.realization
         if realization is not None and include_substructure:
+
             if hasattr(realization, '_logmlow'):
                 log_mlow = realization._logmlow
             else:
                 log_mlow = None
-            halo_names, halo_redshifts, kwargs_halos, kwargs_lenstronomy = realization.lensing_quantities(log_mlow, log_mlow)
+
+            if log_mass_sheet_front is None:
+                log_mass_sheet_front = log_mlow
+            if log_mass_sheet_back is None:
+                log_mass_sheet_back = log_mlow
+
+            halo_names, halo_redshifts, kwargs_halos, kwargs_lenstronomy = \
+                realization.lensing_quantities(log_mass_sheet_front, log_mass_sheet_back)
         else:
             halo_names, halo_redshifts, kwargs_halos, kwargs_lenstronomy = [], [], [], None
         halo_redshifts = list(halo_redshifts)

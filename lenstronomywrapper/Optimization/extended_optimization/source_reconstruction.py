@@ -46,15 +46,12 @@ class SourceReconstruction(object):
         kwargs_data_joint, kwargs_model, kwargs_constraints, kwargs_likelihood, kwargs_params, multi_band_list = \
             self._init.sampler_inputs()
 
-        print(kwargs_constraints)
-        a=input('continue')
-
         fitting_seq = FittingSequence(kwargs_data_joint, kwargs_model, kwargs_constraints, kwargs_likelihood,
                                       kwargs_params)
         if pso_kwargs is None:
             pso_kwargs = {'sigma_scale': 1., 'n_particles': 50, 'n_iterations': 200}
         if mcmc_kwargs is None:
-            mcmc_kwargs = {'n_burn': 10, 'n_run': 10, 'walkerRatio': 4, 'sigma_scale': .1}
+            mcmc_kwargs = {'n_burn': 10, 'n_run': 100, 'walkerRatio': 4, 'sigma_scale': .1}
         fitting_kwargs_list = [['PSO', pso_kwargs],
                                ['MCMC', mcmc_kwargs]
                                ]
