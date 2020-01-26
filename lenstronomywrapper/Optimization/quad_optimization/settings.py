@@ -115,11 +115,11 @@ class HierarchicalSettingsDefault(object):
         # add this everywhere
         globalmin_masses = [8, 8, 8]
         # window size
-        window_sizes = [20, 0.4, 0.1]
+        window_sizes = [20, 0.25, 0.1]
         # controls starting points for re-optimizations
         scale = [1, 0.5, 0.1]
         # determines whether to use PSO for re-optimizations
-        particle_swarm_reopt = [True, False, False]
+        particle_swarm_reopt = [True, True, False]
         # wheter to actually re-fit the lens model
         optimize_iteration = [True, True, False]
         # whether to re-optimize (aka start from a model very close to input model)

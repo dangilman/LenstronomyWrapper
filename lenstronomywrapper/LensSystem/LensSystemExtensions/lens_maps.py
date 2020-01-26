@@ -14,10 +14,10 @@ class LensMaps(object):
         xx, yy = np.meshgrid(x, y)
         return xx.ravel(), yy.ravel(), xx.shape
 
-    def convergence(self, rmin_max, npix):
+    def convergence(self, rmin_max, npix, center_x=0, center_y=0):
 
         xgrid, ygrid, shape0 = self._get_grids(rmin_max, npix)
-        kappa = self.lensModel.kappa(xgrid, ygrid, self.kwargs_lens).reshape(shape0)
+        kappa = self.lensModel.kappa(center_x+xgrid, center_y+ygrid, self.kwargs_lens).reshape(shape0)
 
         return kappa
 
@@ -60,10 +60,10 @@ class ResidualLensMaps(object):
         self.map1 = map1
         self.map2 = map2
 
-    def convergence(self, rmin_max, npix, mean0=False):
+    def convergence(self, rmin_max, npix, center_x=0, center_y=0, mean0=False):
 
-        kappa1 = self.map1.convergence(rmin_max, npix)
-        kappa2 = self.map2.convergence(rmin_max, npix)
+        kappa1 = self.map1.convergence(rmin_max, npix, center_x, center_y)
+        kappa2 = self.map2.convergence(rmin_max, npix, center_x, center_y)
         residual = kappa1 - kappa2
         if mean0:
             residual += -np.mean(residual)

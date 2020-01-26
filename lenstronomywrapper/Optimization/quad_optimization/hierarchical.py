@@ -1,6 +1,7 @@
 from lenstronomywrapper.Optimization.quad_optimization.brute import BruteOptimization
 import numpy as np
 from lenstronomywrapper.Optimization.quad_optimization.settings import *
+from lenstronomywrapper.Utilities.lensing_util import interpolate_ray_paths
 
 class HierarchicalOptimization(BruteOptimization):
 
@@ -34,7 +35,7 @@ class HierarchicalOptimization(BruteOptimization):
         realization = self.lens_system.realization
 
         if realization is not None:
-            foreground_realization, background_realization = self._split_realization(data_to_fit, realization)
+            foreground_realization, background_realization = realization.split_at_z(self.lens_system.zlens)
         else:
             foreground_realization, background_realization = None, None
 
@@ -50,45 +51,6 @@ class HierarchicalOptimization(BruteOptimization):
 
         return self._return_results(source, kwargs_lens_final, lens_model_full, return_kwargs)
 
-    def _split_realization(self, datatofit, realization):
-
-        foreground = realization.filter(datatofit.x, datatofit.y, mindis_front=10,
-                                        mindis_back=0, logmasscut_front=0,
-                                        logabsolute_mass_cut_front=0,
-                                        logmasscut_back=20,
-                                        logabsolute_mass_cut_back=20)
-
-        background = realization.filter(datatofit.x, datatofit.y, mindis_front=0,
-                                        mindis_back=10, logmasscut_front=20,
-                                        logabsolute_mass_cut_front=20,
-                                        logmasscut_back=0,
-                                        logabsolute_mass_cut_back=0)
-
-        return foreground, background
-
-    def _return_ray_path(self, x_opt, y_opt, lensModel, kwargs_lens):
-
-        xpath, ypath = [], []
-
-        for xi, yi in zip(x_opt, y_opt):
-            _x, _y, redshifts, Tzlist = lensModel. \
-                lens_model.ray_shooting_partial_steps(0, 0, xi,
-                                                      yi, 0, self.lens_system.zsource, kwargs_lens)
-
-            xpath.append(_x)
-            ypath.append(_y)
-
-        nplanes = len(xpath[0])
-
-        x_path, y_path = [], []
-        for ni in range(0, nplanes):
-            arrx = np.array([xpath[0][ni], xpath[1][ni], xpath[2][ni], xpath[3][ni]])
-            arry = np.array([ypath[0][ni], ypath[1][ni], ypath[2][ni], ypath[3][ni]])
-            x_path.append(arrx)
-            y_path.append(arry)
-
-        return np.array(x_path), np.array(y_path), np.array(redshifts), np.array(Tzlist)
-
     def _fit_foreground(self, data_to_fit, realization_foreground, opt_routine, constrain_params=None, verbose=False):
 
         aperture_masses, globalmin_masses, window_sizes, scale, optimize_iteration, particle_swarm_reopt, \
@@ -98,15 +60,28 @@ class HierarchicalOptimization(BruteOptimization):
 
         for run in range(0, self.settings.n_iterations_foreground):
 
-            filter_kwargs = {'mindis_front': window_sizes[run], 'mindis_back': 100,
-                             'source_x': self.lens_system.source_centroid_x, 'source_y': self.lens_system.source_centroid_y,
-                             'logmasscut_front': globalmin_masses[run],
-                             'logabsolute_mass_cut_front': aperture_masses[run], 'logmasscut_back': 12,
-                             'logabsolute_mass_cut_back': 12, 'zmax': self.lens_system.zlens}
+            if run == 0:
+                ray_x_interp, ray_y_interp = interpolate_ray_paths(data_to_fit.x, data_to_fit.y, self.lens_system,
+                                                                   include_substructure=False)
+
+            else:
+                ray_x_interp, ray_y_interp = interpolate_ray_paths(data_to_fit.x, data_to_fit.y, self.lens_system,
+                                                                   realization=realization_filtered)
+
+            filter_kwargs = {'aperture_radius_front': window_sizes[run],
+                             'aperture_radius_back': 0.,
+                             'aperture_front_min_logmass': aperture_masses[run],
+                             'aperture_back_min_logmass': 12,
+                             'global_front_min_logmass': globalmin_masses[run],
+                             'global_back_min_logmass': 10.,
+                             'interpolated_x_angle': ray_x_interp,
+                             'interpolated_y_angle': ray_y_interp,
+                             'zmax': self.lens_system.zlens
+                             }
 
             if run == 0:
                 if realization_foreground is not None:
-                    realization_filtered = realization_foreground.filter(data_to_fit.x, data_to_fit.y, **filter_kwargs)
+                    realization_filtered = realization_foreground.filter(**filter_kwargs)
                 else:
                     realization_filtered = None
 
@@ -114,7 +89,7 @@ class HierarchicalOptimization(BruteOptimization):
 
             else:
                 if realization_foreground is not None:
-                    real = realization_foreground.filter(data_to_fit.x, data_to_fit.y, **filter_kwargs)
+                    real = realization_foreground.filter(**filter_kwargs)
                     realization_filtered = real.join(realization_filtered)
                 if verbose: print('optimization ' + str(run + 1))
 
@@ -169,18 +144,31 @@ class HierarchicalOptimization(BruteOptimization):
 
         for run in range(0, self.settings.n_iterations_background):
 
-            filter_kwargs = {'mindis_back': window_sizes[run], 'mindis_front': 0,
-                             'source_x': source_x, 'source_y': source_y,
-                             'logmasscut_back': globalmin_masses[run],
-                             'logabsolute_mass_cut_back': aperture_masses[run], 'logmasscut_front': 12,
-                             'logabsolute_mass_cut_front': 12, 'zmin': self.lens_system.zlens}
+            if run == 0:
+                ray_x_interp, ray_y_interp = interpolate_ray_paths(data_to_fit.x, data_to_fit.y, self.lens_system,
+                                                                   realization=foreground_realization_filtered)
+            else:
+                ray_x_interp, ray_y_interp = interpolate_ray_paths(data_to_fit.x, data_to_fit.y, self.lens_system,
+                                                                   realization=realization_filtered)
+
+            filter_kwargs = {'aperture_radius_front': 10.,
+                             'aperture_radius_back': window_sizes[run],
+                             'aperture_front_min_logmass': 10.,
+                             'aperture_back_min_logmass': aperture_masses[run],
+                             'global_front_min_logmass': 10.,
+                             'global_back_min_logmass': globalmin_masses[run],
+                             'interpolated_x_angle': ray_x_interp,
+                             'interpolated_y_angle': ray_y_interp,
+                             'zmin': self.lens_system.zlens
+                             }
 
             if run == 0:
 
                 if foreground_realization_filtered is not None:
                     N_foreground_halos = foreground_realization_filtered.number_of_halos_before_redshift(self.lens_system.zlens)
-                    real = realization_background.filter(data_to_fit.x, data_to_fit.y, **filter_kwargs)
+                    real = realization_background.filter(**filter_kwargs)
                     realization_filtered = foreground_realization_filtered.join(real)
+
                 else:
                     N_foreground_halos = 0
                     realization_filtered = None
@@ -190,15 +178,15 @@ class HierarchicalOptimization(BruteOptimization):
             else:
 
                 if verbose: print('optimization ' + str(run + 1))
-                filter_kwargs.update({'ray_x': path_x, 'ray_y': path_y, 'path_redshifts': path_redshifts,
-                                          'path_Tzlist': path_Tzlist})
+
                 if realization_filtered is not None:
-                    real = realization_background.filter(data_to_fit.x, data_to_fit.y, **filter_kwargs)
+                    real = realization_background.filter(**filter_kwargs)
                     realization_filtered = realization_filtered.join(real)
 
             if realization_filtered is None:
                 N_background_halos = 0
             else:
+
                 N_background_halos = realization_filtered.number_of_halos_after_redshift(self.lens_system.zlens)
 
             self.lens_system.update_realization(realization_filtered)
@@ -235,20 +223,14 @@ class HierarchicalOptimization(BruteOptimization):
                               self._n_iterations, optimizer_kwargs, verbose,
                               particle_swarm=particle_swarm_reopt[run], re_optimize=re_optimize_iteration[run], tol_mag=None)
 
-                path_x, path_y, path_redshifts, path_Tzlist = self._return_ray_path(data_to_fit.x, data_to_fit.y, lens_model_full,
-                                                        kwargs_lens_final)
 
-                backx.append(path_x)
-                backy.append(path_y)
-                background_Tzs.append(path_Tzlist)
-                background_zs.append(path_redshifts)
                 reoptimized_realizations.append(realization_filtered)
                 N_background_halos_last = N_background_halos
 
             else:
                 reoptimized_realizations.append(realization_filtered)
 
-        info_array = (backx, backy, background_Tzs, background_zs, reoptimized_realizations)
+        info_array = (reoptimized_realizations, ray_x_interp, ray_y_interp)
 
         return kwargs_lens_final, lens_model_raytracing, lens_model_full, info_array, [source_x, source_y]
 

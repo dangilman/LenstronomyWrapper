@@ -51,10 +51,9 @@ class BruteOptimization(OptimizationBase):
                       'simplex_n_iterations': simplex_n_iter, 'particle_swarm': particle_swarm,
                       're_optimize': re_optimize, 'tol_mag': tol_mag, 'multiplane': True,
                       'z_main': self.lens_system.zlens, 'z_source': self.lens_system.zsource,
-                      'astropy_instance': self.lens_system.astropy, 'verbose': verbose, 'pso_convergence_mean': 20000,
+                      'astropy_instance': self.lens_system.astropy, 'verbose': verbose, 'pso_convergence_mean': 30000,
                       'observed_convention_index': convention_index, 'optimizer_kwargs': optimizer_kwargs,
                       }
-
 
         for key in kwargs_optimizer.keys():
             run_kwargs[key] = kwargs_optimizer[key]

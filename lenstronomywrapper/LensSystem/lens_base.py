@@ -59,9 +59,10 @@ class LensBase(object):
 
         return self.get_lenstronomy_args(include_substructure)[2]
 
-    def get_lensmodel(self, include_substructure=True, set_multiplane=True):
+    def get_lensmodel(self, include_substructure=True, set_multiplane=True, substructure_realization=None):
 
-        names, redshifts, kwargs, numercial_alpha_class, convention_index = self.get_lenstronomy_args(include_substructure)
+        names, redshifts, kwargs, numercial_alpha_class, convention_index = self.get_lenstronomy_args(
+            include_substructure, substructure_realization)
 
         if convention_index is None:
             if self.position_convention_halo is None:
@@ -76,10 +77,12 @@ class LensBase(object):
                               observed_convention_index=convention_index, cosmo=self.astropy)
         return lensModel, kwargs
 
-    def get_lenstronomy_args(self, include_substructure=True):
+    def get_lenstronomy_args(self, include_substructure=True, realization=None):
 
         lens_model_names, macro_redshifts, macro_kwargs, convention_index = self.macromodel.get_lenstronomy_args()
-        realization = self.realization
+
+        if realization is None:
+            realization = self.realization
         if realization is not None and include_substructure:
             if hasattr(realization, '_logmlow'):
                 log_mlow = realization._logmlow
@@ -102,8 +105,15 @@ class LensBase(object):
                                                   search_window=4., precision_limit=precision_limit**2)
         return x_image, y_image
 
+
     @staticmethod
     def physical_location_deflector(lensmodel, kwargs, idx):
 
         kwargs_new = lensmodel.lens_model._convention(kwargs)
         return kwargs_new[idx]['center_x'], kwargs_new[idx]['center_y']
+
+    def lensed_position_from_physical(self, lensmodel, kwargs, x_phys, y_phys, z_stop):
+
+        lensed_x, lensed_y, _, _ = lensmodel.ray_shooting_partial(0., 0., x_phys, y_phys, 0, z_stop, kwargs)
+        Tz = self.pyhalo_cosmology.D_C_transverse(z_stop)
+        return lensed_x/Tz, lensed_y/Tz

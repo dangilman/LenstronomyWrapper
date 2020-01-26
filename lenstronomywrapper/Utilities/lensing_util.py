@@ -2,6 +2,25 @@ import numpy as np
 from astropy.cosmology import FlatLambdaCDM
 from scipy.optimize import minimize
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
+from scipy.interpolate import interp1d
+
+def interpolate_ray_paths(x_image, y_image, lens_system, include_substructure=False, realization=None):
+
+    ray_angles_x = []
+    ray_angles_y = []
+
+    lens_model, kwargs_lens = lens_system.get_lensmodel(include_substructure, True, realization)
+    zsource = lens_system.zsource
+
+    for (xi, yi) in zip(x_image, y_image):
+        x, y, redshifts, tz = lens_model.lens_model.ray_shooting_partial_steps(0., 0., xi, yi, 0, zsource,
+                                                                               kwargs_lens)
+        angle_x = [0] + [x_comoving / tzi for x_comoving, tzi in zip(x[1:], tz[1:])]
+        angle_y = [0] + [y_comoving / tzi for y_comoving, tzi in zip(y[1:], tz[1:])]
+        ray_angles_x.append(interp1d(redshifts, angle_x))
+        ray_angles_y.append(interp1d(redshifts, angle_y))
+
+    return ray_angles_x, ray_angles_y
 
 def ddt_from_h(H, omega_matter, omega_matter_baryon, zlens, zsource):
     _astro = FlatLambdaCDM(H0=float(H), Om0=omega_matter, Ob0=omega_matter_baryon)

@@ -33,6 +33,15 @@ class QuadLensSystem(LensBase):
         new_quad.update_source_centroid(source_x, source_y)
         return new_quad
 
+    def get_smooth_lens_system(self):
+
+        smooth_lens = QuadLensSystem(self.macromodel, self.zsource, self.background_quasar,
+                                                  None, self.pyhalo_cosmology)
+
+        smooth_lens.update_source_centroid(self.source_centroid_y, self.source_centroid_y)
+
+        return smooth_lens
+
     def initialize(self, data_to_fit, opt_routine='fixed_powerlaw_shear', constrain_params=None, verbose=False,
                    include_substructure=False, kwargs_optimizer={}):
 
