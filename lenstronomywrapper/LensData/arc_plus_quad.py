@@ -39,7 +39,7 @@ class ArcPlusQuad(object):
             rescale_mag = 25
         else:
             rescale_mag = 1
-        print(magnifications)
+
         data_settings = DefaultDataSpecifics(**data_kwargs)
         self.kwargs_psf, args_data = data_settings()
         kwargs_data = sim_util.data_configure_simple(*args_data)

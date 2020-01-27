@@ -9,6 +9,13 @@ class LightModel(object):
         self.components = components
         self.n_light_models = self._count_models(components)
 
+    def surface_brightness(self, xgrid, ygrid, lensmodel, lensmodel_kwargs):
+
+        light = 0
+        for component in self.components:
+            light += component.surface_brightness(xgrid, ygrid, lensmodel, lensmodel_kwargs)
+        return light
+
     def update_kwargs(self, new_kwargs):
 
         if len(new_kwargs) != self.n_light_models:

@@ -13,13 +13,11 @@ class LightBase(LightReconstructBase):
         lens_light_instance = self.lensLight
 
         try:
-            beta_x, beta_y = lensmodel.ray_shooting(xgrid, ygrid, lensmodel_kwargs)
-            surf_bright = lens_light_instance.surface_brightness(beta_x, beta_y, self.kwargs_light)
+            surf_bright = lens_light_instance.surface_brightness(xgrid, ygrid, self.kwargs_light)
 
         except:
             shape0 = xgrid.shape
-            beta_x, beta_y = lensmodel.ray_shooting(xgrid.ravel(), ygrid.ravel(), lensmodel_kwargs)
-            surf_bright = lens_light_instance.surface_brightness(beta_x, beta_y, self.kwargs_light)
+            surf_bright = lens_light_instance.surface_brightness(xgrid, ygrid, self.kwargs_light)
             surf_bright = surf_bright.reshape(shape0, shape0)
 
         return surf_bright

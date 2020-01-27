@@ -3,18 +3,21 @@ from lenstronomy.LensModel.lens_model import LensModel
 from scipy.optimize import minimize
 from lenstronomywrapper.LensSystem.LensSystemExtensions.solver_functions import _solve_one_image, _source_plane_delta
 
-from lenstronomy.LightModel.light_model import LightModel
+from lenstronomywrapper.LensSystem.light_model import LightModel
+from lenstronomywrapper.LensSystem.BackgroundSource.quasar import Quasar
 
 def iterative_rayshooting(source_x, source_y, x_guess, y_guess, lensModel, kwargs_lens,
                           window_sizes=None, grid_resolutions=None):
 
-    light_model = LightModel(['GAUSSIAN'])
-    kwargs_light = [{'center_x': source_x, 'center_y': source_y, 'sigma': 0.002, 'amp':1}]
+    quasar = Quasar({'center_x': source_x, 'center_y': source_y, 'source_fwhm_pc': 10.})
+    quasar.setup(6000.0)
+
+    light_model = LightModel([quasar])
 
     if window_sizes is None:
         window_sizes = [0.15, 0.07, 0.03]
     if grid_resolutions is None:
-        grid_resolutions = [0.005, 0.004, 0.0005]
+        grid_resolutions = [0.005, 0.004, 0.00025]
 
     if len(window_sizes) != len(grid_resolutions):
         raise Exception('Length of window size and grid resolution lists must be equal')
@@ -24,7 +27,8 @@ def iterative_rayshooting(source_x, source_y, x_guess, y_guess, lensModel, kwarg
 
     x_image_out, y_image_out = [], []
     for (xi, yi) in zip(x_guess, y_guess):
-        xout, yout = _solve_one_image(window_sizes, grid_resolutions, xi, yi, lensModel, kwargs_lens, light_model, kwargs_light)
+        xout, yout = _solve_one_image(window_sizes, grid_resolutions, xi, yi, lensModel, kwargs_lens,
+                                      light_model)
         x_image_out.append(xout)
         y_image_out.append(yout)
 

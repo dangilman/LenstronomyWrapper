@@ -4,9 +4,9 @@ from copy import deepcopy
 import matplotlib.pyplot as plt
 from lenstronomywrapper.Utilities.lensing_util import RayShootingGrid
 from lenstronomy.LightModel.light_model import LightModel
-from lenstronomywrapper.LensSystem.light_reconstruct_base import LightReconstructBase
+from lenstronomywrapper.LensSystem.BackgroundSource.source_base import SourceBase
 
-class Quasar(LightReconstructBase):
+class Quasar(SourceBase):
 
     def __init__(self, kwargs_quasars, grid_resolution=None, grid_rmax=None):
 
@@ -15,7 +15,16 @@ class Quasar(LightReconstructBase):
         self._grid_rmax = grid_rmax
         self._initialized = False
 
-        super(Quasar, self).__init__()
+        super(Quasar, self).__init__(False, [], None, None)
+
+    @property
+    def light_model_list(self):
+        return ['GAUSSIAN']
+
+    @property
+    def kwargs_light(self):
+        return self._kwargs_quasar
+
 
     def _check_initialized(self, with_error=True):
 
