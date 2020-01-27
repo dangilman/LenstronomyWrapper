@@ -324,10 +324,6 @@ class AnalogModel(object):
         D_dt_true = lens_system_simple.lens_cosmo.D_dt
         D_dt_fit = kwargs_special['D_dt']
 
-        for kw in lens_system_simple.macromodel.kwargs:
-            for key in kw.keys():
-                print(key, kw[key])
-        exit(1)
         return_kwargs = {'D_dt_true': D_dt_true, 'D_dt_fit': D_dt_fit,
                          'kwargs_lens_macro_fit': lens_system_simple.macromodel.kwargs,
                          'D_dt_samples': chain_list[1][1][:,-1], 'source_x': lens_system_simple.source_centroid_x,
