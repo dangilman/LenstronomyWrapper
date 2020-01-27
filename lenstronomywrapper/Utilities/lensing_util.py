@@ -15,12 +15,8 @@ def interpolate_ray_paths(x_image, y_image, lens_system, include_substructure=Fa
     for (xi, yi) in zip(x_image, y_image):
         x, y, redshifts, tz = lens_model.lens_model.ray_shooting_partial_steps(0., 0., xi, yi, 0, zsource,
                                                                                kwargs_lens)
-        print(x)
-        print(tz)
 
         angle_x = [xi] + [x_comoving / tzi for x_comoving, tzi in zip(x[1:], tz[1:])]
-        print(angle_x)
-        a=input('continue')
         angle_y = [yi] + [y_comoving / tzi for y_comoving, tzi in zip(y[1:], tz[1:])]
         ray_angles_x.append(interp1d(redshifts, angle_x))
         ray_angles_y.append(interp1d(redshifts, angle_y))
