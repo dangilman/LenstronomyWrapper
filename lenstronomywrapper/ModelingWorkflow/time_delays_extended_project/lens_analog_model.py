@@ -14,6 +14,7 @@ from lenstronomywrapper.Utilities.data_util import approx_theta_E
 from lenstronomywrapper.Utilities.lensing_util import solve_H0_from_Ddt
 from lenstronomywrapper.LensSystem.BackgroundSource.quasar import Quasar
 from lenstronomy.Analysis.lens_profile import LensProfileAnalysis
+from lenstronomywrapper.Utilities.data_util import write_data_to_file
 
 import numpy as np
 from pyHalo.pyhalo import pyHalo
@@ -108,6 +109,7 @@ class AnalogModel(object):
                 h0_inferred = h0_inf
                 h0_sigma = h0_inf_sigma
                 macromodel_parameters = macro_params
+
             else:
                 baseline = np.vstack((baseline, tbaseline))
                 flux_anomalies = np.vstack((flux_anomalies, f))
@@ -120,11 +122,16 @@ class AnalogModel(object):
 
         fnames = ['tbaseline_', 'flux_anomaly_', 'time_anomaly_', 'time_anomaly_grav_',
                   'time_anomaly_geo_', 'geometry_', 'h0_inferred_', 'h0_sigma_', 'macroparams_']
+
         arrays = [baseline, flux_anomalies, time_anomalies, time_anomalies_grav, time_anomalies_geo, np.array(info),
                   np.array(h0_inferred), np.array(h0_sigma), macromodel_parameters]
 
         for fname, arr in zip(fnames, arrays):
-            self.save_append(save_name_path + fname + str(N_start) + '.txt', arr)
+                write_data_to_file(save_name_path + fname + str(N_start) + '.txt', arr)
+        # else:
+        #     for fname, arr in zip(fnames, arrays):
+        #         self.save_append(save_name_path + fname + str(N_start) + '.txt', arr)
+
 
         return flux_anomalies, baseline, time_anomalies, time_anomalies_geo, time_anomalies_grav, h0_inferred, h0_sigma
 

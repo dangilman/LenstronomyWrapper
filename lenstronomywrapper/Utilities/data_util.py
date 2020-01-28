@@ -1,5 +1,28 @@
 import numpy as np
 
+def write_data_to_file(filename, data):
+
+    vec = ''
+    with open(filename, 'a') as f:
+        if np.ndim(data) == 0:
+            vec += str(data) + '\n'
+
+        elif np.ndim(data) == 1:
+            for di in data:
+                vec += str(di)+' '
+            vec += '\n'
+
+        elif np.ndim(data) == 2:
+            nrows, ncols = int(np.shape(data)[0]), int(np.shape(data)[1])
+            for nrow in range(0, nrows):
+                for ncol in range(0, ncols):
+                    vec += str(data[nrow, ncol]) + ' '
+                vec += '\n'
+        else:
+            raise Exception('can only handle up to 2-D arrays.')
+
+        f.write(vec)
+
 def approx_theta_E(ximg,yimg):
 
     dis = []
