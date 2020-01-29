@@ -46,6 +46,17 @@ class LensMaps(object):
 
         return dtgeo.reshape(shape0), dtgrav.reshape(shape0)
 
+    def arrival_time_delay_geo_shapiro(self, x, y, xref, yref):
+
+        t1geo, t1shap = self.lensModel.lens_model.geo_shapiro_delay(x, y, self.kwargs_lens)
+        t2geo, t2shap = self.lensModel.lens_model.geo_shapiro_delay(xref, yref, self.kwargs_lens)
+        return t1geo - t2geo, t1shap - t2shap
+
+    def arrival_time_delay(self, x, y, xref, yref):
+
+        dtgeo, dtgrav = self.arrival_time_delay_geo_shapiro(x, y, xref, yref)
+        return dtgeo + dtgrav
+
     def curl(self, rmin_max, npix):
 
         xgrid, ygrid, shape0 = self._get_grids(rmin_max, npix)
@@ -55,54 +66,69 @@ class LensMaps(object):
 
 class ResidualLensMaps(object):
 
-    def __init__(self, map1, map2):
+    def __init__(self, lensmodel1, lensmodel2, kwargs1, kwargs2):
 
-        self.map1 = map1
-        self.map2 = map2
+        self.lensmodel1, self.kwargs1 = lensmodel1, kwargs1
+        self.lensmodel2, self.kwargs2 = lensmodel2, kwargs2
 
-    def convergence(self, rmin_max, npix, center_x=0, center_y=0, mean0=False):
+    def _get_grids(self, rminmax, npix):
 
-        kappa1 = self.map1.convergence(rmin_max, npix, center_x, center_y)
-        kappa2 = self.map2.convergence(rmin_max, npix, center_x, center_y)
+        x, y = np.linspace(-rminmax, rminmax, npix), np.linspace(rminmax, -rminmax, npix)
+        xx, yy = np.meshgrid(x, y)
+        shape0 = xx.shape
+        return xx.ravel(), yy.ravel(), shape0
+
+    def time_delay_surface(self, rminmax, npix, xref, yref):
+
+        # xx, yy, shape0 = self._get_grids(rminmax, npix)
+        #
+        # arrival_time_surface1 = self.lensmodel1.arrival_time(xx.ravel(), yy.ravel(), self.kwargs1)
+        # arrival_time_surface1_ref = self.lensmodel1.arrival_time(xref, yref, self.kwargs1)
+        # surface1 = arrival_time_surface1 - arrival_time_surface1_ref
+        #
+        # arrival_time_surface2 = self.lensmodel2.arrival_time(xx.ravel(), yy.ravel(), self.kwargs2)
+        # arrival_time_surface2_ref = self.lensmodel2.arrival_time(xref, yref, self.kwargs2)
+        # surface2 = arrival_time_surface2 - arrival_time_surface2_ref
+        #
+        # residual = surface1 - surface2
+        # return residual.reshape(shape0)
+
+        res_geo, res_shapiro = self.time_delay_surface_geoshapiro(rminmax, npix, xref, yref)
+        return res_geo + res_shapiro
+
+    def time_delay_surface_geoshapiro(self, rminmax, npix, xref, yref):
+
+        xx, yy, shape0 = self._get_grids(rminmax, npix)
+
+        arrival_time_surface1_geo, arrival_time_surface1_grav = self.lensmodel1.lens_model.\
+            geo_shapiro_delay(xx.ravel(), yy.ravel(), self.kwargs1)
+        arrival_time_surface1_geo_ref, arrival_time_surface1_grav_ref = self.lensmodel1.lens_model.\
+            geo_shapiro_delay(xref, yref, self.kwargs1)
+
+        arrival_time_surface2_geo, arrival_time_surface2_grav = self.lensmodel2.lens_model. \
+            geo_shapiro_delay(xx.ravel(), yy.ravel(), self.kwargs2)
+        arrival_time_surface2_geo_ref, arrival_time_surface2_grav_ref = self.lensmodel2.lens_model. \
+            geo_shapiro_delay(xref, yref, self.kwargs2)
+
+        surface1_geo = arrival_time_surface1_geo - arrival_time_surface1_geo_ref
+        surface1_grav = arrival_time_surface1_grav - arrival_time_surface1_grav_ref
+
+        surface2_geo = arrival_time_surface2_geo - arrival_time_surface2_geo_ref
+        surface2_grav = arrival_time_surface2_grav - arrival_time_surface2_grav_ref
+
+        residual_geo = surface1_geo - surface2_geo
+        residual_grav = surface1_grav - surface2_grav
+
+        return residual_geo.reshape(shape0), residual_grav.reshape(shape0)
+
+    def convergence(self, rminmax, npix, mean0=False):
+
+        xx, yy, shape0 = self._get_grids(rminmax, npix)
+
+        kappa1 = self.lensmodel1.kappa(xx.ravel(), yy.ravel(), self.kwargs1)
+        kappa2 = self.lensmodel2.kappa(xx.ravel(), yy.ravel(), self.kwargs2)
         residual = kappa1 - kappa2
         if mean0:
-            residual += -np.mean(residual)
-        return residual
-
-    def curl(self, rmin_max, npix, mean0=False):
-
-        curl1 = self.map1.curl(rmin_max, npix)
-        curl2 = self.map2.curl(rmin_max, npix)
-        residual = curl1 - curl2
-        if mean0:
-            residual += -np.mean(residual)
-        return residual
-
-    def fermat_potential(self, rmin_max, npix, xref, yref):
-
-        pot1 = self.map1.fermat_potential(rmin_max, npix)
-        pot2 = self.map2.fermat_potential(rmin_max, npix)
-
-        pot1_ref = self.map1.lensModel.fermat_potential(xref, yref, self.map1.kwargs_lens)
-        pot2_ref = self.map2.lensModel.fermat_potential(xref, yref, self.map2.kwargs_lens)
-        pot1 -= pot1_ref
-        pot2 -= pot2_ref
-
-        residual = pot1 - pot2
-
-        return residual
-
-    def time_delay_surface(self, rmin_max, npix, xref, yref, x_point_eval=[], y_point_eval=[]):
-
-        arrival_time_1 = self.map1.time_delay_surface(rmin_max, npix, xref, yref)
-        arrival_time_2 = self.map2.time_delay_surface(rmin_max, npix, xref, yref)
-
-        return arrival_time_1 - arrival_time_2
-
-    def time_delay_surface_geoshapiro(self, rmin_max, npix, xref, yref, x_point_eval=[], y_point_eval=[]):
-
-        dtgeo1, dtgrav1 = self.map1.geo_shapiro_delay(rmin_max, npix, xref, yref)
-        dtgeo2, dtgrav2 = self.map2.geo_shapiro_delay(rmin_max, npix, xref, yref)
-
-        return dtgeo1 - dtgeo2, dtgrav1 - dtgrav2
+            residual -= np.mean(residual)
+        return residual.reshape(shape0)
 

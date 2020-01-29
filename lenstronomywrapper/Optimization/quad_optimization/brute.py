@@ -44,7 +44,8 @@ class BruteOptimization(OptimizationBase):
                                         kwargs_optimizer=kwargs_optimizer, realization=self.realization_initial)
 
         return_kwargs = {'info_array': None,
-                         'lens_model_raytracing': lens_model_full}
+                         'lens_model_raytracing': lens_model_full,
+                         'realization_final': self.realization_initial}
 
         return self._return_results(source, kwargs_lens_final, lens_model_full, return_kwargs)
 

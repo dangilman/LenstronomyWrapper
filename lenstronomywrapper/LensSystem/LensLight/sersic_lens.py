@@ -30,10 +30,7 @@ class SersicLens(LightBase):
 
     @property
     def param_sigma(self):
-        if self._reoptimize:
-            return self.reoptimize_sigma
-        else:
-            return [{'amp': 500, 'R_sersic': 0.2, 'n_sersic': 0.5, 'center_x': 0.05, 'center_y': 0.05}]
+        return [{'amp': 1500, 'R_sersic': 0.5, 'n_sersic': 1.5, 'center_x': 0.5, 'center_y': 0.5}]
 
     @property
     def param_lower(self):

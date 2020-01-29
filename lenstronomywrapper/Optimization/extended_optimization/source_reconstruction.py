@@ -12,9 +12,11 @@ class SourceReconstruction(object):
         else:
             self._init = SamplerInit(lens_system, data_class, time_delay_likelihood)
 
-        self._lens_system = lens_system
+        self.lens_system = lens_system
 
         self._data_class = data_class
+
+        self._lensmodel_init, _ = self.lens_system.get_lensmodel()
 
     def optimize(self, pso_kwargs=None, mcmc_kwargs=None):
 
@@ -32,14 +34,15 @@ class SourceReconstruction(object):
 
     def _update_lens_system(self, kwargs_lens, kwargs_source_light, kwargs_lens_light, kwargs_ps):
 
-        self._lens_system.update_kwargs_macro(kwargs_lens)
+        self.lens_system.update_kwargs_macro(kwargs_lens)
 
         light_x, light_y = kwargs_lens_light[0]['center_x'], kwargs_lens_light[0]['center_y']
         source_x, source_y = kwargs_source_light[0]['center_x'], kwargs_source_light[0]['center_y']
 
-        self._lens_system.update_light_centroid(light_x, light_y)
-        self._lens_system.update_source_centroid(source_x, source_y)
+        self.lens_system.update_light_centroid(light_x, light_y)
+        self.lens_system.update_source_centroid(source_x, source_y)
         self._data_class.point_source.update_kwargs_ps(kwargs_ps)
+        self.lens_system.set_lensmodel_static(self._lensmodel_init, kwargs_lens)
 
     def _fit(self, pso_kwargs, mcmc_kwargs):
 
@@ -48,10 +51,14 @@ class SourceReconstruction(object):
 
         fitting_seq = FittingSequence(kwargs_data_joint, kwargs_model, kwargs_constraints, kwargs_likelihood,
                                       kwargs_params)
+
+
         if pso_kwargs is None:
             pso_kwargs = {'sigma_scale': 1., 'n_particles': 50, 'n_iterations': 200}
         if mcmc_kwargs is None:
-            mcmc_kwargs = {'n_burn': 10, 'n_run': 100, 'walkerRatio': 4, 'sigma_scale': .1}
+            mcmc_kwargs = {'n_burn': 150, 'n_run': 100, 'walkerRatio': 4, 'sigma_scale': .1}
+
+        mcmc_kwargs.update({'progress': False})
         fitting_kwargs_list = [['PSO', pso_kwargs],
                                ['MCMC', mcmc_kwargs]
                                ]

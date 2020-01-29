@@ -15,6 +15,7 @@ from lenstronomywrapper.Utilities.lensing_util import solve_H0_from_Ddt
 from lenstronomywrapper.LensSystem.BackgroundSource.quasar import Quasar
 from lenstronomy.Analysis.lens_profile import LensProfileAnalysis
 from lenstronomywrapper.Utilities.data_util import write_data_to_file
+from lenstronomywrapper.LensSystem.LensSystemExtensions.chain_post_processing import ChainPostProcess
 
 import numpy as np
 from pyHalo.pyhalo import pyHalo
@@ -71,19 +72,17 @@ class AnalogModel(object):
         realization = self.pyhalo.render(realization_type, realization_kwargs)[0]
         return realization
 
-    def flux_anomaly(self, mags1, mags2):
+    def flux_anomaly(self, f1, f2):
 
-        f1, f2 = mags1[1:]/mags1[0], mags2[1:]/mags2[0]
-        return np.array(f1 - f2).reshape(1, 3)
+        return (f1 - f2).reshape(1, 3)
 
     def time_anomaly(self, t1, t2):
 
-        dt1 = t1[1:] - t1[0]
-        dt2 = t2[1:] - t2[0]
-        return np.array(dt1 - dt2).reshape(1, 3)
+        return np.array(t1 - t2).reshape(1, 3)
 
     def run(self, save_name_path, N_start, N, realization_type, realization_kwargs, arrival_time_sigma,
-            image_positions_sigma, gamma_prior_scale, time_delay_likelihood, fix_D_dt, fit_smooth_kwargs):
+            image_positions_sigma, gamma_prior_scale, time_delay_likelihood, fix_D_dt, fit_smooth_kwargs,
+            window_size):
 
         for n in range(0, N):
             tbaseline, f, t, tgeo, tgrav, macro_params, kw_fit, kw_setup = self.run_once(realization_type,
@@ -92,7 +91,8 @@ class AnalogModel(object):
                                                                 image_positions_sigma,
                                                                 gamma_prior_scale,
                                                                 time_delay_likelihood,
-                                                                fix_D_dt, **fit_smooth_kwargs)
+                                                                fix_D_dt, window_size,
+                                                                **fit_smooth_kwargs)
 
             h0_inf = np.mean(kw_fit['H0_inferred'])
             h0_inf_sigma = np.std(kw_fit['H0_inferred'])
@@ -147,46 +147,41 @@ class AnalogModel(object):
         np.savetxt(filename, X=array_to_save, fmt='%.5f')
 
     def run_once(self, realization_type, realization_kwargs, arrival_time_sigma, image_sigma, gamma_prior_scale,
-            time_delay_likelihood, fix_D_dt, realization=None, **fit_smooth_kwargs):
+            time_delay_likelihood, fix_D_dt, window_size, realization=None, **fit_smooth_kwargs):
 
         lens_system, data_class, return_kwargs_setup, kwargs_data_setup = \
-            self.model_setup(realization_type,realization_kwargs, arrival_time_sigma, image_sigma, gamma_prior_scale,
+            self.model_setup(realization_type,realization_kwargs, arrival_time_sigma, image_sigma, gamma_prior_scale, window_size,
                              realization)
 
         return_kwargs_fit, kwargs_data_fit = self.fit_smooth(lens_system, data_class,
                                                              time_delay_likelihood, fix_D_dt, **fit_smooth_kwargs)
 
-        macromodel_kwargs = return_kwargs_fit['kwargs_lens_macro_fit']
-        macromodel_params = []
-        for kwargs_set in macromodel_kwargs:
-            for key in kwargs_set.keys():
-                macromodel_params.append(kwargs_set[key])
+        macromodel_params = np.round(return_kwargs_fit['kwargs_lens_macro_fit'], 5)
 
-        macromodel_params = np.array(macromodel_params)
         L = len(macromodel_params)
         macromodel_params = macromodel_params.reshape(1, int(L))
 
-        key = 'mags'
-        flux_anomaly = self.flux_anomaly(kwargs_data_fit[key], kwargs_data_setup[key])
+        key = 'flux_ratios'
+        flux_anomaly = np.round(self.flux_anomaly(kwargs_data_fit[key], kwargs_data_setup[key]), 4)
 
-        key = 'arrival_times'
-        time_anomaly = self.time_anomaly(kwargs_data_fit[key], kwargs_data_setup[key])
+        key = 'time_delays'
+        time_anomaly = np.round(self.time_anomaly(kwargs_data_fit[key], kwargs_data_setup[key]), 4)
 
-        time_delay_baseline = kwargs_data_fit[key][1:] - kwargs_data_fit[key][0]
+        time_delay_baseline = kwargs_data_setup[key]
         time_delay_baseline = time_delay_baseline.reshape(1,3)
 
         key = 'geo_delay'
-        time_anomaly_geo = self.time_anomaly(kwargs_data_fit[key], kwargs_data_setup[key])
+        time_anomaly_geo = np.round(self.time_anomaly(kwargs_data_fit[key], kwargs_data_setup[key]), 4)
 
         key = 'grav_delay'
-        time_anomaly_grav = self.time_anomaly(kwargs_data_fit[key], kwargs_data_setup[key])
+        time_anomaly_grav = np.round(self.time_anomaly(kwargs_data_fit[key], kwargs_data_setup[key]), 4)
 
         ddt_samples = return_kwargs_fit['D_dt_samples']
         h0 = []
         for di in ddt_samples:
             h0.append(solve_H0_from_Ddt(self.zlens, self.zsource, di, self.pyhalo._cosmology.astropy))
 
-        return_kwargs_fit['H0_inferred'] = np.array(h0)
+        return_kwargs_fit['H0_inferred'] = np.round(np.array(h0), 3)
 
         return time_delay_baseline, flux_anomaly, time_anomaly, time_anomaly_geo, \
                time_anomaly_grav, macromodel_params, return_kwargs_fit, return_kwargs_setup
@@ -202,6 +197,7 @@ class AnalogModel(object):
         return magnifications, arrival_times, dtgeo, dtgrav
 
     def model_setup(self, realization_type, realization_kwargs, arrival_time_sigma, image_sigma, gamma_prior_scale,
+                    window_size,
                     realization=None):
 
         data_to_fit = LensedQuasar(self.lens.x, self.lens.y, self.lens.m)
@@ -262,6 +258,7 @@ class AnalogModel(object):
             realization = self.gen_realization(realization_type, realization_kwargs)
         lens_system_quad = QuadLensSystem(macromodel, self.zsource, background_quasar, realization,
                                           pyhalo_cosmology=self.pyhalo._cosmology)
+
         lens_system_quad.initialize(data_to_fit, include_substructure=True, verbose=False)
         magnifications, arrival_times, dtgeo, dtgrav = self.compute_observables(lens_system_quad)
 
@@ -271,15 +268,17 @@ class AnalogModel(object):
 
         macromodel_prior = [['gamma', gamma_effective, gamma_prior_scale * gamma_effective]]
         lens_system_quad.macromodel.components[0].update_prior(macromodel_prior)
-        window_size_macro = 2. * lens_system_quad.macromodel.kwargs[0]['theta_E']
 
-        if self.lens.has_satellite:
-            if r_sat_max > window_size_macro/2:
-                window_size = r_sat_max * 1.2
+        if window_size is None:
+
+            window_size_macro = 2. * lens_system_quad.macromodel.kwargs[0]['theta_E']
+            if self.lens.has_satellite:
+                if r_sat_max > window_size_macro/2:
+                    window_size = r_sat_max * 1.2
+                else:
+                    window_size = window_size_macro
             else:
                 window_size = window_size_macro
-        else:
-            window_size = window_size_macro
 
         light_model = LightModel(light_model_list)
         source_model = LightModel(source_model_list)
@@ -293,11 +292,6 @@ class AnalogModel(object):
 
         imaging_data = data_class.get_lensed_image()
 
-        # if self._makeplots:
-        #     plt.imshow(np.log10(imaging_data), origin='lower')
-        #     plt.show()
-        #     a=input('continue')
-
         halo_model_names, redshift_list_halos, kwargs_halos, _ = \
             realization.lensing_quantities(realization_kwargs['log_mlow'], realization_kwargs['log_mlow'])
 
@@ -309,10 +303,10 @@ class AnalogModel(object):
                          'redshift_list_halos': redshift_list_halos,
                          'kwargs_lens_halos': kwargs_halos}
 
-        return_kwargs_data = {'mags': magnifications,
-                              'arrival_times': arrival_times,
-                              'geo_delay': dtgeo,
-                              'grav_delay': dtgrav}
+        return_kwargs_data = {'flux_ratios': magnifications[1:]/magnifications[0],
+                              'time_delays': arrival_times[1:]-arrival_times[0],
+                              'geo_delay': dtgeo[1:] - dtgeo[0],
+                              'grav_delay': dtgrav[1:] - dtgrav[0]}
 
         return lens_system, data_class, return_kwargs, return_kwargs_data
 
@@ -321,26 +315,35 @@ class AnalogModel(object):
 
         lens_system_simple = arc_quad_lens.get_smooth_lens_system()
 
-        pso_kwargs = {'sigma_scale': 0.5, 'n_particles': n_particles, 'n_iterations': n_iterations}
-        mcmc_kwargs = {'n_burn': n_burn, 'n_run': n_run, 'walkerRatio': walkerRatio, 'sigma_scale': .1}
+        pso_kwargs = {'sigma_scale': 1.0, 'n_particles': n_particles, 'n_iterations': n_iterations}
+        mcmc_kwargs = {'n_burn': n_burn, 'n_run': n_run, 'walkerRatio': walkerRatio, 'sigma_scale': 0.1}
+
         chain_list, kwargs_result, kwargs_model, multi_band_list, kwargs_special, param_class = \
             lens_system_simple.fit(data, pso_kwargs, mcmc_kwargs, time_delay_likelihood=time_delay_likelihood,
                                    fix_D_dt=fix_D_dt)
 
-        magnifications, arrival_times, dtgeo, dtgrav = self.compute_observables(lens_system_simple)
+        #magnifications, arrival_times, dtgeo, dtgrav = self.compute_observables(lens_system_simple)
         D_dt_true = lens_system_simple.lens_cosmo.D_dt
-        D_dt_fit = kwargs_special['D_dt']
 
-        return_kwargs = {'D_dt_true': D_dt_true, 'D_dt_fit': D_dt_fit,
-                         'kwargs_lens_macro_fit': lens_system_simple.macromodel.kwargs,
+        lensModel, _ = lens_system_simple.get_lensmodel()
+        chain_process = ChainPostProcess(lensModel, chain_list[1][1], param_class,
+                                         background_quasar=lens_system_simple.background_quasar)
+
+        flux_ratios = chain_process.flux_ratios(self.lens.x, self.lens.y)
+        arrival_times, arrival_times_geo, arrival_times_grav = chain_process.time_delays(self.lens.x, self.lens.y)
+        macro_params = chain_process.macro_params()
+        macro_params = np.mean(macro_params, axis=0)
+
+        return_kwargs = {'D_dt_true': D_dt_true,
+                         'kwargs_lens_macro_fit': macro_params,
                          'D_dt_samples': chain_list[1][1][:,-1], 'source_x': lens_system_simple.source_centroid_x,
                          'source_y': lens_system_simple.source_centroid_y, 'zlens': self.zlens,
                          'zsource': self.zsource}
 
-        return_kwargs_data = {'mags': magnifications,
-                              'arrival_times': arrival_times,
-                              'geo_delay': dtgeo,
-                              'grav_delay': dtgrav}
+        return_kwargs_data = {'flux_ratios': np.mean(flux_ratios, axis=0),
+                              'time_delays': np.mean(arrival_times, axis=0),
+                              'geo_delay': np.mean(arrival_times_geo, axis=0),
+                              'grav_delay': np.mean(arrival_times_grav, axis=0)}
 
         return return_kwargs, return_kwargs_data
 

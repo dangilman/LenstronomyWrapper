@@ -44,14 +44,15 @@ class HierarchicalOptimization(BruteOptimization):
         foreground_rays, lens_model_raytracing, lens_model_full, foreground_realization_filtered, [source_x, source_y] = \
             self._fit_foreground(data_to_fit, foreground_realization, opt_routine, constrain_params, verbose)
 
-        kwargs_lens_final, lens_model_raytracing, lens_model_full, info_array, source = \
+        kwargs_lens_final, lens_model_raytracing, lens_model_full, info_array, source, realization_final = \
             self._fit_background(data_to_fit, foreground_realization_filtered, background_realization, foreground_rays,
                                  opt_routine, lens_model_raytracing, lens_model_full, source_x, source_y,
                                  constrain_params, verbose)
 
         return_kwargs = {'info_array': info_array,
                          'lens_model_raytracing': lens_model_raytracing,
-                         'realization_initial': self.realization_initial}
+                         'realization_initial': self.realization_initial,
+                         'realization_final': realization_final}
 
         return self._return_results(source, kwargs_lens_final, lens_model_full, return_kwargs)
 
@@ -237,5 +238,6 @@ class HierarchicalOptimization(BruteOptimization):
 
         info_array = (reoptimized_realizations, ray_x_interp, ray_y_interp)
 
-        return kwargs_lens_final, lens_model_raytracing, lens_model_full, info_array, [source_x, source_y]
+        return kwargs_lens_final, lens_model_raytracing, lens_model_full, info_array, \
+               [source_x, source_y], realization_filtered
 

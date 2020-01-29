@@ -23,6 +23,8 @@ class LensBase(object):
 
         self.position_convention_halo = []
 
+        self.clear_static_lensmodel()
+
     def fit(self, data_to_fit, optimization_class, verbose=False, **kwargs_optimizer):
 
         optimizer = optimization_class(self)
@@ -36,13 +38,9 @@ class LensBase(object):
         self.light_centroid_x = light_x
         self.light_centroid_y = light_y
 
-    @property
-    def realization(self):
-        return self.substructure_realization
-
     def update_realization(self, realization):
 
-        self.substructure_realization = realization
+        self.realization = realization
 
     def set_position_convention_halo(self, idx_list):
 
@@ -59,7 +57,22 @@ class LensBase(object):
 
         return self.get_lenstronomy_args(include_substructure)[2]
 
+    def set_lensmodel_static(self, lensmodel, kwargs):
+
+        self._static_lensmodel = True
+        self._lensmodel_static = lensmodel
+        self._kwargs_static = kwargs
+
+    def clear_static_lensmodel(self):
+
+        self._static_lensmodel = False
+        self._lensmodel_static = None
+        self._kwargs_static = None
+
     def get_lensmodel(self, include_substructure=True, set_multiplane=True, substructure_realization=None):
+
+        if self._static_lensmodel and include_substructure is True:
+            return self._lensmodel_static, self._kwargs_static
 
         names, redshifts, kwargs, numercial_alpha_class, convention_index = self.get_lenstronomy_args(
             include_substructure, substructure_realization)
@@ -84,6 +97,7 @@ class LensBase(object):
 
         if realization is None:
             realization = self.realization
+
         if realization is not None and include_substructure:
 
             if hasattr(realization, '_logmlow'):

@@ -6,7 +6,7 @@ class OptimizationBase(object):
 
     def _return_results(self, source, kwargs_lens_final, lens_model_full, return_kwargs):
 
-        self._update_lens_system(source, kwargs_lens_final, lens_model_full)
+        self._update_lens_system(source, kwargs_lens_final, lens_model_full, return_kwargs['realization_final'])
 
         return kwargs_lens_final, lens_model_full, return_kwargs
 
@@ -18,10 +18,15 @@ class OptimizationBase(object):
             assert contrain_params is not None
             assert 'shear' in contrain_params.keys()
 
-    def _update_lens_system(self, source_centroid, new_kwargs, lens_model_full):
+    def _update_lens_system(self, source_centroid, new_kwargs, lens_model_full, realization_final):
 
         self.lens_system.update_source_centroid(source_centroid[0], source_centroid[1])
 
         self.lens_system.update_kwargs_macro(new_kwargs)
 
         self.lens_system.update_light_centroid(new_kwargs[0]['center_x'], new_kwargs[0]['center_y'])
+
+        self.lens_system.update_realization(realization_final)
+
+        self.lens_system.set_lensmodel_static(lens_model_full, new_kwargs)
+
