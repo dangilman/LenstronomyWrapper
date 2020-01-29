@@ -58,7 +58,7 @@ class SourceReconstruction(object):
         if mcmc_kwargs is None:
             mcmc_kwargs = {'n_burn': 150, 'n_run': 100, 'walkerRatio': 4, 'sigma_scale': .1}
 
-        mcmc_kwargs.update({'progress': False})
+        #mcmc_kwargs.update({'progress': False})
         fitting_kwargs_list = [['PSO', pso_kwargs],
                                ['MCMC', mcmc_kwargs]
                                ]
