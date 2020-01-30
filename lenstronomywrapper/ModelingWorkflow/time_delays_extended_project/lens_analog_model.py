@@ -235,12 +235,12 @@ class AnalogModel(object):
                 r_sat = np.sqrt(xsat ** 2 + ysat ** 2)
                 r_sat_max = max(r_sat, r_sat_max)
                 satellite_redshift = self.lens.satellite_redshift[n]
-                priors = [['theta_E', rein_sat, 0.1 * rein_sat], ['center_x', xsat, 0.05],
+                prior_galaxy = [['theta_E', rein_sat, 0.1 * rein_sat], ['center_x', xsat, 0.05],
                           ['center_y', ysat, 0.05]]
                 kwargs_init = [self.lens.satellite_kwargs[n]]
 
                 satellite_galaxy = SISsatellite(satellite_redshift, kwargs_init=kwargs_init,
-                                            prior=priors)
+                                            prior=prior_galaxy)
 
                 amp, r_sersic, n_sersic = self.satellite_props(rein_sat)
 
@@ -249,8 +249,15 @@ class AnalogModel(object):
                                        'center_x': xsat,
                                        'center_y': ysat}]
 
+                prior_sat_light = [['amp', amp, amp * 0.2],
+                                   ['center_x', xsat, 0.05],
+                                   ['center_y', ysat, 0.05],
+                                   ['R_sersic', r_sersic, 0.2 * r_sersic],
+                                   ['n_sersic', n_sersic, 0.2 * n_sersic]]
+
                 deflector_list += [satellite_galaxy]
-                light_model_list += [SersicLens(kwargs_light_satellite, concentric_with_model=n+1)]
+                light_model_list += [SersicLens(kwargs_light_satellite, concentric_with_model=n+1,
+                                                prior=prior_sat_light)]
 
         macromodel = MacroLensModel(deflector_list)
 

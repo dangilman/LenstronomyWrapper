@@ -1,14 +1,14 @@
 class SamplerInit(object):
 
-    def __init__(self, lens_system_class, quad_lens_data_class,
+    def __init__(self, lens_system_class, lens_data_class,
                  time_delay_likelihood=False, D_dt_true=None, dt_measured=None, dt_sigma=None,
                  fix_D_dt=None):
 
-        assert len(quad_lens_data_class.x == 4)
+        assert len(lens_data_class.x == 4)
         self.system = lens_system_class
         self.sourcelight_instance = lens_system_class.source_light_model
         self.lenslight_instance = lens_system_class.lens_light_model
-        self.pointsource_instance = quad_lens_data_class.point_source
+        self.pointsource_instance = lens_data_class.point_source
 
         self._time_delay_likelihood = time_delay_likelihood
         if self._time_delay_likelihood:
@@ -22,7 +22,7 @@ class SamplerInit(object):
         self.dt_sigma = dt_sigma
         self._fix_D_dt = fix_D_dt
 
-        self.lens_data_class = quad_lens_data_class
+        self.lens_data_class = lens_data_class
 
     def sampler_inputs(self):
 
@@ -144,6 +144,23 @@ class SamplerInit(object):
         return instance.priors
 
     @property
+    def light_priors(self):
+        instance = self.system.lens_light_model
+        return instance.priors
+
+    @property
+    def linked_parameters_lensmodel_lightmodel(self):
+        pass
+
+    @property
+    def linked_parameters_lensmodel_lensmodel(self):
+        pass
+
+    @property
+    def linked_parameters_source_source(self):
+        return [[0, 0]]
+
+    @property
     def kwargs_model(self):
 
         lens_model_list = self.system.macromodel.lens_model_list
@@ -185,14 +202,23 @@ class SamplerInit(object):
                   'source_position_tolerance': source_position_tolerance,
                   'source_position_sigma': source_position_sigma,
                   'prior_lens': self.lens_priors,
+                  'prior_lens_light': self.light_priors,
                   'time_delay_likelihood': self._time_delay_likelihood}
+
         return kwargs
 
     @property
     def kwargs_constraints(self):
 
-        joint_source_with_point_source = [[0, 0]]
-        solver_type = 'PROFILE_SHEAR'
+        joint_source_with_point_source = self.linked_parameters_source_source
+
+        if len(self.lens_data_class.x) == 4:
+            solver_type = 'PROFILE_SHEAR'
+            nimg = 4
+        elif len(self.lens_data_class.x) == 2:
+            raise Exception('two image lenses not yet implemented')
+        else:
+            raise Exception('only four image lenses currently implemented')
 
         if self._time_delay_likelihood:
             Ddt_sampling = True
@@ -200,7 +226,7 @@ class SamplerInit(object):
             Ddt_sampling = False
 
         kwargs = {'joint_source_with_point_source': joint_source_with_point_source,
-                  'num_point_source_list': [4], 'solver_type': solver_type,
+                  'num_point_source_list': [nimg], 'solver_type': solver_type,
                   'Ddt_sampling': Ddt_sampling}
 
         return kwargs

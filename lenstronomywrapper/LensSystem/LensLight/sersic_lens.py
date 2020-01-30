@@ -11,6 +11,17 @@ class SersicLens(LightBase):
         super(SersicLens, self).__init__(concentric_with_model, prior)
 
     @property
+    def priors(self):
+        indexes = []
+        priors = []
+        for prior in self._prior:
+            idx = 0
+            indexes.append(idx)
+            priors.append(prior)
+
+        return indexes, priors
+
+    @property
     def fixed_models(self):
         return [{}]
 

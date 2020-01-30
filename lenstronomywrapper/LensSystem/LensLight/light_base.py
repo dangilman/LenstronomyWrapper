@@ -23,17 +23,5 @@ class LightBase(LightReconstructBase):
         return surf_bright
 
     @property
-    def priors(self):
-
-        indexes = []
-        priors = []
-        for prior in self._prior:
-            idx = 0
-            indexes.append(idx)
-            priors.append(prior)
-
-        return indexes, priors
-
-    @property
     def lensLight(self):
         return LightModel(self.light_model_list)

@@ -16,6 +16,21 @@ class LightModel(object):
             light += component.surface_brightness(xgrid, ygrid, lensmodel, lensmodel_kwargs)
         return light
 
+    @property
+    def priors(self):
+        priors = []
+        component_index = 0
+        for component in self.components:
+
+            prior_index, prior = component.priors
+            new = []
+            for idx, prior_i in zip(prior_index, prior):
+                new += [[idx + component_index] + prior_i]
+            priors += new
+            component_index += component.n_models
+
+        return priors
+
     def update_kwargs(self, new_kwargs):
 
         if len(new_kwargs) != self.n_light_models:
