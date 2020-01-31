@@ -85,7 +85,7 @@ class AnalogModel(object):
             window_size):
 
         for n in range(0, N):
-            tbaseline, f, t, tgeo, tgrav, macro_params, kw_fit, kw_setup = self.run_once(realization_type,
+            tbaseline, f, t, tgeo, tgrav, macro_params, kw_fit, kw_setup= self.run_once(realization_type,
                                                                 realization_kwargs,
                                                                 arrival_time_sigma,
                                                                 image_positions_sigma,
@@ -157,6 +157,8 @@ class AnalogModel(object):
                                                              time_delay_likelihood, fix_D_dt, **fit_smooth_kwargs)
 
         macromodel_params = np.round(return_kwargs_fit['kwargs_lens_macro_fit'], 5)
+        srcx, srcy = np.round(kwargs_data_fit['source_x'], 4), np.round(kwargs_data_fit['source_y'], 4)
+        macromodel_params = np.append(macromodel_params, np.array([srcx, srcy]))
 
         L = len(macromodel_params)
         macromodel_params = macromodel_params.reshape(1, int(L))
@@ -336,7 +338,7 @@ class AnalogModel(object):
         chain_process = ChainPostProcess(lensModel, chain_list[1][1], param_class,
                                          background_quasar=lens_system_simple.background_quasar)
 
-        flux_ratios = chain_process.flux_ratios(self.lens.x, self.lens.y)
+        flux_ratios, source_x, source_y = chain_process.flux_ratios(self.lens.x, self.lens.y)
         arrival_times, arrival_times_geo, arrival_times_grav = chain_process.time_delays(self.lens.x, self.lens.y)
         macro_params = chain_process.macro_params()
         macro_params = np.mean(macro_params, axis=0)
@@ -350,7 +352,9 @@ class AnalogModel(object):
         return_kwargs_data = {'flux_ratios': np.mean(flux_ratios, axis=0),
                               'time_delays': np.mean(arrival_times, axis=0),
                               'geo_delay': np.mean(arrival_times_geo, axis=0),
-                              'grav_delay': np.mean(arrival_times_grav, axis=0)}
+                              'grav_delay': np.mean(arrival_times_grav, axis=0),
+                              'source_x': np.mean(source_x),
+                              'source_y': np.mean(source_y)}
 
         return return_kwargs, return_kwargs_data
 

@@ -67,20 +67,27 @@ class ChainPostProcess(object):
 
         if n_keep == 'all':
             mags = np.empty((self.n_samples, 3))
+            source_x = np.empty(self.n_samples)
+            source_y = np.empty(self.n_samples)
             for n in range(0, self.n_samples):
-                mags[n, :] = self._compute_magnification_single(x_image, y_image, self.samples[n, :])
+                mags[n, :], srcx, srcy = self._compute_magnification_single(x_image, y_image, self.samples[n, :])
+                source_x[n] = srcx
+                source_y[n] = srcy
 
         elif isinstance(n_keep, int):
             nstart = self.n_samples - n_keep
             mags = np.empty((n_keep, 3))
+            source_x = np.empty(n_keep)
+            source_y = np.empty(n_keep)
             inds = np.arange(nstart, self.n_samples, 1)
             for n, index in enumerate(inds):
-                mags[n, :] = self._compute_magnification_single(x_image, y_image, self.samples[index, :])
-
+                mags[n, :], srcx, srcy = self._compute_magnification_single(x_image, y_image, self.samples[index, :])
+                source_x[n] = srcx
+                source_y[n] = srcy
         else:
             raise Exception('indexes must be type int or list/array')
 
-        return mags
+        return mags, source_x, source_y
 
     def _compute_time_delay_single(self, x_image, y_image, mcmc_args):
 
@@ -102,4 +109,4 @@ class ChainPostProcess(object):
         self.background_quasar.update_position(srcx, srcy)
         mags = self.background_quasar.magnification(x_image, y_image, self.lensModel, kwargs_lens, normed=False)
 
-        return mags[1:] / mags[0]
+        return mags[1:] / mags[0], srcx, srcy
