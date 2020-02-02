@@ -222,7 +222,7 @@ class AnalogModel(object):
                                  'center_x': None, 'center_y': None,
                                  'e1': source_e1, 'e2': source_e2}]
         light_model_list = [SersicLens(kwargs_sersic_light, concentric_with_model=0)]
-        source_model_list = [SersicSource(kwargs_sersic_source, concentric_with_source=True)]
+
         r_sat_max = 0
 
         if self.lens.has_satellite:
@@ -277,6 +277,14 @@ class AnalogModel(object):
 
         macromodel_prior = [['gamma', gamma_effective, gamma_prior_scale * gamma_effective]]
         lens_system_quad.macromodel.components[0].update_prior(macromodel_prior)
+
+        source_model_list = [SersicSource(kwargs_sersic_source, concentric_with_source=True)]
+        source_x, source_y = lens_system_quad.source_centroid_x, lens_system_quad.source_centroid_y
+        if self.lens.identifier == 'lens0408':
+            kwargs_sersic_source_2 = [{'amp': 500, 'R_sersic': 0.25, 'n_sersic': 3., 'center_x': source_x - 0.15,
+                                       'center_y': source_y + 0.7,
+                                       'e1': 0.01, 'e2': -0.01}]
+            source_model_list += [SersicSource(kwargs_sersic_source_2)]
 
         if window_size is None:
 
