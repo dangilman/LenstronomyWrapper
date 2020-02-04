@@ -109,6 +109,7 @@ class AnalogModel(object):
                 h0_inferred = h0_inf
                 h0_sigma = h0_inf_sigma
                 macromodel_parameters = macro_params
+                tsigma = arrival_time_sigma
 
             else:
                 baseline = np.vstack((baseline, tbaseline))
@@ -119,12 +120,14 @@ class AnalogModel(object):
                 h0_inferred = np.vstack((h0_inferred, h0_inf))
                 h0_sigma = np.vstack((h0_sigma, h0_inf_sigma))
                 macromodel_parameters = np.vstack((macromodel_parameters, macro_params))
+                tsigma = np.vstack((tsigma, arrival_time_sigma))
 
         fnames = ['tbaseline_', 'flux_anomaly_', 'time_anomaly_', 'time_anomaly_grav_',
-                  'time_anomaly_geo_', 'geometry_', 'h0_inferred_', 'h0_sigma_', 'macroparams_']
+                  'time_anomaly_geo_', 'geometry_', 'h0_inferred_', 'h0_sigma_', 'macroparams_',
+                  'time_delay_sigma_']
 
         arrays = [baseline, flux_anomalies, time_anomalies, time_anomalies_grav, time_anomalies_geo, np.array(info),
-                  np.array(h0_inferred), np.array(h0_sigma), macromodel_parameters]
+                  np.array(h0_inferred), np.array(h0_sigma), macromodel_parameters, tsigma]
 
         for fname, arr in zip(fnames, arrays):
                 write_data_to_file(save_name_path + fname + str(N_start) + '.txt', arr)
@@ -158,6 +161,7 @@ class AnalogModel(object):
 
         macromodel_params = np.round(return_kwargs_fit['kwargs_lens_macro_fit'], 5)
         srcx, srcy = np.round(kwargs_data_fit['source_x'], 4), np.round(kwargs_data_fit['source_y'], 4)
+
         macromodel_params = np.append(macromodel_params, np.array([srcx, srcy]))
 
         L = len(macromodel_params)
@@ -271,6 +275,10 @@ class AnalogModel(object):
         lens_system_quad.initialize(data_to_fit, include_substructure=True, verbose=False)
         magnifications, arrival_times, dtgeo, dtgrav = self.compute_observables(lens_system_quad)
 
+        arrival_time_uncertainties = []
+        for t, delta_t in zip(arrival_times[1:]-arrival_times[0], arrival_time_sigma):
+            arrival_time_uncertainties.append(abs(t*delta_t))
+
         lensModel, kwargs_lens = lens_system_quad.get_lensmodel()
         lens_analysis = LensProfileAnalysis(lensModel)
         gamma_effective = lens_analysis.profile_slope(kwargs_lens, kwargs_lens[0]['theta_E'])
@@ -304,7 +312,7 @@ class AnalogModel(object):
 
         data_kwargs = {'psf_type': 'GAUSSIAN', 'window_size': 2*window_size, 'deltaPix': 0.05, 'fwhm': 0.1}
         data_class = ArcPlusQuad(data_to_fit.x, data_to_fit.y, magnifications, lens_system, arrival_times,
-                           arrival_time_sigma, image_sigma, data_kwargs=data_kwargs, no_bkg=False, noiseless=False,
+                           arrival_time_uncertainties, image_sigma, data_kwargs=data_kwargs, no_bkg=False, noiseless=False,
                                  normed_magnifications=False)
 
         imaging_data = data_class.get_lensed_image()
@@ -323,7 +331,8 @@ class AnalogModel(object):
         return_kwargs_data = {'flux_ratios': magnifications[1:]/magnifications[0],
                               'time_delays': arrival_times[1:]-arrival_times[0],
                               'geo_delay': dtgeo[1:] - dtgeo[0],
-                              'grav_delay': dtgrav[1:] - dtgrav[0]}
+                              'grav_delay': dtgrav[1:] - dtgrav[0],
+                              'arrival_time_sigma': arrival_time_sigma}
 
         return lens_system, data_class, return_kwargs, return_kwargs_data
 
