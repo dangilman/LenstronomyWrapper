@@ -234,7 +234,7 @@ class AnalogModel(object):
             n_satellites = len(self.lens.satellite_mass_model)
 
             n_max = min(n_satellites, 2)
-            
+
             for n in range(0, n_max):
 
                 rein_sat = self.lens.satellite_kwargs[n]['theta_E']
