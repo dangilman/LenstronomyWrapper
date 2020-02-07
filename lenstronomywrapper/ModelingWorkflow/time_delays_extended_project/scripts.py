@@ -47,7 +47,7 @@ def run_real(lens_class, save_name_path, N, N_start, SHMF_norm, LOS_norm, log_ml
                           'log_mlow': log_mlow, 'log_mhigh': 10., 'power_law_index': -1.9,
                           'parent_m200': 10 ** 13, 'r_tidal': '0.5Rs',
                           'cone_opening_angle': opening_angle, 'opening_angle_factor': 10,
-                          'sigma_sub': SHMF_norm, 'subtract_exact_mass_sheets': subtract_exact_mass_sheets,
+                          'norm_arcsec2': SHMF_norm, 'subtract_exact_mass_sheets': subtract_exact_mass_sheets,
                           'subtract_subhalo_mass_sheet': True, 'subhalo_mass_sheet_scale': 1,
                           'LOS_normalization': LOS_norm}
 

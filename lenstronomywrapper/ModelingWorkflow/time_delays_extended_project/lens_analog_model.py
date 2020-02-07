@@ -48,9 +48,9 @@ class AnalogModel(object):
 
     def satellite_props(self, rein):
 
-        amp = 600 * (rein / 0.3) ** 0.9
-        r = 0.25 * (rein / 0.3) ** 0.5
-        n = 3.25 * (rein / 0.3) ** 0.2
+        amp = 600 * (rein / 0.3) ** 1.
+        r = 0.2 * (rein / 0.3) ** 1.
+        n = 3.
         amp = max(amp, 1200)
         r = max(r, 0.25)
         n = max(n, 2.5)
@@ -61,7 +61,7 @@ class AnalogModel(object):
     def sample_source(self, amp_macro):
 
         amp = abs(np.random.normal(amp_macro, 0.5*amp_macro))
-        rein_eff = 0.5 * (amp/600)**(1./0.9)
+        rein_eff = 0.5 * (amp/600)
         _, r, n = self.satellite_props(rein_eff)
         r *= 0.5
         return abs(np.random.normal(amp, 0.1 * amp)), abs(np.random.normal(r, 0.25 * r)), abs(

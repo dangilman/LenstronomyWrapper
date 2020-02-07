@@ -105,7 +105,7 @@ else:
     Nstart = n_lens - N_start_0 - counter_start
 
     print('SAMPLING WITH SUBSTRUCTURE...... ')
-    SHMF_norm = 0.02
+    SHMF_norm = 0.75
     LOS_norm = 1.
     t0 = time()
     save_name_path = os.getenv('HOME') + '/Code/tdelay_output/raw/' + fname + '/LOSsubs_varyDdt/'
