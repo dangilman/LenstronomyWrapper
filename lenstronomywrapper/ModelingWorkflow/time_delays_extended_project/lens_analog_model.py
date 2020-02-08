@@ -130,7 +130,7 @@ class AnalogModel(object):
                   np.array(h0_inferred), np.array(h0_sigma), macromodel_parameters, tsigma]
 
         for fname, arr in zip(fnames, arrays):
-                write_data_to_file(save_name_path + fname + str(N_start) + '.txt', arr)
+            write_data_to_file(save_name_path + fname + str(N_start) + '.txt', arr)
         # else:
         #     for fname, arr in zip(fnames, arrays):
         #         self.save_append(save_name_path + fname + str(N_start) + '.txt', arr)
