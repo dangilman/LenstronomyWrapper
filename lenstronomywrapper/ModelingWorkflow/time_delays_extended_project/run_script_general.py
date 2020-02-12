@@ -1,18 +1,18 @@
 from lenstronomywrapper.ModelingWorkflow.time_delays_extended_project.scripts import *
 import os
 
-def run(Nstart, lens_class, fname, log_mlow, window_size, N=2):
+def run(Nstart, lens_class, fname, log_mlow, window_size, gamma_macro, N=2):
 
     opening_angle = 8 * window_size
     position_sigma = [0.005]*4
     fix_D_dt = False
-    gamma_prior_scale = 0.04
+    gamma_prior_scale = None
 
     arrival_time_sigma = [delta_ti / ti for delta_ti, ti in
                           zip(lens_class.delta_time_delay, lens_class.relative_arrival_times)]
     arrival_time_sigma = np.round(arrival_time_sigma, 5)
 
-    fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 200, 'n_run': 50, 'walkerRatio': 4, 'n_burn': 500}
+    fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 200, 'n_run': 50, 'walkerRatio': 4, 'n_burn': 650}
 
     if Nstart < 501:
         print('SAMPLING subs1...... ')
@@ -72,5 +72,5 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, N=2):
         raise Exception('out of range.')
 
     run_real(lens_class, save_name_path, N, N0, SHMF_norm, LOS_norm, log_mlow, opening_angle,
-             arrival_time_sigma, position_sigma, gamma_prior_scale, fix_D_dt, window_size,
+             arrival_time_sigma, position_sigma, gamma_prior_scale, fix_D_dt, window_size, gamma_macro,
              time_delay_like=True, fit_smooth_kwargs=fit_smooth_kwargs)

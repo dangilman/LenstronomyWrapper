@@ -43,12 +43,13 @@ def solve_H0_from_Ddt(zlens, zsource, D_dt, astropy_instance_ref):
     if isinstance(D_dt, list) or isinstance(D_dt, np.ndarray):
 
         for di in D_dt:
-            result = minimize(_func_to_min, x0=np.array([70]),
-                              method='Nelder-Mead', args=di)['x']
+            result = minimize(_func_to_min, x0=73.3,
+                              method='Nelder-Mead', args=di)['x'][0]
+
             out.append(result)
     else:
-        out = minimize(_func_to_min, x0=np.array([70]),
-                          method='Nelder-Mead', args=D_dt)['x']
+        out = minimize(_func_to_min, x0=73.3,
+                          method='Nelder-Mead', args=D_dt)['x'][0]
 
     return out
 
