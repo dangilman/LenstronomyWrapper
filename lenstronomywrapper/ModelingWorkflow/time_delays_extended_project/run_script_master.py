@@ -10,9 +10,8 @@ import os
 from time import time
 import sys
 
-#n_lens = int(sys.argv[1])
+n_lens = int(sys.argv[1])
 log_mlow = 6.7
-n_lens = 1.
 
 if n_lens < 2001:
     Nstart = n_lens
