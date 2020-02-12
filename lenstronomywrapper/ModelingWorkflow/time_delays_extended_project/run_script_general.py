@@ -12,59 +12,41 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, gamma_macro, N=2):
                           zip(lens_class.delta_time_delay, lens_class.relative_arrival_times)]
     arrival_time_sigma = np.round(arrival_time_sigma, 5)
 
-    fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 200, 'n_run': 50, 'walkerRatio': 4, 'n_burn': 650}
-
+    fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 200, 'n_run': 60, 'walkerRatio': 4, 'n_burn': 700}
+    fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 10, 'walkerRatio': 4, 'n_burn': 1}
     if Nstart < 501:
-        print('SAMPLING subs1...... ')
+        print('SAMPLING control...... ')
         N0 = Nstart
-        SHMF_norm = 0.15
+        SHMF_norm = 0.
         LOS_norm = 0.
-        save_name_path = os.getenv('HOME') + '/Code/tdelay_output/raw/' + fname + '/subs1/'
+        save_name_path = os.getenv('HOME') + '/Code/tdelay_output/raw/' + fname + '/control/'
         if not os.path.exists(save_name_path):
             create_directory(save_name_path)
 
     elif Nstart < 1001:
-        print('SAMPLING subs2...... ')
+        print('SAMPLING subs only...... ')
         N0 = Nstart - 500
-        SHMF_norm = 0.3
+        SHMF_norm = 0.02
         LOS_norm = 0.
-        save_name_path = os.getenv('HOME') + '/Code/tdelay_output/raw/' + fname + '/subs2/'
+        save_name_path = os.getenv('HOME') + '/Code/tdelay_output/raw/' + fname + '/subsonly/'
         if not os.path.exists(save_name_path):
             create_directory(save_name_path)
 
     elif Nstart < 1501:
         print('SAMPLING subs3...... ')
         N0 = Nstart - 1000
-        SHMF_norm = 0.6
-        LOS_norm = 0.
-        save_name_path = os.getenv('HOME') + '/Code/tdelay_output/raw/' + fname + '/subs3/'
-        if not os.path.exists(save_name_path):
-            create_directory(save_name_path)
-
-    elif Nstart < 2001:
-        print('SAMPLING subs4...... ')
-        N0 = Nstart - 1500
-        SHMF_norm = 1.2
-        LOS_norm = 0.
-        save_name_path = os.getenv('HOME') + '/Code/tdelay_output/raw/' + fname + '/subs4/'
-        if not os.path.exists(save_name_path):
-            create_directory(save_name_path)
-
-    elif Nstart < 2501:
-        print('SAMPLING LOS...... ')
-        N0 = Nstart - 2000
-        SHMF_norm = 0.
+        SHMF_norm = 0.0
         LOS_norm = 1.
         save_name_path = os.getenv('HOME') + '/Code/tdelay_output/raw/' + fname + '/LOSonly/'
         if not os.path.exists(save_name_path):
             create_directory(save_name_path)
 
-    elif Nstart < 3001:
-        print('SAMPLING LOS+subs...... ')
-        N0 = Nstart - 2500
-        SHMF_norm = 0.6
+    elif Nstart < 2001:
+        print('SAMPLING subs3...... ')
+        N0 = Nstart - 1500
+        SHMF_norm = 0.02
         LOS_norm = 1.
-        save_name_path = os.getenv('HOME') + '/Code/tdelay_output/raw/' + fname + '/LOSplussubs/'
+        save_name_path = os.getenv('HOME') + '/Code/tdelay_output/raw/' + fname + '/LOS_plus_subs/'
         if not os.path.exists(save_name_path):
             create_directory(save_name_path)
 

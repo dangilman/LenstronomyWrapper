@@ -40,14 +40,14 @@ def run_real(lens_class, save_name_path, N, N_start, SHMF_norm, LOS_norm, log_ml
              fix_D_dt, window_size, gamma_macro, time_delay_like=True, fit_smooth_kwargs=None, subtract_exact_mass_sheets=False):
 
     if fit_smooth_kwargs is None:
-        fit_smooth_kwargs = {'n_particles': 50, 'n_iterations': 200, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 25}
+        fit_smooth_kwargs = {'n_particles': 50, 'n_iterations': 200, 'n_run': 60, 'walkerRatio': 4, 'n_burn': 650}
 
     mdef = 'TNFW'
     realization_kwargs = {'mdef_main': mdef, 'mdef_los': mdef,
                           'log_mlow': log_mlow, 'log_mhigh': 10., 'power_law_index': -1.9,
                           'parent_m200': 10 ** 13, 'r_tidal': '0.5Rs',
-                          'cone_opening_angle': opening_angle, 'opening_angle_factor': 10,
-                          'norm_arcsec2': SHMF_norm, 'subtract_exact_mass_sheets': subtract_exact_mass_sheets,
+                          'cone_opening_angle': opening_angle, 'opening_angle_factor': opening_angle,
+                          'sigma_sub': SHMF_norm, 'subtract_exact_mass_sheets': subtract_exact_mass_sheets,
                           'subtract_subhalo_mass_sheet': True, 'subhalo_mass_sheet_scale': 1,
                           'LOS_normalization': LOS_norm}
 
