@@ -3,7 +3,7 @@ import os
 
 def run(Nstart, lens_class, fname, log_mlow, window_size, gamma_macro, N=2):
 
-    opening_angle = 8 * window_size
+    opening_angle = 10 * window_size
     position_sigma = [0.005]*4
     fix_D_dt = False
     gamma_prior_scale = None
@@ -13,7 +13,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, gamma_macro, N=2):
     arrival_time_sigma = np.round(arrival_time_sigma, 5)
 
     fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 200, 'n_run': 60, 'walkerRatio': 4, 'n_burn': 700}
-    fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 10, 'walkerRatio': 4, 'n_burn': 1}
+    #fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 10, 'walkerRatio': 4, 'n_burn': 1}
     if Nstart < 501:
         print('SAMPLING control...... ')
         N0 = Nstart
