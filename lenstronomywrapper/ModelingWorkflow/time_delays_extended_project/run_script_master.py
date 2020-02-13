@@ -11,6 +11,7 @@ from time import time
 import sys
 
 n_lens = int(sys.argv[1])
+#n_lens = 1.
 log_mlow = 6.7
 
 if n_lens < 2001:
@@ -32,7 +33,7 @@ elif n_lens < 6001:
     lens_name = 'lens0435'
     half_window_size = 2.
     lens_class = Lens0435()
-    gamma_macro = 1.86
+    gamma_macro = 1.93
 
 elif n_lens < 8001:
     Nstart = n_lens - 6000

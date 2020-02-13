@@ -55,8 +55,7 @@ class AnalogModel(object):
         r = max(r, 0.25)
         n = max(n, 2.5)
 
-        return abs(np.random.normal(amp, 0.1 * amp)), abs(np.random.normal(r, 0.1 * r)), abs(
-            np.random.normal(n, 0.1 * n))
+        return amp, r, n
 
     def sample_source(self, amp_macro):
 
@@ -64,8 +63,7 @@ class AnalogModel(object):
         rein_eff = 0.5 * (amp/600)
         _, r, n = self.satellite_props(rein_eff)
         r *= 0.5
-        return abs(np.random.normal(amp, 0.1 * amp)), abs(np.random.normal(r, 0.25 * r)), abs(
-            np.random.normal(n, 0.2 * n))
+        return amp, r, n
 
     def gen_realization(self, realization_type, realization_kwargs):
 
@@ -208,17 +206,14 @@ class AnalogModel(object):
 
         deflector_list = [PowerLawShear(self.zlens, kwargs_macro)]
 
-        source_ellip = np.random.uniform(0.05, 0.4)
-        source_phi = np.random.uniform(-np.pi, np.pi)
-        source_e1, source_e2 = phi_q2_ellipticity(source_phi, 1-source_ellip)
-
         amp, rsersic, nsersic = self.satellite_props(approx_theta_E(self.lens.x, self.lens.y))
-        kwargs_sersic_light = [{'amp': amp, 'R_sersic': rsersic, 'n_sersic': nsersic, 'center_x': None, 'center_y': None}]
-
+        #kwargs_sersic_light = [{'amp': amp, 'R_sersic': rsersic, 'n_sersic': nsersic, 'center_x': None, 'center_y': None}]
+        kwargs_sersic_light = self.lens.kwargs_lens_light
         amp_source, r_source, n_source = self.sample_source(amp)
-        kwargs_sersic_source = [{'amp': amp_source, 'R_sersic': r_source, 'n_sersic': n_source,
-                                 'center_x': None, 'center_y': None,
-                                 'e1': source_e1, 'e2': source_e2}]
+        # kwargs_sersic_source = [{'amp': amp_source, 'R_sersic': r_source, 'n_sersic': n_source,
+        #                          'center_x': None, 'center_y': None,
+        #                          'e1': source_e1, 'e2': source_e2}]
+        kwargs_sersic_source = self.lens.kwargs_source_light
         light_model_list = [SersicLens(kwargs_sersic_light, concentric_with_model=0)]
 
         r_sat_max = 0
@@ -244,18 +239,13 @@ class AnalogModel(object):
                 satellite_galaxy = SISsatellite(satellite_redshift, kwargs_init=kwargs_init,
                                             prior=prior_galaxy)
 
-                amp, r_sersic, n_sersic = self.satellite_props(rein_sat)
-
-                kwargs_light_satellite = [{'amp': amp,
-                                           'R_sersic': r_sersic, 'n_sersic': n_sersic,
-                                       'center_x': xsat,
-                                       'center_y': ysat}]
+                kwargs_light_satellite = [self.lens.kwargs_satellite_light[n]]
 
                 prior_sat_light = [['amp', amp, amp * 0.2],
                                    ['center_x', xsat, 0.05],
                                    ['center_y', ysat, 0.05],
-                                   ['R_sersic', r_sersic, 0.2 * r_sersic],
-                                   ['n_sersic', n_sersic, 0.2 * n_sersic]]
+                                   ['R_sersic', kwargs_light_satellite[0]['R_sersic'], 0.2 * kwargs_light_satellite[0]['R_sersic']],
+                                   ['n_sersic', kwargs_light_satellite[0]['n_sersic'], 0.2 * kwargs_light_satellite[0]['n_sersic']]]
 
                 deflector_list += [satellite_galaxy]
                 light_model_list += [SersicLens(kwargs_light_satellite, concentric_with_model=n+1,
@@ -286,10 +276,14 @@ class AnalogModel(object):
         source_model_list = [SersicSource(kwargs_sersic_source, concentric_with_source=True)]
         source_x, source_y = lens_system_quad.source_centroid_x, lens_system_quad.source_centroid_y
         if self.lens.identifier == 'lens0408':
-            kwargs_sersic_source_2 = [{'amp': 500, 'R_sersic': 0.25, 'n_sersic': 3., 'center_x': source_x - 0.15,
-                                       'center_y': source_y + 0.7,
-                                       'e1': 0.01, 'e2': -0.01}]
-            source_model_list += [SersicSource(kwargs_sersic_source_2)]
+            kwargs_sersic_source_2 = [{'amp': 1500, 'R_sersic': 0.1, 'n_sersic': 4., 'center_x': source_x - 0.6,
+                                       'center_y': source_y + 0.8,
+                                       'e1': 0.2, 'e2': -0.05}]
+            kwargs_sersic_source_3 = [{'amp': 1000, 'R_sersic': 0.2, 'n_sersic': 2., 'center_x': source_x + 0.35,
+              'center_y': source_y + 1.3,
+              'e1': 0.01, 'e2': -0.01}]
+            source_model_list += [SersicSource(kwargs_sersic_source_2),
+                                  SersicSource(kwargs_sersic_source_3)]
 
         if window_size is None:
 

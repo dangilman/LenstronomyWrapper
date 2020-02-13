@@ -12,8 +12,8 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, gamma_macro, N=2):
                           zip(lens_class.delta_time_delay, lens_class.relative_arrival_times)]
     arrival_time_sigma = np.round(arrival_time_sigma, 5)
 
-    fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 200, 'n_run': 60, 'walkerRatio': 4, 'n_burn': 700}
-    #fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 10, 'walkerRatio': 4, 'n_burn': 1}
+    fit_smooth_kwargs = {'n_particles': 120, 'n_iterations': 200, 'n_run': 60, 'walkerRatio': 4, 'n_burn': 700}
+    #fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 5, 'walkerRatio': 4, 'n_burn': 1}
     if Nstart < 501:
         print('SAMPLING control...... ')
         N0 = Nstart
@@ -33,7 +33,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, gamma_macro, N=2):
             create_directory(save_name_path)
 
     elif Nstart < 1501:
-        print('SAMPLING subs3...... ')
+        print('SAMPLING LOS only...... ')
         N0 = Nstart - 1000
         SHMF_norm = 0.0
         LOS_norm = 1.
@@ -42,7 +42,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, gamma_macro, N=2):
             create_directory(save_name_path)
 
     elif Nstart < 2001:
-        print('SAMPLING subs3...... ')
+        print('SAMPLING LOS+subs...... ')
         N0 = Nstart - 1500
         SHMF_norm = 0.02
         LOS_norm = 1.
