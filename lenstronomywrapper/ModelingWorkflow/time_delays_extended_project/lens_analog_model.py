@@ -10,6 +10,7 @@ from lenstronomywrapper.LensSystem.quad_lens import QuadLensSystem
 from lenstronomywrapper.LensSystem.LensComponents.satellite import SISsatellite
 from lenstronomywrapper.LensSystem.light_model import LightModel
 from lenstronomy.Util.param_util import phi_q2_ellipticity
+import random
 from lenstronomywrapper.Utilities.data_util import approx_theta_E
 from lenstronomywrapper.Utilities.lensing_util import solve_H0_from_Ddt
 from lenstronomywrapper.LensSystem.BackgroundSource.quasar import Quasar
@@ -345,7 +346,7 @@ class AnalogModel(object):
         n_keep = 100
         chain_samples = chain_list[1][1]
         nsamples = int(chain_samples[:,-1].shape[0])
-        keep_integers = np.random.random_integers(0, nsamples-1, n_keep)
+        keep_integers = random.sample(range(0, nsamples-1), n_keep)
 
         chain_samples = chain_samples[keep_integers, :]
 
