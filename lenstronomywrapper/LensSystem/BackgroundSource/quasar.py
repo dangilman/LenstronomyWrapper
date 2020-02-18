@@ -104,7 +104,7 @@ class Quasar(SourceBase):
 
         return xgrids, ygrids
 
-    def plot_images(self, xpos, ypos, lensModel, kwargs_lens, normed=True):
+    def get_images(self, xpos, ypos, lensModel, kwargs_lens):
 
         self._check_initialized()
 
@@ -116,17 +116,28 @@ class Quasar(SourceBase):
             surface_brightness_image = self.surface_brightness(xgrids[i].ravel(), ygrids[i].ravel(),
                                                                lensModel, kwargs_lens)
 
-            images.append(surface_brightness_image)
-            mags.append(np.sum(surface_brightness_image) * self.grid_resolution ** 2)
+            n = int(np.sqrt(len(images[i])))
+
+            images.append(surface_brightness_image.reshape(n, n))
+
+        return images
+
+    def plot_images(self, xpos, ypos, lensModel, kwargs_lens, normed=True):
+
+        images = self.get_images(xpos, ypos, lensModel, kwargs_lens)
+
+        mags = []
+        for img in images:
+
+            mags.append(np.sum(img) * self.grid_resolution ** 2)
 
         mags = np.array(mags)
 
         if normed:
             mags *= max(mags) ** -1
         for i in range(0, len(xpos)):
-            n = int(np.sqrt(len(images[i])))
-            print('npixels: ', n)
-            plt.imshow(images[i].reshape(n, n));
+
+            plt.imshow(images[i])
             plt.annotate('relative magnification '+str(np.round(mags[i], 3)), xy=(0.1, 0.85), color='w',
                          xycoords='axes fraction')
             plt.show()
