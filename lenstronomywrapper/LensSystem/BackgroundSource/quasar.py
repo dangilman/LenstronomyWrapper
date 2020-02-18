@@ -116,7 +116,7 @@ class Quasar(SourceBase):
             surface_brightness_image = self.surface_brightness(xgrids[i].ravel(), ygrids[i].ravel(),
                                                                lensModel, kwargs_lens)
 
-            n = int(np.sqrt(len(images[i])))
+            n = int(np.sqrt(len(surface_brightness_image)))
 
             images.append(surface_brightness_image.reshape(n, n))
 
