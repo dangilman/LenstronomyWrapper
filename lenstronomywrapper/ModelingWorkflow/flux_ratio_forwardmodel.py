@@ -23,7 +23,7 @@ def setup(z_lens, z_source, source_size_pc, source_x, source_y, kwargs_macro):
 
 def forward_model(x_image, y_image, magnfications, macromodel_class, source_size_pc,
                   pyhalo_instance, pyhalo_kwargs, realization_type, opt_routine, constrain_params,
-                  verbose, optimizer_class=None, kwargs_optimizer_init={}):
+                  verbose, optimizer_class=None, kwargs_optimizer_init={}, test_mode=False):
 
     kwargs_optimizer = {'opt_routine': opt_routine,
                         'constrain_params': constrain_params}
@@ -53,6 +53,11 @@ def forward_model(x_image, y_image, magnfications, macromodel_class, source_size
     flux_ratios_fit = magnifications_fit[1:]/magnifications_fit[0]
 
     summary_statistic = np.sqrt(np.sum((1 - flux_ratios_fit/flux_ratios_observed)**2))
+
+    if test_mode:
+        lens_system.plot_images(data_class.x, data_class.y,
+                                      lens_model_full, kwargs_lens_final)
+        a=input('continue')
 
     lens_model_names, lens_redshift_list, kwargs_lens_full, _, _ = lens_system.get_lenstronomy_args(True)
     lens_model_names_macro, lens_redshift_list_macro, kwargs_lens_macro, _, _ = lens_system.get_lenstronomy_args(False)

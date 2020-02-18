@@ -28,6 +28,12 @@ class SourceReconstruction(object):
         kwargs_ps = kwargs_result['kwargs_ps']
         kwargs_special = kwargs_result['kwargs_special']
 
+        for i, kw in enumerate(kwargs_lens):
+            if 'ra_0' in kw.keys():
+                del kwargs_lens[i]['ra_0']
+            if 'dec_0' in kw.keys():
+                del kwargs_lens[i]['dec_0']
+
         self._update_lens_system(kwargs_lens, kwargs_source_light, kwargs_lens_light, kwargs_ps)
 
         return chain_list, kwargs_result, kwargs_model, multi_band_list, kwargs_special, param_class
