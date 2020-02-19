@@ -8,11 +8,11 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, gamma_macro, N=2):
     fix_D_dt = False
     gamma_prior_scale = None
 
-    arrival_time_sigma = [delta_ti / ti for delta_ti, ti in
+    arrival_time_sigma = [abs(delta_ti / max(abs(ti), 0.1)) for delta_ti, ti in
                           zip(lens_class.delta_time_delay, lens_class.relative_arrival_times)]
     arrival_time_sigma = np.round(arrival_time_sigma, 5)
 
-    fit_smooth_kwargs = {'n_particles': 120, 'n_iterations': 200, 'n_run': 60, 'walkerRatio': 4, 'n_burn': 700}
+    fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 200, 'n_run': 60, 'walkerRatio': 4, 'n_burn': 700}
     #fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 5, 'walkerRatio': 4, 'n_burn': 1}
     if Nstart < 501:
         print('SAMPLING control...... ')

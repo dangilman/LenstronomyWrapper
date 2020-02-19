@@ -84,7 +84,7 @@ class AnalogModel(object):
             window_size, gamma_macro):
 
         for n in range(0, N):
-            tbaseline, f, t, tgeo, tgrav, macro_params, kw_fit, kw_setup= self.run_once(realization_type,
+            tbaseline, f, t, tdelay_model, macro_params, kw_fit, kw_setup= self.run_once(realization_type,
                                                                 realization_kwargs,
                                                                 arrival_time_sigma,
                                                                 image_positions_sigma,
@@ -94,18 +94,20 @@ class AnalogModel(object):
                                                                 gamma_macro,
                                                                 **fit_smooth_kwargs)
 
-            h0_inf = kw_fit['H0_inferred']
+            #h0_inf = kw_fit['H0_inferred']
 
-            info = [self.zlens, self.zsource, self.lens.x[0], self.lens.x[1], self.lens.x[2], self.lens.x[3],
-                    self.lens.y[0], self.lens.y[1], self.lens.y[2], self.lens.y[3]]
+            # info = [self.zlens, self.zsource, self.lens.x[0], self.lens.x[1], self.lens.x[2], self.lens.x[3],
+            #         self.lens.y[0], self.lens.y[1], self.lens.y[2], self.lens.y[3]]
 
             if n == 0:
                 baseline = tbaseline
                 flux_anomalies = f
                 time_anomalies = t
-                time_anomalies_geo = tgeo
-                time_anomalies_grav = tgrav
-                h0_inferred = h0_inf.ravel()
+                # time_anomalies_geo = tgeo
+                # time_anomalies_grav = tgrav
+                #h0_inferred = h0_inf.ravel()
+                time_delays_model = tdelay_model
+                ddt_inferred = kw_fit['D_dt_samples'].ravel()
                 macromodel_parameters = macro_params
                 tsigma = arrival_time_sigma
 
@@ -113,23 +115,24 @@ class AnalogModel(object):
                 baseline = np.vstack((baseline, tbaseline))
                 flux_anomalies = np.vstack((flux_anomalies, f))
                 time_anomalies = np.vstack((time_anomalies, t))
-                time_anomalies_geo = np.vstack((time_anomalies_geo, tgeo))
-                time_anomalies_grav = np.vstack((time_anomalies_grav, tgrav))
-                h0_inferred = np.append(h0_inferred, h0_inf.ravel()).flatten()
+                time_delays_model = np.vstack((time_delays_model, tdelay_model))
+                # time_anomalies_geo = np.vstack((time_anomalies_geo, tgeo))
+                # time_anomalies_grav = np.vstack((time_anomalies_grav, tgrav))
+                ddt_inferred = np.vstack((ddt_inferred, kw_fit['D_dt_samples'].ravel()))
+                #h0_inferred = np.append(h0_inferred, h0_inf.ravel()).flatten()
                 macromodel_parameters = np.vstack((macromodel_parameters, macro_params))
                 tsigma = np.vstack((tsigma, arrival_time_sigma))
 
-        fnames = ['tbaseline_', 'flux_anomaly_', 'time_anomaly_', 'time_anomaly_grav_',
-                  'time_anomaly_geo_', 'geometry_', 'h0_inferred_', 'macroparams_',
+        fnames = ['tbaseline_', 'flux_anomaly_', 'time_anomaly_', 'time_delays_', 'ddt_inferred', 'macroparams_',
                   'time_delay_sigma_']
 
-        arrays = [baseline, flux_anomalies, time_anomalies, time_anomalies_grav, time_anomalies_geo, np.array(info),
-                  np.array(h0_inferred), macromodel_parameters, tsigma]
+        arrays = [baseline, flux_anomalies, time_anomalies, time_delays_model,
+                  np.array(ddt_inferred), macromodel_parameters, tsigma]
 
         for fname, arr in zip(fnames, arrays):
             write_data_to_file(save_name_path + fname + str(N_start) + '.txt', arr)
 
-        return flux_anomalies, baseline, time_anomalies, time_anomalies_geo, time_anomalies_grav, h0_inferred
+        return flux_anomalies, baseline, time_anomalies, ddt_inferred
 
     def save_append(self, filename, array_to_save):
 
@@ -162,27 +165,27 @@ class AnalogModel(object):
 
         key = 'time_delays'
         time_anomaly = np.round(self.time_anomaly(kwargs_data_fit[key], kwargs_data_setup[key]), 4)
-
+        time_delays_model = self.time_anomaly(kwargs_data_fit[key])
         time_delay_baseline = kwargs_data_setup[key]
         #time_delay_baseline = time_delay_baseline.reshape(1,3)
 
-        key = 'geo_delay'
-        time_anomaly_geo = np.round(self.time_anomaly(kwargs_data_fit[key], kwargs_data_setup[key]), 4)
+        # key = 'geo_delay'
+        # time_anomaly_geo = np.round(self.time_anomaly(kwargs_data_fit[key], kwargs_data_setup[key]), 4)
+        #
+        # key = 'grav_delay'
+        # time_anomaly_grav = np.round(self.time_anomaly(kwargs_data_fit[key], kwargs_data_setup[key]), 4)
 
-        key = 'grav_delay'
-        time_anomaly_grav = np.round(self.time_anomaly(kwargs_data_fit[key], kwargs_data_setup[key]), 4)
+        #ddt_samples = return_kwargs_fit['D_dt_samples']
 
-        ddt_samples = return_kwargs_fit['D_dt_samples']
+        # h0 = []
+        # for di in ddt_samples:
+        #     new_h0 = solve_H0_from_Ddt(self.zlens, self.zsource, di, self.pyhalo._cosmology.astropy)
+        #     h0.append(new_h0)
+        #
+        # return_kwargs_fit['H0_inferred'] = np.round(h0, 4)
 
-        h0 = []
-        for di in ddt_samples:
-            new_h0 = solve_H0_from_Ddt(self.zlens, self.zsource, di, self.pyhalo._cosmology.astropy)
-            h0.append(new_h0)
-
-        return_kwargs_fit['H0_inferred'] = np.round(h0, 4)
-
-        return time_delay_baseline, flux_anomaly, time_anomaly, time_anomaly_geo, \
-               time_anomaly_grav, macromodel_params, return_kwargs_fit, return_kwargs_setup
+        return time_delay_baseline, flux_anomaly, time_anomaly, time_delays_model, \
+               macromodel_params, return_kwargs_fit, return_kwargs_setup
 
     def compute_observables(self, lens_system):
 
@@ -208,12 +211,9 @@ class AnalogModel(object):
         deflector_list = [PowerLawShear(self.zlens, kwargs_macro)]
 
         amp, rsersic, nsersic = self.satellite_props(approx_theta_E(self.lens.x, self.lens.y))
-        #kwargs_sersic_light = [{'amp': amp, 'R_sersic': rsersic, 'n_sersic': nsersic, 'center_x': None, 'center_y': None}]
+
         kwargs_sersic_light = self.lens.kwargs_lens_light
-        amp_source, r_source, n_source = self.sample_source(amp)
-        # kwargs_sersic_source = [{'amp': amp_source, 'R_sersic': r_source, 'n_sersic': n_source,
-        #                          'center_x': None, 'center_y': None,
-        #                          'e1': source_e1, 'e2': source_e2}]
+
         kwargs_sersic_source = self.lens.kwargs_source_light
         light_model_list = [SersicLens(kwargs_sersic_light, concentric_with_model=0)]
 
