@@ -12,7 +12,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, gamma_macro, N=2):
                           zip(lens_class.delta_time_delay, lens_class.relative_arrival_times)]
     arrival_time_sigma = np.round(arrival_time_sigma, 5)
 
-    fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 200, 'n_run': 60, 'walkerRatio': 4, 'n_burn': 700}
+    fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 200, 'n_run': 100, 'walkerRatio': 4, 'n_burn': 550}
     #fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 5, 'walkerRatio': 4, 'n_burn': 1}
     if Nstart < 501:
         print('SAMPLING control...... ')
@@ -52,7 +52,8 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, gamma_macro, N=2):
 
     else:
         raise Exception('out of range.')
-
+    if Nstart > 500:
+        return
     run_real(lens_class, save_name_path, N, N0, SHMF_norm, LOS_norm, log_mlow, opening_angle,
              arrival_time_sigma, position_sigma, gamma_prior_scale, fix_D_dt, window_size, gamma_macro,
              time_delay_like=True, fit_smooth_kwargs=fit_smooth_kwargs)
