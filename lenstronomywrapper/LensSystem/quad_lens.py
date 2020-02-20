@@ -1,4 +1,5 @@
 from lenstronomywrapper.Optimization.quad_optimization.brute import BruteOptimization
+from lenstronomywrapper.Optimization.quad_optimization.four_image_solver import FourImageSolver
 from lenstronomywrapper.LensSystem.lens_base import LensBase
 from pyHalo.Cosmology.cosmology import Cosmology
 from lenstronomywrapper.LensSystem.BackgroundSource.quasar import Quasar
@@ -43,14 +44,19 @@ class QuadLensSystem(LensBase):
         return smooth_lens
 
     def initialize(self, data_to_fit, opt_routine='fixed_powerlaw_shear', constrain_params=None, verbose=False,
-                   include_substructure=False, kwargs_optimizer={}):
+                   include_substructure=False, kwargs_optimizer={}, method='PSO_SIMPLEX'):
 
-        optimizer = BruteOptimization(self)
+        if method == 'PSO_SIMPLEX':
 
-        kwargs_lens_final, lens_model_full, _ = optimizer.optimize(data_to_fit, opt_routine, constrain_params,
-                                                                   verbose, include_substructure, kwargs_optimizer,
-                                                                   )
+            optimizer = BruteOptimization(self)
+            kwargs_lens_final, lens_model_full, _ = optimizer.optimize(data_to_fit, opt_routine, constrain_params,
+                                                                       verbose, include_substructure, kwargs_optimizer,
+                                                                       )
 
+        elif method == 'SOLVER4POINT':
+
+            optimizer = FourImageSolver(self)
+            kwargs_lens_final, lens_model_full, _ = optimizer.optimize(data_to_fit, constrain_params, include_substructure)
 
         return
 
