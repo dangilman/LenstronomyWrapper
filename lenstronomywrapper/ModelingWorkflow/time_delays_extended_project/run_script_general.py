@@ -13,7 +13,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, gamma_macro, N=2):
 
     arrival_time_sigma = np.round(arrival_time_sigma, 5)
 
-    fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 1, 'walkerRatio': 4, 'n_burn': 0}
+    fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 200, 'n_run': 100, 'walkerRatio': 4, 'n_burn': 550}
 
     if Nstart < 501:
         print('SAMPLING control...... ')
@@ -31,7 +31,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, gamma_macro, N=2):
         N0 = Nstart - 500
         SHMF_norm = 0.0
         LOS_norm = 0.
-        save_name_path = os.getenv('HOME') + '/Code/tdelay_output/raw/' + fname + '/control_halfsigma/'
+        save_name_path = os.getenv('HOME') + '/Code/tdelay_output/raw/' + fname + '/control_quartersigma/'
         if not os.path.exists(save_name_path):
             create_directory(save_name_path)
 
