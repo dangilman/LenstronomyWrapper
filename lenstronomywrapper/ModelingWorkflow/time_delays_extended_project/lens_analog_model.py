@@ -4,7 +4,6 @@ from lenstronomywrapper.LensSystem.LensLight.sersic_lens import SersicLens
 from lenstronomywrapper.LensData.arc_plus_quad import ArcPlusQuad
 from lenstronomywrapper.LensData.lensed_quasar import LensedQuasar
 from lenstronomywrapper.LensSystem.macrolensmodel import MacroLensModel
-from lenstronomywrapper.LensSystem.LensComponents.powerlawshearconvergence import PowerLawShearConvergence
 from lenstronomywrapper.LensSystem.LensComponents.powerlawshear import PowerLawShear
 from lenstronomywrapper.LensSystem.quad_lens import QuadLensSystem
 from lenstronomywrapper.LensSystem.LensComponents.satellite import SISsatellite
