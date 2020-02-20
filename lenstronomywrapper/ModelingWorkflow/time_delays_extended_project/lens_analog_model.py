@@ -117,7 +117,7 @@ class AnalogModel(object):
                 time_delays_model = np.vstack((time_delays_model, tdelay_model))
                 # time_anomalies_geo = np.vstack((time_anomalies_geo, tgeo))
                 # time_anomalies_grav = np.vstack((time_anomalies_grav, tgrav))
-                ddt_inferred = np.vstack((ddt_inferred, kw_fit['D_dt_samples'].ravel()))
+                ddt_inferred = np.append((ddt_inferred, kw_fit['D_dt_samples'].ravel()))
                 #h0_inferred = np.append(h0_inferred, h0_inf.ravel()).flatten()
                 macromodel_parameters = np.vstack((macromodel_parameters, macro_params))
                 tsigma = np.vstack((tsigma, arrival_time_sigma))
@@ -164,7 +164,7 @@ class AnalogModel(object):
 
         key = 'time_delays'
         time_anomaly = np.round(self.time_anomaly(kwargs_data_fit[key], kwargs_data_setup[key]), 4)
-        time_delays_model = self.time_anomaly(kwargs_data_fit[key])
+        time_delays_model = kwargs_data_fit[key]
         time_delay_baseline = kwargs_data_setup[key]
         #time_delay_baseline = time_delay_baseline.reshape(1,3)
 

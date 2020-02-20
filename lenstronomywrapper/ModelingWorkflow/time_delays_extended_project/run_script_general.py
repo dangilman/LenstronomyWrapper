@@ -13,7 +13,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, gamma_macro, N=2):
 
     arrival_time_sigma = np.round(arrival_time_sigma, 5)
 
-    fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 200, 'n_run': 100, 'walkerRatio': 4, 'n_burn': 550}
+    fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 1, 'walkerRatio': 4, 'n_burn': 0}
 
     if Nstart < 501:
         print('SAMPLING control...... ')
