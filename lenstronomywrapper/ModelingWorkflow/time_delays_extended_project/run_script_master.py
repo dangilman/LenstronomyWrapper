@@ -1,4 +1,5 @@
-from MagniPy.Workflow.grism_lenses.he0435 import Lens0435
+#from MagniPy.Workflow.grism_lenses.he0435 import Lens0435
+from MagniPy.Workflow.grism_lenses.he0435_satellite_convention_phys import Lens0435
 from MagniPy.Workflow.grism_lenses.lens2033 import WFI2033
 from MagniPy.Workflow.grism_lenses.rxj1131 import Lens1131
 from MagniPy.Workflow.radio_lenses.lens1115 import Lens1115
@@ -24,23 +25,23 @@ log_mlow = 6.7
 #     external_shear_mean = 0.09
 #     external_shear_sigma = 0.01
 
-if n_lens < 1001:
-    Nstart = n_lens
-    lens_name = 'lens1115'
-    half_window_size = 1.8
-    lens_class = Lens1115()
-    gamma_macro = 2.2
-    # external_shear_mean =
-    # external_shear_sigma =
-
-# elif n_lens < 6001:
-#     Nstart = n_lens - 4000
-#     lens_name = 'lens0435'
-#     half_window_size = 2.
-#     lens_class = Lens0435()
-#     gamma_macro = 1.93
+# if n_lens < 1001:
+#     Nstart = n_lens
+#     lens_name = 'lens1115'
+#     half_window_size = 1.8
+#     lens_class = Lens1115()
+#     gamma_macro = 2.2
 #     # external_shear_mean =
 #     # external_shear_sigma =
+
+if n_lens < 1001:
+    Nstart = n_lens
+    lens_name = 'lens0435_lensedsatellite'
+    half_window_size = 2.
+    lens_class = Lens0435()
+    gamma_macro = 1.93
+    # external_shear_mean =
+    # external_shear_sigma =
 
 # elif n_lens < 8001:
 #     Nstart = n_lens - 6000
@@ -51,14 +52,14 @@ if n_lens < 1001:
 #     # external_shear_mean =
 #     # external_shear_sigma =
 
-elif n_lens < 2001:
-    Nstart = n_lens - 1000
-    lens_name = 'lens2033'
-    half_window_size = 2.5
-    lens_class = WFI2033()
-    gamma_macro = 1.95
-    # external_shear_mean = 0.11
-    # external_shear_sigma = 0.02
+# elif n_lens < 2001:
+#     Nstart = n_lens - 1000
+#     lens_name = 'lens2033'
+#     half_window_size = 2.5
+#     lens_class = WFI2033()
+#     gamma_macro = 1.95
+#     # external_shear_mean = 0.11
+#     # external_shear_sigma = 0.02
 
 # elif n_lens < 12001:
 #     Nstart = n_lens - 10000
