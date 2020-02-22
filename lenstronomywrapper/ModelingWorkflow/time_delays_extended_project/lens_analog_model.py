@@ -117,7 +117,7 @@ class AnalogModel(object):
                 time_delays_model = np.vstack((time_delays_model, tdelay_model))
                 # time_anomalies_geo = np.vstack((time_anomalies_geo, tgeo))
                 # time_anomalies_grav = np.vstack((time_anomalies_grav, tgrav))
-                ddt_inferred = np.append((ddt_inferred, kw_fit['D_dt_samples'].ravel()))
+                ddt_inferred = np.append(ddt_inferred, kw_fit['D_dt_samples'].ravel())
                 #h0_inferred = np.append(h0_inferred, h0_inf.ravel()).flatten()
                 macromodel_parameters = np.vstack((macromodel_parameters, macro_params))
                 tsigma = np.vstack((tsigma, arrival_time_sigma))
@@ -203,9 +203,7 @@ class AnalogModel(object):
         data_to_fit = LensedQuasar(self.lens.x, self.lens.y, self.lens.m)
         background_quasar = self.background_quasar_class()
 
-        kwargs_macro = [{'theta_E': 1., 'center_x': 0., 'center_y': 0, 'e1': 0.1, 'e2': 0.1,
-                         'gamma': gamma_macro},
-                        {'gamma1': 0.02, 'gamma2': 0.01}]
+        kwargs_macro = self.lens.kwargs_lens_init
 
         deflector_list = [PowerLawShear(self.zlens, kwargs_macro)]
 
@@ -239,16 +237,19 @@ class AnalogModel(object):
                 satellite_galaxy = SISsatellite(satellite_redshift, kwargs_init=kwargs_init,
                                             prior=prior_galaxy)
 
-                kwargs_light_satellite = [self.lens.kwargs_satellite_light[n]]
+                deflector_list += [satellite_galaxy]
 
-                prior_sat_light = [['amp', amp, amp * 0.2],
+                if self.lens.kwargs_satellite_light[n] is not None:
+                    kwargs_light_satellite = [self.lens.kwargs_satellite_light[n]]
+
+                    prior_sat_light = [['amp', amp, amp * 0.2],
                                    ['center_x', xsat, 0.05],
                                    ['center_y', ysat, 0.05],
                                    ['R_sersic', kwargs_light_satellite[0]['R_sersic'], 0.2 * kwargs_light_satellite[0]['R_sersic']],
                                    ['n_sersic', kwargs_light_satellite[0]['n_sersic'], 0.2 * kwargs_light_satellite[0]['n_sersic']]]
 
-                deflector_list += [satellite_galaxy]
-                light_model_list += [SersicLens(kwargs_light_satellite, concentric_with_model=n+1,
+
+                    light_model_list += [SersicLens(kwargs_light_satellite, concentric_with_model=n+1,
                                                 prior=prior_sat_light)]
 
         macromodel = MacroLensModel(deflector_list)
@@ -258,7 +259,8 @@ class AnalogModel(object):
         lens_system_quad = QuadLensSystem(macromodel, self.zsource, background_quasar, realization,
                                           pyhalo_cosmology=self.pyhalo._cosmology)
 
-        lens_system_quad.initialize(data_to_fit, include_substructure=True, verbose=False)
+        lens_system_quad.initialize(data_to_fit, include_substructure=True, verbose=True,
+                                    kwargs_optimizer={'particle_swarm': False})
         magnifications, arrival_times, dtgeo, dtgrav = self.compute_observables(lens_system_quad)
 
         arrival_time_uncertainties = []
@@ -345,6 +347,7 @@ class AnalogModel(object):
         n_keep = 100
         chain_samples = chain_list[1][1]
         nsamples = int(chain_samples[:,-1].shape[0])
+
         keep_integers = random.sample(range(0, nsamples-1), n_keep)
 
         chain_samples = chain_samples[keep_integers, :]

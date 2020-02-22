@@ -13,9 +13,9 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, gamma_macro, N=2):
 
     arrival_time_sigma = np.round(arrival_time_sigma, 5)
 
-    fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 200, 'n_run': 100, 'walkerRatio': 4, 'n_burn': 550}
+    fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 200, 'n_run': 100, 'walkerRatio': 4, 'n_burn': 600}
 
-    if Nstart < 501:
+    if Nstart < 75:
         print('SAMPLING control...... ')
         arrival_time_sigma *= 1.
         N0 = Nstart
@@ -25,18 +25,16 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, gamma_macro, N=2):
         if not os.path.exists(save_name_path):
             create_directory(save_name_path)
 
-    elif Nstart < 1001:
+    else:
         print('SAMPLING control half sigma...... ')
         arrival_time_sigma *= 0.25
-        N0 = Nstart - 500
+        N0 = Nstart - 75
         SHMF_norm = 0.0
         LOS_norm = 0.
         save_name_path = os.getenv('HOME') + '/Code/tdelay_output/raw/' + fname + '/control_quartersigma/'
         if not os.path.exists(save_name_path):
             create_directory(save_name_path)
 
-    else:
-        raise Exception('out of range.')
 
     run_real(lens_class, save_name_path, N, N0, SHMF_norm, LOS_norm, log_mlow, opening_angle,
              arrival_time_sigma, position_sigma, gamma_prior_scale, fix_D_dt, window_size, gamma_macro,

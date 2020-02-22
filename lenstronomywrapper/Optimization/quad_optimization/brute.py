@@ -38,7 +38,7 @@ class BruteOptimization(OptimizationBase):
         self._check_routine(opt_routine, constrain_params)
 
         kwargs_lens_final, _, lens_model_full, _, images, source = self._fit(data_to_fit, self.n_particles, opt_routine,
-                                  constrain_params, self.n_iterations, {}, verbose, particle_swarm=True,
+                                  constrain_params, self.n_iterations, {}, verbose,
                                       re_optimize=self.reoptimize, tol_mag=None,
                                           include_substructure=include_substructure,
                                         kwargs_optimizer=kwargs_optimizer, realization=self.realization_initial)
@@ -50,7 +50,7 @@ class BruteOptimization(OptimizationBase):
         return self._return_results(source, kwargs_lens_final, lens_model_full, return_kwargs)
 
     def _fit(self, data_to_fit, nparticles, opt_routine, constrain_params, simplex_n_iter, optimizer_kwargs, verbose,
-                            particle_swarm=True, re_optimize=False, tol_mag=None, include_substructure=True,
+                            re_optimize=False, tol_mag=None, include_substructure=True,
                                             kwargs_optimizer={}, realization=None):
 
         """
@@ -64,7 +64,7 @@ class BruteOptimization(OptimizationBase):
                                                   log_mass_sheet_back=self._log_mass_sheet_back)
 
         run_kwargs = {'optimizer_routine': opt_routine, 'constrain_params': constrain_params,
-                      'simplex_n_iterations': simplex_n_iter, 'particle_swarm': particle_swarm,
+                      'simplex_n_iterations': simplex_n_iter,
                       're_optimize': re_optimize, 'tol_mag': tol_mag, 'multiplane': True,
                       'z_main': self.lens_system.zlens, 'z_source': self.lens_system.zsource,
                       'astropy_instance': self.lens_system.astropy, 'verbose': verbose, 'pso_convergence_mean': 30000,
@@ -97,4 +97,4 @@ class BruteSettingsDefault(object):
 
     @property
     def n_iterations(self):
-        return 250
+        return 300

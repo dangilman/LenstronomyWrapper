@@ -16,59 +16,47 @@ n_lens = int(sys.argv[1])
 log_mlow = 6.7
 #time.sleep(180)
 
-# if n_lens < 2001:
-#     Nstart = n_lens
-#     lens_name = 'lens1131'
-#     half_window_size = 3.
-#     lens_class = Lens1131()
-#     gamma_macro = 1.98
-#     external_shear_mean = 0.09
-#     external_shear_sigma = 0.01
-
-# if n_lens < 1001:
-#     Nstart = n_lens
-#     lens_name = 'lens1115'
-#     half_window_size = 1.8
-#     lens_class = Lens1115()
-#     gamma_macro = 2.2
-#     # external_shear_mean =
-#     # external_shear_sigma =
-
-if n_lens < 1001:
+if n_lens < 151:
     Nstart = n_lens
-    lens_name = 'lens0435_lensedsatellite'
+    lens_name = 'lens1131'
+    half_window_size = 3.
+    lens_class = Lens1131()
+    gamma_macro = 1.98
+
+elif n_lens < 301:
+    Nstart = n_lens - 150
+    lens_name = 'lens1115'
+    half_window_size = 1.8
+    lens_class = Lens1115()
+    gamma_macro = 2.2
+
+elif n_lens < 451:
+    Nstart = n_lens - 300
+    lens_name = 'lens0435'
     half_window_size = 2.
     lens_class = Lens0435()
     gamma_macro = 1.93
-    # external_shear_mean =
-    # external_shear_sigma =
 
-# elif n_lens < 8001:
-#     Nstart = n_lens - 6000
-#     lens_name = 'lens1608'
-#     half_window_size = 1.9
-#     lens_class = Lens1608()
-#     gamma_macro = 2.08
-#     # external_shear_mean =
-#     # external_shear_sigma =
+elif n_lens < 601:
+    Nstart = n_lens - 450
+    lens_name = 'lens1608'
+    half_window_size = 1.9
+    lens_class = Lens1608()
+    gamma_macro = 2.08
 
-# elif n_lens < 2001:
-#     Nstart = n_lens - 1000
-#     lens_name = 'lens2033'
-#     half_window_size = 2.5
-#     lens_class = WFI2033()
-#     gamma_macro = 1.95
-#     # external_shear_mean = 0.11
-#     # external_shear_sigma = 0.02
+elif n_lens < 751:
+    Nstart = n_lens - 600
+    lens_name = 'lens2033'
+    half_window_size = 2.5
+    lens_class = WFI2033()
+    gamma_macro = 1.95
 
-# elif n_lens < 12001:
-#     Nstart = n_lens - 10000
-#     lens_name = 'lens0408'
-#     half_window_size = 3.5
-#     lens_class = Lens0408()
-#     gamma_macro = 1.9
-#     # external_shear_mean =
-#     # external_shear_sigma =
+elif n_lens < 900:
+    Nstart = n_lens - 750
+    lens_name = 'lens0408'
+    half_window_size = 3.8
+    lens_class = Lens0408()
+    gamma_macro = 1.9
 
 else:
     raise Exception('out of range.')
