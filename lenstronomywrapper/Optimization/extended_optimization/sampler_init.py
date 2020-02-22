@@ -24,9 +24,31 @@ class SamplerInit(object):
 
         self.lens_data_class = lens_data_class
 
+    def _fixed_lens_options(self, kwargs_lens_init_fixed):
+
+        param_lower = []
+        param_upper = []
+        param_sigma = []
+
+        for i in range(0, len(kwargs_lens_init_fixed)):
+            dict_lower, dict_upper, dict_sigma = {}, {}, {}
+            for kw in kwargs_lens_init_fixed[i].keys():
+                dict_lower[kw] = kwargs_lens_init_fixed[i][kw] * 0.8
+                dict_upper[kw] = kwargs_lens_init_fixed[i][kw] * 1.2
+                dict_sigma[kw] = 0.01
+
+            param_lower.append(dict_lower)
+            param_upper.append(dict_upper)
+            param_sigma.append(dict_sigma)
+
+        return param_lower, param_upper, param_sigma
+
     def sampler_inputs(self):
 
-        kwargs_model = self.kwargs_model
+        kwargs_model, fixed_models_lens, kwargs_lens_init_tovary, kwargs_lens_init_fixed = self.kwargs_model
+
+        param_lower_fixed, param_upper_fixed, param_sigma_fixed = self._fixed_lens_options(kwargs_lens_init_fixed)
+
         kwargs_numerics = self.kwargs_numerics
         kwargs_constraints = self.kwargs_constraints
         kwargs_likelihood = self.kwargs_likelihood
@@ -38,34 +60,33 @@ class SamplerInit(object):
             kwargs_data_joint['time_delays_measured'] = self.dt_measured
             kwargs_data_joint['time_delays_uncertainties'] = self.dt_sigma
 
-        kwargs_lens_init = self.system.macromodel.kwargs
         kwargs_source_init = self.sourcelight_instance.param_init
         kwargs_lens_light_init = self.lenslight_instance.param_init
         kwargs_ps_init = self.pointsource_instance.param_init
 
         # initial spread in parameter estimation #
-        kwargs_lens_sigma = self.system.macromodel.param_sigma
+        kwargs_lens_sigma = self.system.macromodel.param_sigma + param_sigma_fixed
         kwargs_source_sigma = self.sourcelight_instance.param_sigma
         kwargs_lens_light_sigma = self.lenslight_instance.param_sigma
         kwargs_ps_sigma = self.pointsource_instance.param_sigma
 
         # hard bound lower limit in parameter space #
-        kwargs_lower_lens = self.system.macromodel.param_lower
+        kwargs_lower_lens = self.system.macromodel.param_lower + param_lower_fixed
         kwargs_lower_source = self.sourcelight_instance.param_lower
         kwargs_lower_lens_light = self.lenslight_instance.param_lower
         kwargs_lower_ps = self.pointsource_instance.param_lower
 
         # hard bound upper limit in parameter space #
-        kwargs_upper_lens = self.system.macromodel.param_upper
+        kwargs_upper_lens = self.system.macromodel.param_upper + param_upper_fixed
         kwargs_upper_source = self.sourcelight_instance.param_upper
         kwargs_upper_lens_light = self.lenslight_instance.param_upper
         kwargs_upper_ps = self.pointsource_instance.param_upper
 
-        fixed_models_lens = self.system.macromodel.fixed_models
         fixed_models_source_light = self.sourcelight_instance.fixed_models
         fixed_models_lens_light = self.lenslight_instance.fixed_models
         fixed_models_ps = self.pointsource_instance.fixed_models
 
+        kwargs_lens_init = kwargs_lens_init_tovary + kwargs_lens_init_fixed
         lens_params = [kwargs_lens_init, kwargs_lens_sigma, fixed_models_lens, kwargs_lower_lens, kwargs_upper_lens]
         source_params = [kwargs_source_init, kwargs_source_sigma, fixed_models_source_light, kwargs_lower_source,
                          kwargs_upper_source]
@@ -163,8 +184,38 @@ class SamplerInit(object):
     @property
     def kwargs_model(self):
 
-        lens_model_list = self.system.macromodel.lens_model_list
-        lens_redshift_list = self.system.macromodel.redshift_list
+        lens_model_list, lens_redshift_list, kwargs_lens_init, _, _ = self.system.get_lenstronomy_args()
+
+        fixed_params_macro = self.system.macromodel.fixed_models
+        fixed_params_other = []
+
+        n_total = len(lens_model_list)
+        n_fixed_macro = len(fixed_params_macro)
+        n = n_total - n_fixed_macro
+
+        if n > 0:
+
+            kwargs_lens_init_tovary = kwargs_lens_init[0:n_fixed_macro]
+            kwargs_lens_init_fixed = kwargs_lens_init[n_fixed_macro:]
+
+            i_start = n_fixed_macro
+            for i in range(0, n):
+                new_dict = {}
+                keys = kwargs_lens_init[i_start+i].keys()
+                for key in keys:
+                    new_dict[key] = kwargs_lens_init[i_start+i][key]
+                if 'kappa_ext' in keys:
+                    new_dict['ra_0'] = 0.
+                    new_dict['dec_0'] = 0.
+                fixed_params_other.append(new_dict)
+
+        else:
+
+            kwargs_lens_init_tovary = kwargs_lens_init
+            kwargs_lens_init_fixed = []
+
+        fixed_params_lens = fixed_params_macro + fixed_params_other
+
         source_light_model_list = self.sourcelight_instance.light_model_list
         point_source_model_list = self.pointsource_instance.point_source_list
         lens_light_model_list = self.lenslight_instance.light_model_list
@@ -181,7 +232,7 @@ class SamplerInit(object):
                   'z_lens': self.system.zlens, 'z_source': self.system.zsource,
                   'multi_plane': True, 'lens_redshift_list': lens_redshift_list}
 
-        return kwargs
+        return kwargs, fixed_params_lens, kwargs_lens_init_tovary, kwargs_lens_init_fixed
 
     @property
     def kwargs_likelihood(self):
@@ -197,7 +248,7 @@ class SamplerInit(object):
         kwargs = {'check_bounds': check_bounds,
                   'force_no_add_image': force_no_add_image,
                   'source_marg': source_marg,
-                  'image_position_uncertainty': image_position_uncertainty,
+                  #'image_position_uncertainty': image_position_uncertainty,
                   'check_matched_source_position': check_matched_source_position,
                   'source_position_tolerance': source_position_tolerance,
                   'source_position_sigma': source_position_sigma,

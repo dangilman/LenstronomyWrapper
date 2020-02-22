@@ -79,7 +79,7 @@ class HierarchicalSettingsDefault(object):
 
     @property
     def log_mass_cut_global(self):
-        return 8.
+        return 7.7
 
     @property
     def n_particles(self):
@@ -100,9 +100,9 @@ class HierarchicalSettingsDefault(object):
     @property
     def foreground_settings(self):
         # add this only within the window
-        aperture_masses = [8, 7, 0]
+        aperture_masses = [self.log_mass_cut_global, 7, 0]
         # add this everywhere
-        globalmin_masses = [self.log_mass_cut_global, 8, 8]
+        globalmin_masses = [self.log_mass_cut_global]*3
         # window size
         window_sizes = [20, 0.4, 0.15]
         # controls starting points for re-optimizations
@@ -119,9 +119,9 @@ class HierarchicalSettingsDefault(object):
     @property
     def background_settings(self):
         # add this only within the window
-        aperture_masses = [8, 7, 0]
+        aperture_masses = [self.log_mass_cut_global, 7, 0]
         # add this everywhere
-        globalmin_masses = [self.log_mass_cut_global, 8, 8]
+        globalmin_masses = [self.log_mass_cut_global]*3
         # window size
         window_sizes = [20, 0.3, 0.125]
         # controls starting points for re-optimizations

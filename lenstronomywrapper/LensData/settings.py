@@ -1,6 +1,6 @@
 class DefaultDataSpecifics(object):
 
-    def __init__(self, background_rms=0.5, exp_time=100, window_size=3.5, deltaPix=0.04, fwhm=0.1,
+    def __init__(self, background_rms=0.1, exp_time=1e+4, window_size=3.5, deltaPix=0.05, fwhm=0.1,
                  psf_type='GAUSSIAN'):
 
         numPix = float(window_size)/deltaPix

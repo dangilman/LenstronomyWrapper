@@ -109,7 +109,8 @@ class LensBase(object):
                 log_mass_sheet_front = log_mlow
             if log_mass_sheet_back is None:
                 log_mass_sheet_back = log_mlow
-
+            print(log_mass_sheet_front, log_mass_sheet_back)
+            a=input('continue')
             halo_names, halo_redshifts, kwargs_halos, kwargs_lenstronomy = \
                 realization.lensing_quantities(log_mass_sheet_front, log_mass_sheet_back)
         else:
@@ -140,3 +141,4 @@ class LensBase(object):
         lensed_x, lensed_y, _, _ = lensmodel.ray_shooting_partial(0., 0., x_phys, y_phys, 0, z_stop, kwargs)
         Tz = self.pyhalo_cosmology.D_C_transverse(z_stop)
         return lensed_x/Tz, lensed_y/Tz
+
