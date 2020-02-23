@@ -50,7 +50,7 @@ class BruteOptimization(OptimizationBase):
         return self._return_results(source, kwargs_lens_final, lens_model_full, return_kwargs)
 
     def _fit(self, data_to_fit, nparticles, opt_routine, constrain_params, simplex_n_iter, optimizer_kwargs, verbose,
-                            re_optimize=False, tol_mag=None, include_substructure=True,
+                            re_optimize=False, tol_mag=None, include_substructure=True, particle_swarm=None,
                                             kwargs_optimizer={}, realization=None):
 
         """
@@ -73,6 +73,9 @@ class BruteOptimization(OptimizationBase):
 
         for key in kwargs_optimizer.keys():
             run_kwargs[key] = kwargs_optimizer[key]
+
+        if particle_swarm is not None:
+            run_kwargs['particle_swarm'] = particle_swarm
 
         opt = Optimizer(data_to_fit.x, data_to_fit.y, redshift_list, lens_model_list, kwargs_lens, numerical_alpha_class,
                  magnification_target=data_to_fit.m, **run_kwargs)

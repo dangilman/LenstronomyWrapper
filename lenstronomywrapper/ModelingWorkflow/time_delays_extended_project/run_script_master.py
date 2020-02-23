@@ -1,5 +1,5 @@
-#from MagniPy.Workflow.grism_lenses.he0435 import Lens0435
-from MagniPy.Workflow.grism_lenses.he0435_satellite_convention_phys import Lens0435
+from MagniPy.Workflow.grism_lenses.he0435 import Lens0435
+#from MagniPy.Workflow.grism_lenses.he0435_satellite_convention_phys import Lens0435 as
 from MagniPy.Workflow.grism_lenses.lens2033 import WFI2033
 from MagniPy.Workflow.grism_lenses.rxj1131 import Lens1131
 from MagniPy.Workflow.radio_lenses.lens1115 import Lens1115
