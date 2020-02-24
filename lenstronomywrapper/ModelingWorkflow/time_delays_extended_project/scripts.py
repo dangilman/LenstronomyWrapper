@@ -37,10 +37,7 @@ def run_mock(output_path, Nstart, N, SHMF_norm, LOS_norm, log_mlow, opening_angl
 
 def run_real(lens_class, save_name_path, N, N_start, SHMF_norm, LOS_norm, log_mlow, opening_angle, arrival_time_sigma,
             image_positions_sigma, gamma_prior_scale,
-             fix_D_dt, window_size, gamma_macro, time_delay_like=True, fit_smooth_kwargs=None, subtract_exact_mass_sheets=False):
-
-    if fit_smooth_kwargs is None:
-        fit_smooth_kwargs = {'n_particles': 120, 'n_iterations': 200, 'n_run': 60, 'walkerRatio': 4, 'n_burn': 600}
+             fix_D_dt, window_size, exp_time, time_delay_like=True, fit_smooth_kwargs=None, subtract_exact_mass_sheets=False):
 
     mdef = 'TNFW'
     realization_kwargs = {'mdef_main': mdef, 'mdef_los': mdef,
@@ -55,5 +52,5 @@ def run_real(lens_class, save_name_path, N, N_start, SHMF_norm, LOS_norm, log_ml
     model = AnalogModel(lens_class, kwargs_cosmo)
     out = model.run(save_name_path, N_start, N, 'composite_powerlaw', realization_kwargs, arrival_time_sigma,
                     image_positions_sigma, gamma_prior_scale, time_delay_like, fix_D_dt, fit_smooth_kwargs,
-                    window_size, gamma_macro)
+                    window_size, exp_time)
 

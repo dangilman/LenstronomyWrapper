@@ -3,6 +3,7 @@ from astropy.cosmology import FlatLambdaCDM
 from scipy.optimize import minimize
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 from scipy.interpolate import interp1d
+from time import time
 
 def interpolate_ray_paths(x_image, y_image, lens_system, include_substructure=False, realization=None):
 
@@ -31,7 +32,14 @@ def ddt_from_h(H, omega_matter, omega_matter_baryon, zlens, zsource):
     Dds = lensCosmo.D_ds
     return (1 + zlens) * Dd * Ds / Dds
 
-def solve_H0_from_Ddt(zlens, zsource, D_dt, astropy_instance_ref):
+def interpolate_Ddt_h0(zlens, zsource, astropy_instance, h0_min=10, h0_max=200, steps=150):
+
+    h0_values = np.linspace(h0_min, h0_max, steps)
+    ddt = [ddt_from_h(hi, astropy_instance.Om0, astropy_instance.Ob0, zlens, zsource) for hi in h0_values]
+    interpolator = interp1d(ddt, h0_values)
+    return interpolator
+
+def solve_H0_from_Ddt(zlens, zsource, D_dt, astropy_instance_ref, interpolation_function=None):
 
     omega_matter = astropy_instance_ref.Om0
     omega_matter_baryon = astropy_instance_ref.Ob0
@@ -42,14 +50,21 @@ def solve_H0_from_Ddt(zlens, zsource, D_dt, astropy_instance_ref):
 
     if isinstance(D_dt, list) or isinstance(D_dt, np.ndarray):
 
-        for di in D_dt:
-            result = minimize(_func_to_min, x0=73.3,
+        for counter, di in enumerate(D_dt):
+            if interpolation_function is None:
+                result = minimize(_func_to_min, x0=73.3,
                               method='Nelder-Mead', args=di)['x'][0]
+            else:
+                result = interpolation_function(di)
 
             out.append(result)
+
     else:
-        out = minimize(_func_to_min, x0=73.3,
+        if interpolation_function is None:
+            out = minimize(_func_to_min, x0=73.3,
                           method='Nelder-Mead', args=D_dt)['x'][0]
+        else:
+            out = interpolation_function(D_dt)
 
     return out
 

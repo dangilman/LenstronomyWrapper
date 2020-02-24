@@ -1,7 +1,7 @@
 from lenstronomywrapper.ModelingWorkflow.time_delays_extended_project.scripts import *
 import os
 
-def run(Nstart, lens_class, fname, log_mlow, window_size, gamma_macro, N=2):
+def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, N=2):
 
     opening_angle = 10 * window_size
     position_sigma = [0.005]*4
@@ -13,9 +13,9 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, gamma_macro, N=2):
 
     arrival_time_sigma = np.round(arrival_time_sigma, 5)
 
-    fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 200, 'n_run': 100, 'walkerRatio': 4, 'n_burn': 600}
+    fit_smooth_kwargs = {'n_particles': 120, 'n_iterations': 200, 'n_run': 100, 'walkerRatio': 4, 'n_burn': 650}
 
-    if Nstart < 75:
+    if Nstart < 101:
         print('SAMPLING control...... ')
         arrival_time_sigma *= 1.
         N0 = Nstart
@@ -26,16 +26,14 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, gamma_macro, N=2):
             create_directory(save_name_path)
 
     else:
-        print('SAMPLING control half sigma...... ')
-        arrival_time_sigma *= 0.25
-        N0 = Nstart - 75
-        SHMF_norm = 0.0
-        LOS_norm = 0.
+        print('SAMPLING LOS plus subs...... ')
+        N0 = Nstart - 100
+        SHMF_norm = 0.02
+        LOS_norm = 1.
         save_name_path = os.getenv('HOME') + '/Code/tdelay_output/raw/' + fname + '/control_quartersigma/'
         if not os.path.exists(save_name_path):
             create_directory(save_name_path)
 
-
     run_real(lens_class, save_name_path, N, N0, SHMF_norm, LOS_norm, log_mlow, opening_angle,
-             arrival_time_sigma, position_sigma, gamma_prior_scale, fix_D_dt, window_size, gamma_macro,
+             arrival_time_sigma, position_sigma, gamma_prior_scale, fix_D_dt, window_size, exp_time,
              time_delay_like=True, fit_smooth_kwargs=fit_smooth_kwargs)

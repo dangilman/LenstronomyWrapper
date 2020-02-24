@@ -16,49 +16,49 @@ n_lens = int(sys.argv[1])
 log_mlow = 6.7
 #time.sleep(180)
 
-if n_lens < 151:
+if n_lens < 201:
     Nstart = n_lens
     lens_name = 'lens1131'
     half_window_size = 3.
     lens_class = Lens1131()
-    gamma_macro = 1.98
+    exp_time = 800.
 
-elif n_lens < 301:
-    Nstart = n_lens - 150
+elif n_lens < 401:
+    Nstart = n_lens - 200
     lens_name = 'lens1115'
     half_window_size = 1.8
     lens_class = Lens1115()
-    gamma_macro = 2.2
+    exp_time = 1000.
 
-elif n_lens < 451:
-    Nstart = n_lens - 300
+elif n_lens < 601:
+    Nstart = n_lens - 400
     lens_name = 'lens0435'
     half_window_size = 2.
     lens_class = Lens0435()
-    gamma_macro = 1.93
+    exp_time = 900
 
-elif n_lens < 601:
-    Nstart = n_lens - 450
+elif n_lens < 801:
+    Nstart = n_lens - 600
     lens_name = 'lens1608'
     half_window_size = 1.9
     lens_class = Lens1608()
-    gamma_macro = 2.08
+    exp_time = 1050
 
-elif n_lens < 751:
-    Nstart = n_lens - 600
+elif n_lens < 1001:
+    Nstart = n_lens - 800
     lens_name = 'lens2033'
     half_window_size = 2.5
     lens_class = WFI2033()
-    gamma_macro = 1.95
+    exp_time = 1050
 
-elif n_lens < 900:
-    Nstart = n_lens - 750
+elif n_lens < 1201:
+    Nstart = n_lens - 1000
     lens_name = 'lens0408'
     half_window_size = 3.8
     lens_class = Lens0408()
-    gamma_macro = 1.9
+    exp_time = 1000
 
 else:
     raise Exception('out of range.')
 
-run_lens(Nstart, lens_class, lens_name, log_mlow, half_window_size, gamma_macro)
+run_lens(Nstart, lens_class, lens_name, log_mlow, half_window_size, exp_time)
