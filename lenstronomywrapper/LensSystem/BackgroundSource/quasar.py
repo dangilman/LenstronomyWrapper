@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from lenstronomywrapper.Utilities.lensing_util import RayShootingGrid
 from lenstronomy.LightModel.light_model import LightModel
 from lenstronomywrapper.LensSystem.BackgroundSource.source_base import SourceBase
+from lenstronomywrapper.Utilities.lensing_util import flux_at_edge
 
 class Quasar(SourceBase):
 
@@ -147,19 +148,22 @@ class Quasar(SourceBase):
 
         self._check_initialized()
 
-        flux = np.zeros_like(xpos)
-        xgrids, ygrids = self._ray_shooting_setup(xpos, ypos)
+        images = self.get_images(xpos, ypos, lensModel, kwargs_lens)
 
-        for i in range(0,len(xpos)):
-            surface_brightness_image = self.surface_brightness(xgrids[i].ravel(), ygrids[i].ravel(),
-                                                               lensModel, kwargs_lens)
-            flux[i] = np.sum(surface_brightness_image * self.grid_resolution ** 2)
+        mags, edge_flux = [], []
+        blended = False
+        for img in images:
+            mags.append(np.sum(img) * self.grid_resolution ** 2)
+            if blended is False:
+                if flux_at_edge(img):
+                    blended = True
 
-        flux = np.array(flux)
+        flux = np.array(mags)
 
         if normed:
             flux *= max(flux) ** -1
-        return flux
+
+        return flux, blended
 
     def _get_grids(self, xpos, ypos, grids):
 

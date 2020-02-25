@@ -176,7 +176,7 @@ class SimulatedModel(object):
 
     def compute_observables(self, lens_system, x, y):
 
-        magnifications = lens_system.quasar_magnification(x, y, normed=False)
+        magnifications, _ = lens_system.quasar_magnification(x, y, normed=False)
         # lens_system_quad.plot_images(data_to_fit.x, data_to_fit.y)
         lensModel, kwargs_lens = lens_system.get_lensmodel()
         dtgeo, dtgrav = lensModel.lens_model.geo_shapiro_delay(x, y, kwargs_lens)

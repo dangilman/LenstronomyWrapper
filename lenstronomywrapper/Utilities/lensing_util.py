@@ -5,6 +5,19 @@ from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 from scipy.interpolate import interp1d
 from time import time
 
+def flux_at_edge(image):
+
+    assert np.shape(image)[0] == np.shape(image)[1]
+
+    maxbright = np.max(image)
+    edgebright = [image[0,:],image[-1,:],image[:,0],image[:,-1]]
+
+    for edge in edgebright:
+        if any(edge > maxbright * 0.2):
+            return True
+    else:
+        return False
+
 def interpolate_ray_paths(x_image, y_image, lens_system, include_substructure=False, realization=None):
 
     ray_angles_x = []

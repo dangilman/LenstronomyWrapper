@@ -17,7 +17,7 @@ def setup(z_lens, z_source, source_size_pc, source_x, source_y, kwargs_macro):
 
     lensmodel, kwargs = lens_system.get_lensmodel()
     x_image, y_image = lens_system.solve_lens_equation(lensmodel, kwargs)
-    magnifications = lens_system.quasar_magnification(x_image, y_image, lensmodel, kwargs)
+    magnifications, _ = lens_system.quasar_magnification(x_image, y_image, lensmodel, kwargs)
 
     return x_image, y_image, magnifications
 
@@ -48,13 +48,17 @@ def forward_model(x_image, y_image, magnfications, macromodel_class, source_size
         kwargs_lens_final, lens_model_full, return_kwargs = lens_system.fit(data_class, HierarchicalOptimization,
                                                                         verbose=verbose, **kwargs_optimizer)
 
-    magnifications_fit = lens_system.quasar_magnification(data_class.x, data_class.y,
+    magnifications_fit, blended = lens_system.quasar_magnification(data_class.x, data_class.y,
                                       lens_model_full, kwargs_lens_final, normed=True)
     flux_ratios_fit = magnifications_fit[1:]/magnifications_fit[0]
 
     summary_statistic = np.sqrt(np.sum((1 - flux_ratios_fit/flux_ratios_observed)**2))
 
     if test_mode:
+        if blended:
+            print('images are blended.')
+        else:
+            print('images are not blended.')
         lens_system.plot_images(data_class.x, data_class.y,
                                       lens_model_full, kwargs_lens_final)
         a=input('continue')
@@ -86,6 +90,7 @@ def forward_model(x_image, y_image, magnfications, macromodel_class, source_size
                   'flux_ratios_observed': np.round(flux_ratios_observed, 4),
                   'magnifications_fit': np.round(magnifications_fit, 4),
                   'external_shear': external_shear,
-                  'lens_system_optimized': lens_system}
+                  'lens_system_optimized': lens_system,
+                  'blended': blended}
 
     return out_kwargs

@@ -107,6 +107,6 @@ class ChainPostProcess(object):
         srcx, srcy = self.lensModel.ray_shooting(x_image, y_image, kwargs_lens)
         srcx, srcy = np.mean(srcx), np.mean(srcy)
         self.background_quasar.update_position(srcx, srcy)
-        mags = self.background_quasar.magnification(x_image, y_image, self.lensModel, kwargs_lens, normed=False)
+        mags, _ = self.background_quasar.magnification(x_image, y_image, self.lensModel, kwargs_lens, normed=False)
 
         return mags[1:] / mags[0], srcx, srcy
