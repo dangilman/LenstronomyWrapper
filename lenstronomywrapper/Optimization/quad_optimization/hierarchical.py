@@ -13,7 +13,7 @@ class HierarchicalOptimization(BruteOptimization):
         elif settings_class == 'delta_function':
             settings_class = HierarchicalSettingsDeltaFunction(**settings_kwargs)
         else:
-            raise Exception('settings class not recognized')
+            settings_class = settings_class()
 
         if n_particles is None:
             n_particles = settings_class.n_particles
@@ -83,7 +83,6 @@ class HierarchicalOptimization(BruteOptimization):
                              'interpolated_y_angle': ray_y_interp,
                              'zmax': self.lens_system.zlens
                              }
-
 
             if run == 0:
                 if realization_foreground is not None:
