@@ -259,8 +259,12 @@ class AnalogModel(object):
         lens_system_quad = QuadLensSystem(macromodel, self.zsource, background_quasar, realization,
                                           pyhalo_cosmology=self.pyhalo._cosmology)
 
+        if self.lens.identifier == 'lens0408':
+            particle_swarm = True
+        else:
+            particle_swarm = False
         lens_system_quad.initialize(data_to_fit, include_substructure=True, verbose=True,
-                                    kwargs_optimizer={'particle_swarm': False})
+                                    kwargs_optimizer={'particle_swarm': particle_swarm})
         magnifications, arrival_times, dtgeo, dtgrav = self.compute_observables(lens_system_quad)
 
         arrival_time_uncertainties = []

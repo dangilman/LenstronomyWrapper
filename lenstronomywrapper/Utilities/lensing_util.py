@@ -45,7 +45,7 @@ def ddt_from_h(H, omega_matter, omega_matter_baryon, zlens, zsource):
     Dds = lensCosmo.D_ds
     return (1 + zlens) * Dd * Ds / Dds
 
-def interpolate_Ddt_h0(zlens, zsource, astropy_instance, h0_min=10, h0_max=200, steps=150):
+def interpolate_Ddt_h0(zlens, zsource, astropy_instance, h0_min=0.1, h0_max=300, steps=250):
 
     h0_values = np.linspace(h0_min, h0_max, steps)
     ddt = [ddt_from_h(hi, astropy_instance.Om0, astropy_instance.Ob0, zlens, zsource) for hi in h0_values]
@@ -67,8 +67,14 @@ def solve_H0_from_Ddt(zlens, zsource, D_dt, astropy_instance_ref, interpolation_
             if interpolation_function is None:
                 result = minimize(_func_to_min, x0=73.3,
                               method='Nelder-Mead', args=di)['x'][0]
+
             else:
-                result = interpolation_function(di)
+                try:
+                    result = interpolation_function(di)
+                except:
+                    print(di)
+                    result = minimize(_func_to_min, x0=73.3,
+                             method='Nelder-Mead', args=di)['x'][0]
 
             out.append(result)
 
@@ -77,7 +83,12 @@ def solve_H0_from_Ddt(zlens, zsource, D_dt, astropy_instance_ref, interpolation_
             out = minimize(_func_to_min, x0=73.3,
                           method='Nelder-Mead', args=D_dt)['x'][0]
         else:
-            out = interpolation_function(D_dt)
+            try:
+                out = interpolation_function(D_dt)
+            except:
+                out = minimize(_func_to_min, x0=73.3,
+                          method='Nelder-Mead', args=D_dt)['x'][0]
+
 
     return out
 
