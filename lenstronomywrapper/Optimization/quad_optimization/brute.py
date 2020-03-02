@@ -12,23 +12,27 @@ class BruteOptimization(OptimizationBase):
         if n_particles is None:
             n_particles = settings.n_particles
         if simplex_n_iter is None:
-            n_iterations = settings.n_iterations
+            simplex_n_iter = settings.n_iterations
         if reoptimize is None:
             reoptimize = settings.reoptimize
 
         self.n_particles = n_particles
-        self.n_iterations = n_iterations
+        self.n_iterations = simplex_n_iter
         self.reoptimize = reoptimize
 
         self._log_mass_sheet_front = log_mass_sheet_front
         self._log_mass_sheet_back = log_mass_sheet_back
 
         # shoot a ray through the center to determine any global shifts in path
-        ray_interp_x, ray_interp_y = interpolate_ray_paths([0.], [0.], lens_system,
+
+        if lens_system.realization is not None:
+            ray_interp_x, ray_interp_y = interpolate_ray_paths([0.], [0.], lens_system,
                                                            include_substructure=False, realization=None)
 
-        self.realization_initial = lens_system.realization.shift_background_to_source(ray_interp_x[0],
+            self.realization_initial = lens_system.realization.shift_background_to_source(ray_interp_x[0],
                                                                               ray_interp_y[0])
+        else:
+            self.realization_initial = lens_system.realization
 
         super(BruteOptimization, self).__init__(lens_system)
 
@@ -37,7 +41,7 @@ class BruteOptimization(OptimizationBase):
 
         self._check_routine(opt_routine, constrain_params)
 
-        kwargs_lens_final, _, lens_model_full, _, images, source = self._fit(data_to_fit, self.n_particles, opt_routine,
+        kwargs_lens_final, _, lens_model_full, _, images, source = self.fit(data_to_fit, self.n_particles, opt_routine,
                                   constrain_params, self.n_iterations, {}, verbose,
                                       re_optimize=self.reoptimize, tol_mag=None,
                                           include_substructure=include_substructure,
@@ -49,7 +53,7 @@ class BruteOptimization(OptimizationBase):
 
         return self._return_results(source, kwargs_lens_final, lens_model_full, return_kwargs)
 
-    def _fit(self, data_to_fit, nparticles, opt_routine, constrain_params, simplex_n_iter, optimizer_kwargs, verbose,
+    def fit(self, data_to_fit, nparticles, opt_routine, constrain_params, simplex_n_iter, optimizer_kwargs, verbose,
                             re_optimize=False, tol_mag=None, include_substructure=True, particle_swarm=None,
                                             kwargs_optimizer={}, realization=None):
 
@@ -67,7 +71,7 @@ class BruteOptimization(OptimizationBase):
                       'simplex_n_iterations': simplex_n_iter,
                       're_optimize': re_optimize, 'tol_mag': tol_mag, 'multiplane': True,
                       'z_main': self.lens_system.zlens, 'z_source': self.lens_system.zsource,
-                      'astropy_instance': self.lens_system.astropy, 'verbose': verbose, 'pso_convergence_mean': 30000,
+                      'astropy_instance': self.lens_system.astropy, 'verbose': verbose, 'pso_convergence_mean': 40000,
                       'observed_convention_index': convention_index, 'optimizer_kwargs': optimizer_kwargs,
                       }
 

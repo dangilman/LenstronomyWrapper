@@ -70,6 +70,7 @@ class HierarchicalOptimization(BruteOptimization):
                                                                    include_substructure=False)
 
             else:
+
                 ray_x_interp, ray_y_interp = interpolate_ray_paths(data_to_fit.x, data_to_fit.y, self.lens_system,
                                                                    realization=realization_filtered)
 
@@ -125,11 +126,14 @@ class HierarchicalOptimization(BruteOptimization):
 
                 optimizer_kwargs = {'re_optimize_scale': scale[run]}
                 kwargs_lens_final, lens_model_raytracing, lens_model_full, foreground_rays, images, [source_x, source_y] = \
-                    self._fit(data_to_fit, self._n_particles, opt_routine, constrain_params, self._n_iterations,
+                    self.fit(data_to_fit, self._n_particles, opt_routine, constrain_params, self._n_iterations,
                               optimizer_kwargs, verbose, particle_swarm=particle_swarm_reopt[run],
                               re_optimize=re_optimize_iteration[run], tol_mag=None, realization=realization_filtered)
 
                 N_foreground_halos_last = N_foreground_halos
+
+                self.lens_system.update_kwargs_macro(kwargs_lens_final)
+                self.lens_system.clear_static_lensmodel()
 
             else:
 
@@ -224,12 +228,14 @@ class HierarchicalOptimization(BruteOptimization):
                                   'precomputed_rays': foreground_rays}
 
                 kwargs_lens_final, lens_model_raytracing, lens_model_full, foreground_rays, images, [source_x, source_y] = \
-                    self._fit(data_to_fit, self._n_particles, opt_routine, constrain_params,
+                    self.fit(data_to_fit, self._n_particles, opt_routine, constrain_params,
                               self._n_iterations, optimizer_kwargs, verbose,
                               particle_swarm=particle_swarm_reopt[run],
                               re_optimize=re_optimize_iteration[run], tol_mag=None, realization=realization_filtered)
 
                 reoptimized_realizations.append(realization_filtered)
+                self.lens_system.update_kwargs_macro(kwargs_lens_final)
+
                 N_background_halos_last = N_background_halos
 
             else:
@@ -239,4 +245,3 @@ class HierarchicalOptimization(BruteOptimization):
 
         return kwargs_lens_final, lens_model_raytracing, lens_model_full, info_array, \
                [source_x, source_y], realization_filtered
-

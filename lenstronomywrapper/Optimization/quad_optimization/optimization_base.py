@@ -29,4 +29,3 @@ class OptimizationBase(object):
         self.lens_system.update_realization(realization_final)
 
         self.lens_system.set_lensmodel_static(lens_model_full, new_kwargs)
-
