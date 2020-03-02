@@ -1,7 +1,7 @@
 from lenstronomywrapper.ModelingWorkflow.time_delays_extended_project.scripts import *
 import os
 
-def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, N=2):
+def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_rms, N=2):
 
     opening_angle = 10 * window_size
     position_sigma = [0.005]*4
@@ -13,7 +13,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, N=2):
 
     arrival_time_sigma = np.round(arrival_time_sigma, 5)
 
-    fit_smooth_kwargs = {'n_particles': 120, 'n_iterations': 200, 'n_run': 100, 'walkerRatio': 4, 'n_burn': 650}
+    fit_smooth_kwargs = {'n_particles': 120, 'n_iterations': 200, 'n_run': 200, 'walkerRatio': 4, 'n_burn': 1000}
     #fit_smooth_kwargs = {'n_particles': 10, 'n_iterations': 1, 'n_run': 1, 'walkerRatio': 4, 'n_burn': 1}
 
     if Nstart < 101:
@@ -36,5 +36,5 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, N=2):
             create_directory(save_name_path)
 
     run_real(lens_class, save_name_path, N, N0, SHMF_norm, LOS_norm, log_mlow, opening_angle,
-             arrival_time_sigma, position_sigma, gamma_prior_scale, fix_D_dt, window_size, exp_time,
+             arrival_time_sigma, position_sigma, gamma_prior_scale, fix_D_dt, window_size, exp_time, background_rms,
              time_delay_like=True, fit_smooth_kwargs=fit_smooth_kwargs)

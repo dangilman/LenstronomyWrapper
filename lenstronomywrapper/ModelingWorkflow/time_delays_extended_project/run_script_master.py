@@ -61,4 +61,4 @@ elif n_lens < 1201:
 else:
     raise Exception('out of range.')
 
-run_lens(Nstart, lens_class, lens_name, log_mlow, half_window_size, exp_time)
+run_lens(Nstart, lens_class, lens_name, log_mlow, half_window_size, exp_time, background_rms=0.2)

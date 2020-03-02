@@ -79,7 +79,7 @@ class AnalogModel(object):
 
     def run(self, save_name_path, N_start, N, realization_type, realization_kwargs, arrival_time_sigma,
             image_positions_sigma, gamma_prior_scale, time_delay_likelihood, fix_D_dt, fit_smooth_kwargs,
-            window_size, exp_time):
+            window_size, exp_time, background_rms):
 
         observed_lens, modeled_lens, normalized_residuals, residual_convergence = [], [], [], []
         residual_mean_kappa = []
@@ -92,7 +92,7 @@ class AnalogModel(object):
                                                                 gamma_prior_scale,
                                                                 time_delay_likelihood,
                                                                 fix_D_dt, window_size,
-                                                                exp_time,
+                                                                exp_time, background_rms
                                                                 **fit_smooth_kwargs)
 
             #h0_inf = kw_fit['H0_inferred']
@@ -160,11 +160,11 @@ class AnalogModel(object):
         np.savetxt(filename, X=array_to_save, fmt='%.5f')
 
     def run_once(self, realization_type, realization_kwargs, arrival_time_sigma, image_sigma, gamma_prior_scale,
-            time_delay_likelihood, fix_D_dt, window_size, exp_time, realization=None, **fit_smooth_kwargs):
+            time_delay_likelihood, fix_D_dt, window_size, exp_time, background_rms, realization=None, **fit_smooth_kwargs):
 
         lens_system, data_class, return_kwargs_setup, kwargs_data_setup = \
             self.model_setup(realization_type,realization_kwargs, arrival_time_sigma, image_sigma, gamma_prior_scale, window_size,
-                             realization, exp_time)
+                             realization, exp_time, background_rms)
 
         return_kwargs_fit, kwargs_data_fit = self.fit_smooth(lens_system, data_class,
                                                              time_delay_likelihood, fix_D_dt, window_size, **fit_smooth_kwargs)
@@ -196,8 +196,7 @@ class AnalogModel(object):
         return magnifications, arrival_times, dtgeo, dtgrav
 
     def model_setup(self, realization_type, realization_kwargs, arrival_time_sigma, image_sigma, gamma_prior_scale,
-                    window_size,
-                    realization, exp_time):
+                    window_size, realization, exp_time, background_rms):
 
         data_to_fit = LensedQuasar(self.lens.x, self.lens.y, self.lens.m)
         background_quasar = self.background_quasar_class()
@@ -295,7 +294,8 @@ class AnalogModel(object):
                                                  source_model)
 
         data_kwargs = {'psf_type': 'GAUSSIAN', 'window_size': 2*window_size, 'deltaPix': 0.05, 'fwhm': 0.1,
-                       'exp_time': exp_time}
+                       'exp_time': exp_time, 'background_rms': background_rms}
+
         data_class = ArcPlusQuad(data_to_fit.x, data_to_fit.y, magnifications, lens_system, arrival_times,
                            arrival_time_uncertainties, image_sigma, data_kwargs=data_kwargs, no_bkg=False, noiseless=False,
                                  normed_magnifications=False)
