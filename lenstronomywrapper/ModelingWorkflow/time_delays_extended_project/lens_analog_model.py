@@ -83,6 +83,7 @@ class AnalogModel(object):
 
         observed_lens, modeled_lens, normalized_residuals, residual_convergence = [], [], [], []
         residual_mean_kappa = []
+        residual_time_delay_surface = []
 
         for n in range(0, N):
 
@@ -106,6 +107,7 @@ class AnalogModel(object):
             normalized_residuals.append(kw_fit['normalized_residuals'])
             residual_convergence.append(kw_fit['residual_convergence'])
             residual_mean_kappa.append(kw_fit['mean_kappa'])
+            residual_time_delay_surface.append(kw_fit['residual_time_delay_surface'])
 
             if n == 0:
                 baseline = tbaseline
@@ -135,7 +137,8 @@ class AnalogModel(object):
                   'time_delay_sigma_', 'kappares_']
 
         arrays = [baseline, flux_anomalies, time_anomalies, time_delays_model,
-                  np.array(ddt_inferred), macromodel_parameters, tsigma, np.array(residual_mean_kappa)]
+                  np.array(ddt_inferred), macromodel_parameters, tsigma, np.array(residual_mean_kappa)
+                  ]
 
         for fname, arr in zip(fnames, arrays):
             write_data_to_file(save_name_path + fname + str(N_start) + '.txt', arr)
@@ -146,6 +149,7 @@ class AnalogModel(object):
             np.savetxt(save_name_path + 'modeled_' + str(N_start+i)+'.txt', X=modeled_lens[i])
             np.savetxt(save_name_path + 'residuals_' + str(N_start + i) + '.txt', X=normalized_residuals[i])
             np.savetxt(save_name_path + 'kappa_' + str(N_start + i) + '.txt', X=residual_convergence[i])
+            np.savetxt(save_name_path + 'tdelayres_' + str(N_start + i) + '.txt', X=residual_time_delay_surface[i])
 
         return flux_anomalies, baseline, time_anomalies, ddt_inferred
 
@@ -345,6 +349,9 @@ class AnalogModel(object):
 
         residual_maps = ResidualLensMaps(lensModel_full, lensModel, kwargs_lens_full, kwargs_lens)
         kappa = residual_maps.convergence(window_size, 200)
+        tdelay_res_geo, tdelay_res_grav = residual_maps.time_delay_surface_geoshapiro(window_size, 200,
+                                           self.lens.x[0], self.lens.y[0])
+        tdelay_res_map = tdelay_res_geo + tdelay_res_grav
 
         D_dt_true = lens_system_simple.lens_cosmo.D_dt
 
@@ -365,7 +372,8 @@ class AnalogModel(object):
         macro_params = chain_process.macro_params()
 
         return_kwargs = {'D_dt_true': D_dt_true,
-                         'kwargs_lens_macro_fit': macro_params, 'mean_kappa': np.mean(kappa), 'residual_convergence': kappa,
+                         'kwargs_lens_macro_fit': macro_params, 'mean_kappa': np.mean(kappa),
+                         'residual_convergence': kappa, 'residual_time_delay_surface': tdelay_res_map,
                          'observed_lens': observed_lens, 'modeled_lens': modeled_lens, 'normalized_residuals': normalized_residuals,
                          'D_dt_samples': chain_samples[:,-1], 'source_x': lens_system_simple.source_centroid_x,
                          'source_y': lens_system_simple.source_centroid_y, 'zlens': self.zlens,
