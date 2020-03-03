@@ -33,7 +33,7 @@ def run_mock(output_path, Nstart, N, SHMF_norm, LOS_norm, log_mlow, opening_angl
                           np.random.normal(0, arrival_time_sigma)]
 
     model_sim.run(output_path, Nstart, N, arrival_time_sigma, image_positions_sigma, gamma_prior_scale,
-                  time_delay_like, fix_D_dt, **fit_smooth_kwargs)
+                  time_delay_like, fix_D_dt, fit_smooth_kwargs=fit_smooth_kwargs)
 
 def run_real(lens_class, save_name_path, N, N_start, SHMF_norm, LOS_norm, log_mlow, opening_angle, arrival_time_sigma,
             image_positions_sigma, gamma_prior_scale,

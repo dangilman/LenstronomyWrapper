@@ -85,6 +85,7 @@ class AnalogModel(object):
         residual_mean_kappa = []
 
         for n in range(0, N):
+            
             tbaseline, f, t, tdelay_model, macro_params, kw_fit, kw_setup= self.run_once(realization_type,
                                                                 realization_kwargs,
                                                                 arrival_time_sigma,
@@ -92,7 +93,7 @@ class AnalogModel(object):
                                                                 gamma_prior_scale,
                                                                 time_delay_likelihood,
                                                                 fix_D_dt, window_size,
-                                                                exp_time, background_rms
+                                                                exp_time, background_rms,
                                                                 **fit_smooth_kwargs)
 
             #h0_inf = kw_fit['H0_inferred']
