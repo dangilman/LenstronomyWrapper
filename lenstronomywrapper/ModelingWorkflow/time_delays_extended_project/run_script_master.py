@@ -23,36 +23,36 @@ if n_lens < 401:
     lens_class = Lens1131()
     exp_time = 800.
 
-elif n_lens < 601:
+elif n_lens < 801:
     Nstart = n_lens - 400
     lens_name = 'lens1115'
     half_window_size = 1.8
     lens_class = Lens1115()
     exp_time = 1000.
 
-elif n_lens < 801:
-    Nstart = n_lens - 600
+elif n_lens < 1201:
+    Nstart = n_lens - 800
     lens_name = 'lens0435'
     half_window_size = 2.
     lens_class = Lens0435()
     exp_time = 900
 
-elif n_lens < 1001:
-    Nstart = n_lens - 800
+elif n_lens < 1601:
+    Nstart = n_lens - 1200
     lens_name = 'lens1608'
     half_window_size = 1.9
     lens_class = Lens1608()
     exp_time = 1050
 
-elif n_lens < 1201:
-    Nstart = n_lens - 1000
+elif n_lens < 2001:
+    Nstart = n_lens - 1600
     lens_name = 'lens2033'
     half_window_size = 2.5
     lens_class = WFI2033()
     exp_time = 1050
 
-elif n_lens < 1401:
-    Nstart = n_lens - 1200
+elif n_lens < 2401:
+    Nstart = n_lens - 2000
     lens_name = 'lens0408'
     half_window_size = 3.8
     lens_class = Lens0408()
