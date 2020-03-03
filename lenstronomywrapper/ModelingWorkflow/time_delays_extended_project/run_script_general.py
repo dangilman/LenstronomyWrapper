@@ -1,7 +1,7 @@
 from lenstronomywrapper.ModelingWorkflow.time_delays_extended_project.scripts import *
 import os
 
-def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_rms, N=2):
+def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_rms, N=1):
 
     opening_angle = 10 * window_size
     position_sigma = [0.005]*4
@@ -16,7 +16,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
     fit_smooth_kwargs = {'n_particles': 120, 'n_iterations': 200, 'n_run': 200, 'walkerRatio': 4, 'n_burn': 1000}
     #fit_smooth_kwargs = {'n_particles': 10, 'n_iterations': 1, 'n_run': 1, 'walkerRatio': 4, 'n_burn': 1}
 
-    if Nstart < 101:
+    if Nstart < 201:
         print('SAMPLING control...... ')
         arrival_time_sigma *= 1.
         N0 = Nstart
@@ -28,7 +28,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
 
     else:
         print('SAMPLING LOS plus subs...... ')
-        N0 = Nstart - 100
+        N0 = Nstart - 200
         SHMF_norm = 0.02
         LOS_norm = 1.
         save_name_path = os.getenv('HOME') + '/Code/tdelay_output/raw/' + fname + '/los_plus_subs/'

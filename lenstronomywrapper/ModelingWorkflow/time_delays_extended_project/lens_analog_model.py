@@ -85,7 +85,7 @@ class AnalogModel(object):
         residual_mean_kappa = []
 
         for n in range(0, N):
-            
+
             tbaseline, f, t, tdelay_model, macro_params, kw_fit, kw_setup= self.run_once(realization_type,
                                                                 realization_kwargs,
                                                                 arrival_time_sigma,
