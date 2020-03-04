@@ -1,7 +1,8 @@
 from lenstronomywrapper.ModelingWorkflow.time_delays_extended_project.scripts import *
 import os
 
-def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_rms, N=1):
+def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_rms, N=1,
+        subtract_exact_mass_sheets=False, name_append=''):
 
     opening_angle = 10 * window_size
     position_sigma = [0.005]*4
@@ -22,7 +23,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
         N0 = Nstart
         SHMF_norm = 0.
         LOS_norm = 0.
-        save_name_path = os.getenv('HOME') + '/Code/tdelay_output/raw/' + fname + '/control/'
+        save_name_path = os.getenv('HOME') + '/Code/tdelay_output/raw/' + fname + '/control' + name_append + '/'
         if not os.path.exists(save_name_path):
             create_directory(save_name_path)
 
@@ -31,10 +32,11 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
         N0 = Nstart - 200
         SHMF_norm = 0.02
         LOS_norm = 1.
-        save_name_path = os.getenv('HOME') + '/Code/tdelay_output/raw/' + fname + '/los_plus_subs/'
+        save_name_path = os.getenv('HOME') + '/Code/tdelay_output/raw/' + fname + '/los_plus_subs' + name_append + '/'
         if not os.path.exists(save_name_path):
             create_directory(save_name_path)
 
     run_real(lens_class, save_name_path, N, N0, SHMF_norm, LOS_norm, log_mlow, opening_angle,
              arrival_time_sigma, position_sigma, gamma_prior_scale, fix_D_dt, window_size, exp_time, background_rms,
-             time_delay_like=True, fit_smooth_kwargs=fit_smooth_kwargs)
+             time_delay_like=True, fit_smooth_kwargs=fit_smooth_kwargs,
+             subtract_exact_mass_sheets=subtract_exact_mass_sheets)

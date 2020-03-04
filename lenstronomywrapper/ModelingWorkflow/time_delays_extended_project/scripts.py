@@ -37,7 +37,8 @@ def run_mock(output_path, Nstart, N, SHMF_norm, LOS_norm, log_mlow, opening_angl
 
 def run_real(lens_class, save_name_path, N, N_start, SHMF_norm, LOS_norm, log_mlow, opening_angle, arrival_time_sigma,
             image_positions_sigma, gamma_prior_scale,
-             fix_D_dt, window_size, exp_time, background_rms, time_delay_like=True, fit_smooth_kwargs=None, subtract_exact_mass_sheets=False):
+             fix_D_dt, window_size, exp_time, background_rms, time_delay_like=True, fit_smooth_kwargs=None,
+             subtract_exact_mass_sheets=False):
 
     mdef = 'TNFW'
     realization_kwargs = {'mdef_main': mdef, 'mdef_los': mdef,
