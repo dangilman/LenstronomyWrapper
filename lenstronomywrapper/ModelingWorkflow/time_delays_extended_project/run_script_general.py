@@ -14,7 +14,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
 
     arrival_time_sigma = np.round(arrival_time_sigma, 5)
 
-    fit_smooth_kwargs = {'n_particles': 120, 'n_iterations': 200, 'n_run': 200, 'walkerRatio': 4, 'n_burn': 1000}
+    fit_smooth_kwargs = {'n_particles': 120, 'n_iterations': 200, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 800}
     #fit_smooth_kwargs = {'n_particles': 10, 'n_iterations': 1, 'n_run': 1, 'walkerRatio': 4, 'n_burn': 1}
 
     kwargs_cosmo = {'cosmo_kwargs': {'H0': 73.3}}
@@ -27,6 +27,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
         if not os.path.exists(save_name_path):
             create_directory(save_name_path)
         shapelet_nmax = None
+        fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 100, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 500}
 
     elif Nstart < 301:
         print('SAMPLING LOS plus subs...... ')
