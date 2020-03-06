@@ -22,8 +22,6 @@ class BruteOptimization(OptimizationBase):
         self._log_mass_sheet_front = log_mass_sheet_front
         self._log_mass_sheet_back = log_mass_sheet_back
 
-        # shoot a ray through the center to determine any global shifts in path
-
         self.realization_initial = lens_system.realization
 
         super(BruteOptimization, self).__init__(lens_system)

@@ -172,7 +172,8 @@ class AnalogModel(object):
                  **fit_smooth_kwargs):
 
         lens_system, data_class, return_kwargs_setup, kwargs_data_setup = \
-            self.model_setup(realization, arrival_time_sigma, image_sigma, gamma_prior_scale, window_size, exp_time, background_rms, shapelet_nmax)
+            self.model_setup(realization, arrival_time_sigma, image_sigma, gamma_prior_scale, window_size,
+                             exp_time, background_rms, shapelet_nmax)
 
         return_kwargs_fit, kwargs_data_fit = self.fit_smooth(lens_system, data_class,
                                                              time_delay_likelihood, fix_D_dt, window_size, **fit_smooth_kwargs)
@@ -289,12 +290,6 @@ class AnalogModel(object):
             source_model_list += [SersicSource(kwargs_sersic_source_2),
                                   SersicSource(kwargs_sersic_source_3)]
 
-        if shapelet_nmax is not None:
-            kwargs_source_shapelet = [{'amp': 200., 'beta': 0.05,
-                                       'n_max': int(shapelet_nmax),
-                                       'center_x': 0., 'center_y': 0.}]
-            source_model_list += [Shapelet(kwargs_source_shapelet, concentric_with_source=True)]
-
         if window_size is None:
 
             window_size_macro = 2. * lens_system_quad.macromodel.kwargs[0]['theta_E']
@@ -332,6 +327,13 @@ class AnalogModel(object):
         else:
             halo_model_names, redshift_list_halos, kwargs_halos = [], [], []
 
+        if shapelet_nmax is not None:
+            kwargs_shapelets = [{'amp': 100, 'beta': 0.01,
+                                 'n_max': shapelet_nmax, 'center_x': 0., 'center_y': 0.}]
+            source_model_list += [Shapelet(kwargs_shapelets, concentric_with_source=True)]
+            source_model = LightModel(source_model_list)
+            lens_system.source_light_model = source_model
+
         return_kwargs = {'imaging_data': imaging_data,
                          'kwargs_lens_macro': lens_system.macromodel.kwargs,
                          'lens_model_list_macro': lens_system.macromodel.lens_model_list,
@@ -362,6 +364,7 @@ class AnalogModel(object):
                                    fix_D_dt=fix_D_dt)
 
         lensModel, kwargs_lens = lens_system_simple.get_lensmodel()
+
         modelPlot = ModelPlot(multi_band_list, kwargs_model, kwargs_result, arrow_size=0.02, cmap_string="gist_heat")
 
         observed_lens = modelPlot._select_band(0)._data
