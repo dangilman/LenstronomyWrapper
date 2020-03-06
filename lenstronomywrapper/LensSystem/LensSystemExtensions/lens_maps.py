@@ -80,21 +80,33 @@ class ResidualLensMaps(object):
 
     def time_delay_surface(self, rminmax, npix, xref, yref):
 
-        # xx, yy, shape0 = self._get_grids(rminmax, npix)
-        #
-        # arrival_time_surface1 = self.lensmodel1.arrival_time(xx.ravel(), yy.ravel(), self.kwargs1)
-        # arrival_time_surface1_ref = self.lensmodel1.arrival_time(xref, yref, self.kwargs1)
-        # surface1 = arrival_time_surface1 - arrival_time_surface1_ref
-        #
-        # arrival_time_surface2 = self.lensmodel2.arrival_time(xx.ravel(), yy.ravel(), self.kwargs2)
-        # arrival_time_surface2_ref = self.lensmodel2.arrival_time(xref, yref, self.kwargs2)
-        # surface2 = arrival_time_surface2 - arrival_time_surface2_ref
-        #
-        # residual = surface1 - surface2
-        # return residual.reshape(shape0)
-
         res_geo, res_shapiro = self.time_delay_surface_geoshapiro(rminmax, npix, xref, yref)
         return res_geo + res_shapiro
+
+    def time_delay_surface_12(self, rminmax, npix, xref, yref):
+
+        xx, yy, shape0 = self._get_grids(rminmax, npix)
+
+        arrival_time_surface1_geo, arrival_time_surface1_grav = self.lensmodel1.lens_model. \
+            geo_shapiro_delay(xx.ravel(), yy.ravel(), self.kwargs1)
+        arrival_time_surface1_geo_ref, arrival_time_surface1_grav_ref = self.lensmodel1.lens_model. \
+            geo_shapiro_delay(xref, yref, self.kwargs1)
+
+        arrival_time_surface2_geo, arrival_time_surface2_grav = self.lensmodel2.lens_model. \
+            geo_shapiro_delay(xx.ravel(), yy.ravel(), self.kwargs2)
+        arrival_time_surface2_geo_ref, arrival_time_surface2_grav_ref = self.lensmodel2.lens_model. \
+            geo_shapiro_delay(xref, yref, self.kwargs2)
+
+        surface1_geo = arrival_time_surface1_geo - arrival_time_surface1_geo_ref
+        surface1_grav = arrival_time_surface1_grav - arrival_time_surface1_grav_ref
+
+        surface2_geo = arrival_time_surface2_geo - arrival_time_surface2_geo_ref
+        surface2_grav = arrival_time_surface2_grav - arrival_time_surface2_grav_ref
+
+        surface1 = surface1_geo + surface1_grav
+        surface2 = surface2_geo + surface2_grav
+
+        return surface1.reshape(shape0), surface2.reshape(shape0)
 
     def time_delay_surface_geoshapiro(self, rminmax, npix, xref, yref):
 
