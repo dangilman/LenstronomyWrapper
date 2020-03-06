@@ -1,6 +1,5 @@
 from lenstronomy.LensModel.Optimizer.optimizer import Optimizer
 from lenstronomywrapper.Optimization.quad_optimization.optimization_base import OptimizationBase
-from lenstronomywrapper.Utilities.lensing_util import interpolate_ray_paths
 
 class BruteOptimization(OptimizationBase):
 
@@ -25,14 +24,7 @@ class BruteOptimization(OptimizationBase):
 
         # shoot a ray through the center to determine any global shifts in path
 
-        if lens_system.realization is not None:
-            ray_interp_x, ray_interp_y = interpolate_ray_paths([0.], [0.], lens_system,
-                                                           include_substructure=False, realization=None)
-
-            self.realization_initial = lens_system.realization.shift_background_to_source(ray_interp_x[0],
-                                                                              ray_interp_y[0])
-        else:
-            self.realization_initial = lens_system.realization
+        self.realization_initial = lens_system.realization
 
         super(BruteOptimization, self).__init__(lens_system)
 

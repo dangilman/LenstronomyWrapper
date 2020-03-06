@@ -7,6 +7,10 @@ class MacroLensModel(object):
         self.components = components
         self.n_lens_models = self._count_models(components)
 
+    def centroid(self):
+        main = self.components[0]
+        return main.x_center, main.y_center
+
     @property
     def zlens(self):
         return self.components[0].zlens

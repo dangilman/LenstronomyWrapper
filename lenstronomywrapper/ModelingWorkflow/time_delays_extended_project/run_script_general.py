@@ -4,7 +4,6 @@ import os
 def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_rms, N=1,
         subtract_exact_mass_sheets=False, name_append=''):
 
-    opening_angle = 10 * window_size
     position_sigma = [0.005]*4
     fix_D_dt = False
     gamma_prior_scale = None
@@ -22,6 +21,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
 
     if Nstart < 101:
         print('SAMPLING control...... ')
+        N0 = Nstart
         realization = None
         save_name_path = os.getenv('HOME') + '/Code/tdelay_output/raw/' + fname + '/control' + name_append + '/'
         if not os.path.exists(save_name_path):
@@ -36,8 +36,9 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
         save_name_path = save_name_path_base + '/los_plus_subs' + name_append + '/'
         if not os.path.exists(save_name_path):
             create_directory(save_name_path)
-        realization_file_name = save_name_path_base + '/realization_'+str(N0)
+        realization_file_name = save_name_path_base + '/realizations/realization_'+str(N0) + '.txt'
         realization = RealiztionFromFile(realization_file_name)
+        realization.log_mlow = log_mlow
         shapelet_nmax = None
 
     elif Nstart < 501:
@@ -48,8 +49,9 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
 
         if not os.path.exists(save_name_path):
             create_directory(save_name_path)
-        realization_file_name = save_name_path_base + 'realization_' + str(N0)
+        realization_file_name = save_name_path_base + '/realizations/realization_' + str(N0) + '.txt'
         realization = RealiztionFromFile(realization_file_name)
+        realization.log_mlow = log_mlow
         shapelet_nmax = 10
 
     run_real(lens_analog_model_class, save_name_path, N, N0, realization,

@@ -3,6 +3,7 @@ from lenstronomywrapper.Optimization.quad_optimization.four_image_solver import 
 from lenstronomywrapper.LensSystem.lens_base import LensBase
 from pyHalo.Cosmology.cosmology import Cosmology
 from lenstronomywrapper.LensSystem.BackgroundSource.quasar import Quasar
+from lenstronomywrapper.Utilities.lensing_util import interpolate_ray_paths
 
 class QuadLensSystem(LensBase):
 
@@ -21,6 +22,33 @@ class QuadLensSystem(LensBase):
         self.background_quasar.setup(pc_per_arcsec_zsource)
 
         super(QuadLensSystem, self).__init__(macromodel, z_source, substructure_realization, pyhalo_cosmology)
+
+    @classmethod
+    def shift_background_auto(cls, lens_data_class, macromodel, zsource,
+                              background_quasar, realization, cosmo=None, particle_swarm_init=False):
+
+        lens_system_init = QuadLensSystem(macromodel, zsource, background_quasar, None,
+                                          pyhalo_cosmology=cosmo)
+
+        lens_system_init.initialize(lens_data_class, kwargs_optimizer={'particle_swarm': particle_swarm_init})
+
+        lens_center_x, lens_center_y = lens_system_init.macromodel.centroid()
+
+        ray_interp_x, ray_interp_y = interpolate_ray_paths(
+            [lens_center_x], [lens_center_y], lens_system_init)
+
+        realization = realization.shift_background_to_source(ray_interp_x[0], ray_interp_y[0])
+
+        macromodel = lens_system_init.macromodel
+        background_quasar = lens_system_init.background_quasar
+
+        lens_system = QuadLensSystem(macromodel, zsource, background_quasar,
+                                          realization, lens_system_init.pyhalo_cosmology)
+
+        source_x, source_y = lens_system_init.source_centroid_x, lens_system_init.source_centroid_y
+        lens_system.update_source_centroid(source_x, source_y)
+
+        return lens_system
 
     @classmethod
     def addRealization(cls, quad_lens_system, realization):

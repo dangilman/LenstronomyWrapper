@@ -15,7 +15,7 @@ from lenstronomywrapper.LensSystem.BackgroundSource.quasar import Quasar
 from lenstronomywrapper.Utilities.data_util import write_data_to_file
 from lenstronomywrapper.LensSystem.LensSystemExtensions.chain_post_processing import ChainPostProcess
 from lenstronomywrapper.LensSystem.LensSystemExtensions.lens_maps import ResidualLensMaps
-
+from lenstronomywrapper.Utilities.lensing_util import interpolate_ray_paths
 import numpy as np
 from pyHalo.pyhalo import pyHalo
 import os
@@ -257,7 +257,13 @@ class AnalogModel(object):
 
         macromodel = MacroLensModel(deflector_list)
 
-        lens_system_quad = QuadLensSystem(macromodel, self.zsource, background_quasar, realization,
+        if realization is not None:
+            lens_system_quad = QuadLensSystem.shift_background_auto(data_to_fit, macromodel,
+                                                                    self.zsource, background_quasar, realization,
+                                                                    self.pyhalo._cosmology)
+
+        else:
+            lens_system_quad = QuadLensSystem(macromodel, self.zsource, background_quasar, None,
                                           pyhalo_cosmology=self.pyhalo._cosmology)
 
         lens_system_quad.initialize(data_to_fit, include_substructure=True, verbose=True,
@@ -311,10 +317,17 @@ class AnalogModel(object):
 
         imaging_data = data_class.get_lensed_image()
 
-        log_mlow = realization._profile_params['log_mlow']
-        print(log_mlow)
-        halo_model_names, redshift_list_halos, kwargs_halos, _ = \
-            realization.lensing_quantities(log_mlow, log_mlow)
+        if realization is not None:
+            try:
+                log_mlow = realization.log_mlow
+            except:
+                print('realization instance has no attribute log_mlow; defaulting to 6.7')
+                log_mlow = 6.7
+
+            halo_model_names, redshift_list_halos, kwargs_halos, _ = \
+                realization.lensing_quantities(log_mlow, log_mlow)
+        else:
+            halo_model_names, redshift_list_halos, kwargs_halos = [], [], []
 
         return_kwargs = {'imaging_data': imaging_data,
                          'kwargs_lens_macro': lens_system.macromodel.kwargs,
