@@ -14,7 +14,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
     arrival_time_sigma = np.round(arrival_time_sigma, 5)
 
     fit_smooth_kwargs = {'n_particles': 120, 'n_iterations': 200, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 800}
-    #fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 1, 'walkerRatio': 4, 'n_burn': 1}
+    fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 1, 'walkerRatio': 4, 'n_burn': 0}
 
     kwargs_cosmo = {'cosmo_kwargs': {'H0': 73.3}}
     lens_analog_model_class = AnalogModel(lens_class, kwargs_cosmo)
