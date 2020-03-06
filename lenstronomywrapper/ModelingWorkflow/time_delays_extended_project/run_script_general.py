@@ -17,26 +17,40 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
     fit_smooth_kwargs = {'n_particles': 120, 'n_iterations': 200, 'n_run': 200, 'walkerRatio': 4, 'n_burn': 1000}
     #fit_smooth_kwargs = {'n_particles': 10, 'n_iterations': 1, 'n_run': 1, 'walkerRatio': 4, 'n_burn': 1}
 
-    if Nstart < 201:
+    kwargs_cosmo = {'cosmo_kwargs': {'H0': 73.3}}
+    lens_analog_model_class = AnalogModel(lens_class, kwargs_cosmo)
+
+    if Nstart < 101:
         print('SAMPLING control...... ')
-        arrival_time_sigma *= 1.
-        N0 = Nstart
-        SHMF_norm = 0.
-        LOS_norm = 0.
+        realization = None
         save_name_path = os.getenv('HOME') + '/Code/tdelay_output/raw/' + fname + '/control' + name_append + '/'
         if not os.path.exists(save_name_path):
             create_directory(save_name_path)
+        shapelet_nmax = None
 
-    else:
+    elif Nstart < 301:
         print('SAMPLING LOS plus subs...... ')
-        N0 = Nstart - 200
-        SHMF_norm = 0.02
-        LOS_norm = 1.
-        save_name_path = os.getenv('HOME') + '/Code/tdelay_output/raw/' + fname + '/los_plus_subs' + name_append + '/'
+        N0 = Nstart - 100
+        save_name_path_base = os.getenv('HOME') + '/Code/tdelay_output/raw/' + fname
+        save_name_path = save_name_path_base + '/los_plus_subs' + name_append + '/'
         if not os.path.exists(save_name_path):
             create_directory(save_name_path)
+        realization_file_name = save_name_path_base + '/realization_'+str(N0)
+        realization = RealiztionFromFile(realization_file_name)
+        shapelet_nmax = None
 
-    run_real(lens_class, save_name_path, N, N0, SHMF_norm, LOS_norm, log_mlow, opening_angle,
+    elif Nstart < 501:
+        print('SAMPLING LOS plus subs with shapelets...... ')
+        N0 = Nstart - 300
+        save_name_path_base = os.getenv('HOME') + '/Code/tdelay_output/raw/' + fname
+        save_name_path = save_name_path_base + '/los_plus_subs' + name_append + '_shapelets/'
+
+        if not os.path.exists(save_name_path):
+            create_directory(save_name_path)
+        realization_file_name = save_name_path_base + 'realization_' + str(N0)
+        realization = RealiztionFromFile(realization_file_name)
+        shapelet_nmax = 10
+
+    run_real(lens_analog_model_class, save_name_path, N, N0, realization,
              arrival_time_sigma, position_sigma, gamma_prior_scale, fix_D_dt, window_size, exp_time, background_rms,
-             time_delay_like=True, fit_smooth_kwargs=fit_smooth_kwargs,
-             subtract_exact_mass_sheets=subtract_exact_mass_sheets)
+             time_delay_like=True, fit_smooth_kwargs=fit_smooth_kwargs, shapelet_nmax=shapelet_nmax)

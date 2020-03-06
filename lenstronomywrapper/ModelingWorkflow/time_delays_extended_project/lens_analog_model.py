@@ -77,9 +77,9 @@ class AnalogModel(object):
 
         return t1 - t2
 
-    def run(self, save_name_path, N_start, N, realization_type, realization_kwargs, arrival_time_sigma,
+    def run(self, save_name_path, N_start, N, realization, arrival_time_sigma,
             image_positions_sigma, gamma_prior_scale, time_delay_likelihood, fix_D_dt, fit_smooth_kwargs,
-            window_size, exp_time, background_rms):
+            window_size, exp_time, background_rms, shapelet_nmax):
 
         observed_lens, modeled_lens, normalized_residuals, residual_convergence = [], [], [], []
         residual_mean_kappa = []
@@ -87,14 +87,14 @@ class AnalogModel(object):
 
         for n in range(0, N):
 
-            tbaseline, f, t, tdelay_model, macro_params, kw_fit, kw_setup= self.run_once(realization_type,
-                                                                realization_kwargs,
+            tbaseline, f, t, tdelay_model, macro_params, kw_fit, kw_setup= self.run_once(realization,
                                                                 arrival_time_sigma,
                                                                 image_positions_sigma,
                                                                 gamma_prior_scale,
                                                                 time_delay_likelihood,
                                                                 fix_D_dt, window_size,
                                                                 exp_time, background_rms,
+                                                                shapelet_nmax,
                                                                 **fit_smooth_kwargs)
 
             #h0_inf = kw_fit['H0_inferred']
@@ -164,12 +164,12 @@ class AnalogModel(object):
 
         np.savetxt(filename, X=array_to_save, fmt='%.5f')
 
-    def run_once(self, realization_type, realization_kwargs, arrival_time_sigma, image_sigma, gamma_prior_scale,
-            time_delay_likelihood, fix_D_dt, window_size, exp_time, background_rms, realization=None, **fit_smooth_kwargs):
+    def run_once(self, realization, arrival_time_sigma, image_sigma, gamma_prior_scale,
+            time_delay_likelihood, fix_D_dt, window_size, exp_time, background_rms, shapelet_nmax,
+                 **fit_smooth_kwargs):
 
         lens_system, data_class, return_kwargs_setup, kwargs_data_setup = \
-            self.model_setup(realization_type,realization_kwargs, arrival_time_sigma, image_sigma, gamma_prior_scale, window_size,
-                             realization, exp_time, background_rms)
+            self.model_setup(realization, arrival_time_sigma, image_sigma, gamma_prior_scale, window_size, exp_time, background_rms, shapelet_nmax)
 
         return_kwargs_fit, kwargs_data_fit = self.fit_smooth(lens_system, data_class,
                                                              time_delay_likelihood, fix_D_dt, window_size, **fit_smooth_kwargs)
@@ -200,8 +200,8 @@ class AnalogModel(object):
 
         return magnifications, arrival_times, dtgeo, dtgrav
 
-    def model_setup(self, realization_type, realization_kwargs, arrival_time_sigma, image_sigma, gamma_prior_scale,
-                    window_size, realization, exp_time, background_rms):
+    def model_setup(self, realization, arrival_time_sigma, image_sigma, gamma_prior_scale,
+                    window_size, exp_time, background_rms, shapelet_nmax):
 
         data_to_fit = LensedQuasar(self.lens.x, self.lens.y, self.lens.m)
         background_quasar = self.background_quasar_class()
@@ -257,8 +257,6 @@ class AnalogModel(object):
 
         macromodel = MacroLensModel(deflector_list)
 
-        if realization is None:
-            realization = self.gen_realization(realization_type, realization_kwargs)
         lens_system_quad = QuadLensSystem(macromodel, self.zsource, background_quasar, realization,
                                           pyhalo_cosmology=self.pyhalo._cosmology)
 
@@ -281,6 +279,12 @@ class AnalogModel(object):
               'e1': 0.01, 'e2': -0.01}]
             source_model_list += [SersicSource(kwargs_sersic_source_2),
                                   SersicSource(kwargs_sersic_source_3)]
+
+        if shapelet_nmax is not None:
+            kwargs_source_shapelet = [{'amp': 200., 'beta': 0.05,
+                                       'n_max': int(shapelet_nmax),
+                                       'center_x': 0., 'center_y': 0.}]
+            source_model_list += [SersicSource(kwargs_source_shapelet, concentric_with_source=True)]
 
         if window_size is None:
 
@@ -307,8 +311,10 @@ class AnalogModel(object):
 
         imaging_data = data_class.get_lensed_image()
 
+        log_mlow = realization._profile_params['log_mlow']
+        print(log_mlow)
         halo_model_names, redshift_list_halos, kwargs_halos, _ = \
-            realization.lensing_quantities(realization_kwargs['log_mlow'], realization_kwargs['log_mlow'])
+            realization.lensing_quantities(log_mlow, log_mlow)
 
         return_kwargs = {'imaging_data': imaging_data,
                          'kwargs_lens_macro': lens_system.macromodel.kwargs,
@@ -345,7 +351,6 @@ class AnalogModel(object):
         observed_lens = modelPlot._select_band(0)._data
         modeled_lens = modelPlot._select_band(0)._model
         normalized_residuals = modelPlot._select_band(0)._norm_residuals
-
 
         residual_maps = ResidualLensMaps(lensModel_full, lensModel, kwargs_lens_full, kwargs_lens)
         kappa = residual_maps.convergence(window_size, 200)

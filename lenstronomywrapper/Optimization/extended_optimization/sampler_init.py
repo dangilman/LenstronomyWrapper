@@ -158,7 +158,12 @@ class SamplerInit(object):
 
     @property
     def linked_parameters_source_source(self):
-        return [[0, 0]]
+
+        out = []
+        for k, source_model in enumerate(self.system.source_light_model.components):
+            if source_model.concentric_with_source is True:
+                out.append([0, k])
+        return out
 
     @property
     def kwargs_model(self):

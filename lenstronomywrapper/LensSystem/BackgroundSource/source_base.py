@@ -30,17 +30,6 @@ class SourceBase(LightReconstructBase):
     def source_centroid(self):
         return self._source_x, self._source_y
 
-    @property
-    def priors(self):
-
-        indexes = []
-        priors = []
-        for prior in self._prior:
-            idx = 0
-            indexes.append(idx)
-            priors.append(prior)
-
-        return indexes, priors
 
     @property
     def sourceLight(self):

@@ -22,6 +22,7 @@ if n_lens < 401:
     half_window_size = 3.
     lens_class = Lens1131()
     exp_time = 800.
+    background_rms = 0.3
 
 elif n_lens < 801:
     Nstart = n_lens - 400
@@ -29,6 +30,7 @@ elif n_lens < 801:
     half_window_size = 1.8
     lens_class = Lens1115()
     exp_time = 1000.
+    background_rms = 0.2
 
 elif n_lens < 1201:
     Nstart = n_lens - 800
@@ -36,6 +38,7 @@ elif n_lens < 1201:
     half_window_size = 2.
     lens_class = Lens0435()
     exp_time = 900
+    background_rms = 0.2
 
 elif n_lens < 1601:
     Nstart = n_lens - 1200
@@ -43,6 +46,7 @@ elif n_lens < 1601:
     half_window_size = 1.9
     lens_class = Lens1608()
     exp_time = 1050
+    background_rms = 0.2
 
 elif n_lens < 2001:
     Nstart = n_lens - 1600
@@ -50,6 +54,7 @@ elif n_lens < 2001:
     half_window_size = 2.5
     lens_class = WFI2033()
     exp_time = 1050
+    background_rms = 0.2
 
 elif n_lens < 2401:
     Nstart = n_lens - 2000
@@ -57,9 +62,10 @@ elif n_lens < 2401:
     half_window_size = 3.8
     lens_class = Lens0408()
     exp_time = 1000
+    background_rms = 0.2
 
 else:
     raise Exception('out of range.')
 
 run_lens(Nstart, lens_class, lens_name, log_mlow, half_window_size, exp_time,
-         background_rms=0.2, subtract_exact_mass_sheets=True, name_append='_exactsheets')
+         background_rms=background_rms, subtract_exact_mass_sheets=False, name_append='')

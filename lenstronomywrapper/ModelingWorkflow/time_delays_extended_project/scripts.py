@@ -4,6 +4,7 @@ import os
 import sys
 import numpy as np
 import subprocess
+from pyHalo.single_realization import RealiztionFromFile
 
 def create_directory(dirname=''):
 
@@ -35,23 +36,12 @@ def run_mock(output_path, Nstart, N, SHMF_norm, LOS_norm, log_mlow, opening_angl
     model_sim.run(output_path, Nstart, N, arrival_time_sigma, image_positions_sigma, gamma_prior_scale,
                   time_delay_like, fix_D_dt, fit_smooth_kwargs=fit_smooth_kwargs)
 
-def run_real(lens_class, save_name_path, N, N_start, SHMF_norm, LOS_norm, log_mlow, opening_angle, arrival_time_sigma,
+def run_real(lens_analog_model_class, save_name_path, N, N_start, realization, arrival_time_sigma,
             image_positions_sigma, gamma_prior_scale,
              fix_D_dt, window_size, exp_time, background_rms, time_delay_like=True, fit_smooth_kwargs=None,
-             subtract_exact_mass_sheets=False):
+             shapelet_nmax=None):
 
-    mdef = 'TNFW'
-    realization_kwargs = {'mdef_main': mdef, 'mdef_los': mdef,
-                          'log_mlow': log_mlow, 'log_mhigh': 10., 'power_law_index': -1.9,
-                          'parent_m200': 10 ** 13, 'r_tidal': '0.5Rs',
-                          'cone_opening_angle': opening_angle, 'opening_angle_factor': opening_angle,
-                          'sigma_sub': SHMF_norm, 'subtract_exact_mass_sheets': subtract_exact_mass_sheets,
-                          'subtract_subhalo_mass_sheet': True, 'subhalo_mass_sheet_scale': 1,
-                          'LOS_normalization': LOS_norm}
-
-    kwargs_cosmo = {'cosmo_kwargs': {'H0': 73.3}}
-    model = AnalogModel(lens_class, kwargs_cosmo)
-    out = model.run(save_name_path, N_start, N, 'composite_powerlaw', realization_kwargs, arrival_time_sigma,
+    out = lens_analog_model_class.run(save_name_path, N_start, N, realization, arrival_time_sigma,
                     image_positions_sigma, gamma_prior_scale, time_delay_like, fix_D_dt, fit_smooth_kwargs,
-                    window_size, exp_time, background_rms)
+                    window_size, exp_time, background_rms, shapelet_nmax)
 

@@ -2,7 +2,8 @@ from lenstronomywrapper.LensSystem.BackgroundSource.source_base import SourceBas
 
 class SersicSource(SourceBase):
 
-    def __init__(self, kwargs_sersic, reoptimize=True, prior=[], concentric_with_source=None):
+    def __init__(self, kwargs_sersic, reoptimize=True, prior=[],
+                 concentric_with_source=None):
 
         self._reoptimize = reoptimize
         self._kwargs = kwargs_sersic

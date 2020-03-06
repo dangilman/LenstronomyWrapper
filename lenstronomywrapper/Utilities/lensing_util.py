@@ -72,7 +72,7 @@ def solve_H0_from_Ddt(zlens, zsource, D_dt, astropy_instance_ref, interpolation_
                 try:
                     result = interpolation_function(di)
                 except:
-                    print(di)
+
                     result = minimize(_func_to_min, x0=73.3,
                              method='Nelder-Mead', args=di)['x'][0]
 
