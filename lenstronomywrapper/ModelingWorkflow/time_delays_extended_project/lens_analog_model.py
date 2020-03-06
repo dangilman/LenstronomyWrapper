@@ -15,7 +15,7 @@ from lenstronomywrapper.LensSystem.BackgroundSource.quasar import Quasar
 from lenstronomywrapper.Utilities.data_util import write_data_to_file
 from lenstronomywrapper.LensSystem.LensSystemExtensions.chain_post_processing import ChainPostProcess
 from lenstronomywrapper.LensSystem.LensSystemExtensions.lens_maps import ResidualLensMaps
-from lenstronomywrapper.Utilities.lensing_util import interpolate_ray_paths
+from lenstronomywrapper.LensSystem.BackgroundSource.shapelet import Shapelet
 import numpy as np
 from pyHalo.pyhalo import pyHalo
 import os
@@ -293,7 +293,7 @@ class AnalogModel(object):
             kwargs_source_shapelet = [{'amp': 200., 'beta': 0.05,
                                        'n_max': int(shapelet_nmax),
                                        'center_x': 0., 'center_y': 0.}]
-            source_model_list += [SersicSource(kwargs_source_shapelet, concentric_with_source=True)]
+            source_model_list += [Shapelet(kwargs_source_shapelet, concentric_with_source=True)]
 
         if window_size is None:
 

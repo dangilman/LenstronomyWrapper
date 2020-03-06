@@ -37,7 +37,7 @@ def create_realizations(lens_class, fname, log_mlow, window_size,
     if not os.path.exists(save_name_path):
         create_directory(save_name_path)
 
-    for i in range(0, Nreal):
+    for i in range(138, 140):
         realization_file_name = save_name_path + 'realization_'+str(i+1)+'.txt'
         realization = lens_analog_model_class.pyhalo.render('composite_powerlaw', realization_kwargs)[0]
         realization.save_to_file(realization_file_name, log_mlow)
