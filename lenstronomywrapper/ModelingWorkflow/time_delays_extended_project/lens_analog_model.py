@@ -86,6 +86,10 @@ class AnalogModel(object):
         time_delay_surface_true = []
         time_delay_surface_modeled = []
 
+        if os.path.exists(save_name_path + 'residuals_' + str(N_start) + '.txt'):
+            print('output file exists, quitting.')
+            return None
+
         for n in range(0, N):
 
             tbaseline, f, t, tdelay_model, macro_params, kw_fit, kw_setup= self.run_once(realization,
@@ -154,7 +158,7 @@ class AnalogModel(object):
             np.savetxt(save_name_path + 'tdelaymodeled_' + str(N_start + i) + '.txt', X=time_delay_surface_modeled[i])
             np.savetxt(save_name_path + 'tdelaytrue_' + str(N_start + i) + '.txt', X=time_delay_surface_true[i])
 
-        return flux_anomalies, baseline, time_anomalies, ddt_inferred
+        return [flux_anomalies, baseline, time_anomalies, ddt_inferred]
 
     def save_append(self, filename, array_to_save):
 
