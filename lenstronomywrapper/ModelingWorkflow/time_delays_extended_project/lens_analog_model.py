@@ -83,8 +83,7 @@ class AnalogModel(object):
 
         observed_lens, modeled_lens, normalized_residuals, residual_convergence = [], [], [], []
         residual_mean_kappa = []
-        time_delay_surface_true = []
-        time_delay_surface_modeled = []
+        time_delay_residuals = []
 
         if os.path.exists(save_name_path + 'residuals_' + str(N_start) + '.txt'):
             print('output file exists, quitting.')
@@ -112,8 +111,7 @@ class AnalogModel(object):
             normalized_residuals.append(kw_fit['normalized_residuals'])
             residual_convergence.append(kw_fit['residual_convergence'])
             residual_mean_kappa.append(kw_fit['mean_kappa'])
-            time_delay_surface_true.append(kw_fit['time_delay_surface_true'])
-            time_delay_surface_modeled.append(kw_fit['time_delay_surface_modeled'])
+            time_delay_residuals.append(kw_fit['time_delay_residuals'])
 
             if n == 0:
                 baseline = tbaseline
@@ -155,8 +153,7 @@ class AnalogModel(object):
             np.savetxt(save_name_path + 'modeled_' + str(N_start+i)+'.txt', X=modeled_lens[i])
             np.savetxt(save_name_path + 'residuals_' + str(N_start + i) + '.txt', X=normalized_residuals[i])
             np.savetxt(save_name_path + 'kappa_' + str(N_start + i) + '.txt', X=residual_convergence[i])
-            np.savetxt(save_name_path + 'tdelaymodeled_' + str(N_start + i) + '.txt', X=time_delay_surface_modeled[i])
-            np.savetxt(save_name_path + 'tdelaytrue_' + str(N_start + i) + '.txt', X=time_delay_surface_true[i])
+            np.savetxt(save_name_path + 'tdelayres_' + str(N_start + i) + '.txt', X=time_delay_residuals[i])
 
         return [flux_anomalies, baseline, time_anomalies, ddt_inferred]
 
@@ -360,11 +357,15 @@ class AnalogModel(object):
         lensModel_full, kwargs_lens_full = arc_quad_lens.get_lensmodel()
         lens_system_simple = arc_quad_lens.get_smooth_lens_system()
 
-        pso_kwargs = {'sigma_scale': 1.0, 'n_particles': n_particles, 'n_iterations': n_iterations}
-        mcmc_kwargs = {'n_burn': n_burn, 'n_run': n_run, 'walkerRatio': walkerRatio, 'sigma_scale': 0.1}
+        pso_kwargs = {'sigma_scale': 0.5, 'n_particles': n_particles, 'n_iterations': n_iterations}
+        simplex_kwargs = {'n_iterations': 500}
+        mcmc_kwargs = {'n_burn': n_burn, 'n_run': n_run, 'walkerRatio': walkerRatio, 'sigma_scale': 0.05}
+
+        mcmc_chain_idx = 1
 
         chain_list, kwargs_result, kwargs_model, multi_band_list, kwargs_special, param_class = \
-            lens_system_simple.fit(data, pso_kwargs, mcmc_kwargs, time_delay_likelihood=time_delay_likelihood,
+            lens_system_simple.fit(data, pso_kwargs, mcmc_kwargs,
+                                   time_delay_likelihood=time_delay_likelihood,
                                    fix_D_dt=fix_D_dt)
 
         lensModel, kwargs_lens = lens_system_simple.get_lensmodel()
@@ -377,18 +378,18 @@ class AnalogModel(object):
 
         residual_maps = ResidualLensMaps(lensModel_full, lensModel, kwargs_lens_full, kwargs_lens)
         kappa = residual_maps.convergence(window_size, 200)
-
-        tdelay_map_full, tdelay_map_simple = residual_maps.time_delay_surface_12(window_size, 200,
-                                           self.lens.x[0], self.lens.y[0])
-
-        # tdelay_res_geo, tdelay_res_grav = residual_maps.time_delay_surface_geoshapiro(window_size, 200,
+        #
+        # tdelay_map_full, tdelay_map_simple = residual_maps.time_delay_surface_12(window_size, 200,
         #                                    self.lens.x[0], self.lens.y[0])
-        # tdelay_res_map = tdelay_res_geo + tdelay_res_grav
+
+        tdelay_res_geo, tdelay_res_grav = residual_maps.time_delay_surface_geoshapiro(window_size, 200,
+                                           self.lens.x[0], self.lens.y[0])
+        tdelay_res_map = tdelay_res_geo + tdelay_res_grav
 
         D_dt_true = lens_system_simple.lens_cosmo.D_dt
 
         n_keep = 100
-        chain_samples = chain_list[1][1]
+        chain_samples = chain_list[mcmc_chain_idx][1]
         nsamples = int(chain_samples[:,-1].shape[0])
 
         keep_integers = random.sample(range(0, nsamples-1), n_keep)
@@ -405,8 +406,7 @@ class AnalogModel(object):
 
         return_kwargs = {'D_dt_true': D_dt_true,
                          'kwargs_lens_macro_fit': macro_params, 'mean_kappa': np.mean(kappa),
-                         'residual_convergence': kappa, 'time_delay_surface_true': tdelay_map_full,
-                         'time_delay_surface_modeled': tdelay_map_simple,
+                         'residual_convergence': kappa, 'time_delay_residuals': tdelay_res_map,
                          'observed_lens': observed_lens, 'modeled_lens': modeled_lens, 'normalized_residuals': normalized_residuals,
                          'D_dt_samples': chain_samples[:,-1], 'source_x': lens_system_simple.source_centroid_x,
                          'source_y': lens_system_simple.source_centroid_y, 'zlens': self.zlens,

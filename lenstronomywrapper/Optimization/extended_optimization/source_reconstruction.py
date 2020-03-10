@@ -18,15 +18,39 @@ class SourceReconstruction(object):
 
         self._lensmodel_init, _ = self.lens_system.get_lensmodel()
 
-    def optimize(self, pso_kwargs=None, mcmc_kwargs=None):
+    def optimize(self, pso_kwargs=None, mcmc_kwargs=None, simplex_kwargs=None):
 
-        chain_list, kwargs_result, kwargs_model, multi_band_list, param_class = self._fit(pso_kwargs, mcmc_kwargs)
+        chain_list, kwargs_result, kwargs_model, multi_band_list, param_class = \
+                self._fit(pso_kwargs=pso_kwargs, mcmc_kwargs=mcmc_kwargs, simplex_kwargs=simplex_kwargs)
+
+        kwargs_special = kwargs_result['kwargs_special']
+        return chain_list, kwargs_result, kwargs_model, multi_band_list, kwargs_special, param_class
+
+    def _fit(self, pso_kwargs=None, mcmc_kwargs=None, simplex_kwargs=None, reoptimize=False):
+
+        kwargs_data_joint, kwargs_model, kwargs_constraints, kwargs_likelihood, kwargs_params, multi_band_list = \
+            self._init.sampler_inputs(reoptimize)
+
+        fitting_seq = FittingSequence(kwargs_data_joint, kwargs_model, kwargs_constraints, kwargs_likelihood,
+                                      kwargs_params)
+
+        fitting_kwargs_list = []
+        if pso_kwargs is not None:
+            fitting_kwargs_list.append(['PSO', pso_kwargs])
+        if simplex_kwargs is not None:
+            fitting_kwargs_list.append(['SIMPLEX', simplex_kwargs])
+        if mcmc_kwargs is not None:
+            fitting_kwargs_list.append(['MCMC', mcmc_kwargs])
+
+        chain_list = fitting_seq.fit_sequence(fitting_kwargs_list)
+        kwargs_result = fitting_seq.best_fit()
+        print('fit kwargs:')
+        print(kwargs_result['kwargs_lens'])
 
         kwargs_lens = kwargs_result['kwargs_lens']
         kwargs_source_light = kwargs_result['kwargs_source']
         kwargs_lens_light = kwargs_result['kwargs_lens_light']
         kwargs_ps = kwargs_result['kwargs_ps']
-        kwargs_special = kwargs_result['kwargs_special']
 
         for i, kw in enumerate(kwargs_lens):
             if 'ra_0' in kw.keys():
@@ -36,7 +60,7 @@ class SourceReconstruction(object):
 
         self._update_lens_system(kwargs_lens, kwargs_source_light, kwargs_lens_light, kwargs_ps)
 
-        return chain_list, kwargs_result, kwargs_model, multi_band_list, kwargs_special, param_class
+        return chain_list, kwargs_result, kwargs_model, multi_band_list, fitting_seq.param_class
 
     def _update_lens_system(self, kwargs_lens, kwargs_source_light, kwargs_lens_light, kwargs_ps):
 
@@ -50,27 +74,3 @@ class SourceReconstruction(object):
         self._data_class.point_source.update_kwargs_ps(kwargs_ps)
         self.lens_system.set_lensmodel_static(self._lensmodel_init, kwargs_lens)
 
-    def _fit(self, pso_kwargs, mcmc_kwargs):
-
-        kwargs_data_joint, kwargs_model, kwargs_constraints, kwargs_likelihood, kwargs_params, multi_band_list = \
-            self._init.sampler_inputs()
-
-        fitting_seq = FittingSequence(kwargs_data_joint, kwargs_model, kwargs_constraints, kwargs_likelihood,
-                                      kwargs_params)
-
-
-        if pso_kwargs is None:
-            pso_kwargs = {'sigma_scale': 1., 'n_particles': 50, 'n_iterations': 200}
-        if mcmc_kwargs is None:
-            mcmc_kwargs = {'n_burn': 150, 'n_run': 100, 'walkerRatio': 4, 'sigma_scale': .1}
-
-        #mcmc_kwargs.update({'progress': False})
-        fitting_kwargs_list = [['PSO', pso_kwargs],
-                               ['MCMC', mcmc_kwargs]
-                               ]
-
-        chain_list = fitting_seq.fit_sequence(fitting_kwargs_list)
-        kwargs_result = fitting_seq.best_fit()
-        print('fit kwargs:')
-        print(kwargs_result['kwargs_lens'])
-        return chain_list, kwargs_result, kwargs_model, multi_band_list, fitting_seq.param_class

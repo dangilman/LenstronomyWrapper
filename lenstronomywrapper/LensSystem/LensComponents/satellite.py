@@ -3,12 +3,13 @@ from lenstronomywrapper.LensSystem.LensComponents.macromodel_base import Compone
 class SISsatellite(ComponentBase):
 
     def __init__(self, redshift, kwargs_init=None, theta_E=None, center_x=None, center_y=None,
-                 prior=[], fixed=False, convention_index=False, reoptimize=True):
+                 prior=[], fixed=False, convention_index=False, reoptimize=False):
 
         if kwargs_init is None:
             kwargs_init = [{'theta_E': theta_E, 'center_x': center_x, 'center_y': center_y}]
         self._redshift = redshift
         self._prior = prior
+        self.reoptimize = reoptimize
 
         super(SISsatellite, self).__init__(self.lens_model_list, [redshift], kwargs_init,
                                            convention_index, fixed, reoptimize)
@@ -35,11 +36,16 @@ class SISsatellite(ComponentBase):
 
     @property
     def param_init(self):
+
         return self.kwargs
 
     @property
     def param_sigma(self):
-        return [{'theta_E': 0.3, 'center_x': 0.3, 'center_y': 0.3}]
+
+        if self.reoptimize:
+            return [{'theta_E': 0.05, 'center_x': 0.05, 'center_y': 0.05}]
+        else:
+            return [{'theta_E': 0.3, 'center_x': 0.3, 'center_y': 0.3}]
 
     @property
     def param_lower(self):

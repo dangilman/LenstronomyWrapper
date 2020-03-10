@@ -10,6 +10,8 @@ class NFWperturber(ComponentBase):
 
         self._redshift = redshift
 
+        self.reoptimize = False
+
         self.x_center, self.y_center = kwargs_init[0]['center_x'], kwargs_init[0]['center_y']
 
         if param_min is None:

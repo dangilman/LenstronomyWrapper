@@ -6,9 +6,9 @@ class PowerLawShear(ComponentBase):
 
     def __init__(self, redshift, kwargs_init=None, theta_E=1., gamma=2.,
                  shear=0.03, shear_angle=0., center_x=0., center_y=0., ellip=0.1, ellip_angle=0., convention_index=False,
-                 reoptimize=True, prior=[]):
+                 reoptimize=False, prior=[]):
 
-        self._reoptimize = reoptimize
+        self.reoptimize = reoptimize
         self._prior = prior
 
         if kwargs_init is None:
@@ -73,8 +73,34 @@ class PowerLawShear(ComponentBase):
     @property
     def param_sigma(self):
 
-        return [{'theta_E': 0.5, 'center_x': 0.2, 'center_y': 0.2, 'e1': 0.4, 'e2': 0.4, 'gamma': 0.25},
-                {'gamma1': 0.1, 'gamma2': 0.1}]
+        if self.reoptimize:
+
+            theta_E_scale, gamma_scale, centroid_scale, e12_scale = 0.05, 0.05, 0.1, 0.05
+            shear_scale = 0.05
+            old_kwargs = self._kwargs[0]
+            old_kwargs_shear = self._kwargs[1]
+            new_kwargs = {}
+            new_kwargs_shear = {}
+
+            new_kwargs_shear['gamma1'] = max(0.001, np.absolute(shear_scale * old_kwargs_shear['gamma1']))
+            new_kwargs_shear['gamma2'] = max(0.001, np.absolute(shear_scale * old_kwargs_shear['gamma2']))
+
+            for key in self._kwargs[0].keys():
+                if key == 'center_x' or key == 'center_y':
+                    new_kwargs[key] = max(0.001, centroid_scale * old_kwargs[key])
+                elif key == 'theta_E':
+                    new_kwargs[key] = max(0.01, theta_E_scale * old_kwargs[key])
+                elif key == 'gamma':
+                    new_kwargs[key] = max(0.01, gamma_scale * old_kwargs[key])
+                elif key == 'e1' or key == 'e2':
+                    new_kwargs[key] = max(0.0005, np.absolute(e12_scale * old_kwargs[key]))
+                else:
+                    raise Exception('param name ' + str(key) + 'not recognized.')
+
+            return [new_kwargs, new_kwargs_shear]
+        else:
+            return [{'theta_E': 0.25, 'center_x': 0.1, 'center_y': 0.1, 'e1': 0.2, 'e2': 0.2, 'gamma': 0.15},
+                    {'gamma1': 0.1, 'gamma2': 0.1}]
 
     @property
     def param_lower(self):

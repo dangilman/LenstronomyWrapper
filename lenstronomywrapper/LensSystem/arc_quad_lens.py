@@ -78,11 +78,12 @@ class ArcQuadLensSystem(LensBase):
                     component._kwargs[i]['center_x'] = self.source_centroid_x
                     component._kwargs[i]['center_y'] = self.source_centroid_y
 
-    def fit(self, data_to_fit, pso_kwargs=None, mcmc_kwargs=None, **kwargs):
+    def fit(self, data_to_fit, pso_kwargs=None, mcmc_kwargs=None, simplex_kwargs=None,
+            **kwargs):
 
         optimizer = SourceReconstruction(self, data_to_fit, **kwargs)
         chain_list, kwargs_result, kwargs_model, multi_band_list, kwargs_special, param_class = optimizer.\
-            optimize(pso_kwargs, mcmc_kwargs)
+            optimize(pso_kwargs, mcmc_kwargs, simplex_kwargs)
 
         return chain_list, kwargs_result, kwargs_model, multi_band_list, kwargs_special, param_class
 

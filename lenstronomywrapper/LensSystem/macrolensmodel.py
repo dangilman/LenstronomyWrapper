@@ -7,6 +7,11 @@ class MacroLensModel(object):
         self.components = components
         self.n_lens_models = self._count_models(components)
 
+    def set_reoptimize(self, reoptimize=bool):
+
+        for component in self.components:
+            component.reoptimize = reoptimize
+
     def centroid(self):
         main = self.components[0]
         return main.x_center, main.y_center

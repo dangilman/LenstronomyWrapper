@@ -1,11 +1,12 @@
 from lenstronomywrapper.LensSystem.BackgroundSource.source_base import SourceBase
+import numpy as np
 
 class SersicSource(SourceBase):
 
-    def __init__(self, kwargs_sersic, reoptimize=True, prior=[],
+    def __init__(self, kwargs_sersic, reoptimize=False, prior=[],
                  concentric_with_source=None):
 
-        self._reoptimize = reoptimize
+        self.reoptimize = reoptimize
         self._kwargs = kwargs_sersic
         source_x, source_y = kwargs_sersic[0]['center_x'], kwargs_sersic[0]['center_y']
 
@@ -27,18 +28,35 @@ class SersicSource(SourceBase):
     @property
     def param_init(self):
 
-        if self._reoptimize:
-            return self.kwargs_light
-        else:
-            # basically random
-            return [{'amp': 3000, 'R_sersic': 0.5, 'n_sersic': 4.0, 'center_x': 0., 'center_y': 0.,
-                     'e1': 0.2, 'e2': -0.1}]
+        return self.kwargs_light
 
     @property
     def param_sigma(self):
 
-        return [{'amp': 10000, 'R_sersic': 1., 'n_sersic': 2.5, 'center_x': 0.3, 'center_y': 0.3,
-                     'e1': 0.5, 'e2': 0.5}]
+        if self.reoptimize:
+
+            amp_scale, r_sersic_scale, n_sersic_scale, centroid_scale, e12_scale = 0.2, 0.05, 0.1, 0.1, 0.05
+
+            old_kwargs = self._kwargs[0]
+            new_kwargs = {}
+            for key in self._kwargs[0].keys():
+                if key == 'center_x' or key == 'center_y':
+                    new_kwargs[key] = max(0.001, centroid_scale * old_kwargs[key])
+                elif key == 'n_sersic':
+                    new_kwargs[key] = max(0.025, n_sersic_scale * old_kwargs[key])
+                elif key == 'amp':
+                    new_kwargs[key] = max(1., amp_scale * old_kwargs[key])
+                elif key == 'R_sersic':
+                    new_kwargs[key] = max(0.01, r_sersic_scale * old_kwargs[key])
+                elif key == 'e1' or key == 'e2':
+                    new_kwargs[key] = max(0.0005, np.absolute(e12_scale * old_kwargs[key]))
+                else:
+                    raise Exception('param name '+str(key) + ' not recognized.')
+
+            return [new_kwargs]
+        else:
+            return [{'amp': 1000, 'R_sersic': 0.3, 'n_sersic': 2.0, 'center_x': 0.2, 'center_y': 0.2,
+                     'e1': 0.25, 'e2': 0.25}]
 
     @property
     def param_lower(self):

@@ -24,7 +24,11 @@ class SamplerInit(object):
 
         self.lens_data_class = lens_data_class
 
-    def sampler_inputs(self):
+    def sampler_inputs(self, reoptimize):
+
+        self.system.source_light_model.set_reoptimize(reoptimize)
+        self.system.lens_light_model.set_reoptimize(reoptimize)
+        self.system.macromodel.set_reoptimize(reoptimize)
 
         kwargs_model = self.kwargs_model
         kwargs_numerics = self.kwargs_numerics

@@ -9,6 +9,11 @@ class LightModel(object):
         self.components = components
         self.n_light_models = self._count_models(components)
 
+    def set_reoptimize(self, reoptimize=bool):
+
+        for component in self.components:
+            component.reoptimize = reoptimize
+
     def surface_brightness(self, xgrid, ygrid, lensmodel, lensmodel_kwargs):
 
         light = 0
