@@ -386,7 +386,7 @@ class AnalogModel(object):
                                            self.lens.x[0], self.lens.y[0])
         tdelay_res_map = tdelay_res_geo + tdelay_res_grav
 
-        D_dt_true = lens_system_simple.lens_cosmo.D_dt
+        D_dt_true = lens_system_simple.lens_cosmo.ddt
 
         n_keep = 100
         chain_samples = chain_list[mcmc_chain_idx][1]

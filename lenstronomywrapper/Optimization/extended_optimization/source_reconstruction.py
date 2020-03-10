@@ -6,7 +6,7 @@ class SourceReconstruction(object):
     def __init__(self, lens_system, data_class, time_delay_likelihood=False, fix_D_dt=None):
 
         if time_delay_likelihood:
-            D_dt_true = lens_system.lens_cosmo.D_dt
+            D_dt_true = lens_system.lens_cosmo.ddt
             self._init = SamplerInit(lens_system, data_class, time_delay_likelihood, D_dt_true,
                                      data_class.relative_arrival_times, data_class.time_delay_sigma, fix_D_dt)
         else:
