@@ -38,10 +38,12 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
             create_directory(save_name_path)
         shapelet_nmax = None
         fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 200, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 200}
+        fit_smooth_kwargs = {'n_particles': 2, 'n_iterations': 2, 'n_run': 3, 'walkerRatio': 4, 'n_burn': 0}
 
     elif Nstart < 301:
         print('SAMPLING LOS plus subs...... ')
         fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 200, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 300}
+        fit_smooth_kwargs = {'n_particles': 2, 'n_iterations': 2, 'n_run': 3, 'walkerRatio': 4, 'n_burn': 0}
         N0 = Nstart - 100
         save_name_path_base = base_path + '/tdelay_output/raw/' + fname
         save_name_path = save_name_path_base + '/los_plus_subs' + name_append + '/'
@@ -64,6 +66,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
         print('SAMPLING LOS plus subs with shapelets...... ')
         fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 250,
                              'n_run': 150, 'walkerRatio': 4, 'n_burn': 350}
+        fit_smooth_kwargs = {'n_particles': 2, 'n_iterations': 2, 'n_run': 3, 'walkerRatio': 4, 'n_burn': 0}
         N0 = Nstart - 300
         save_name_path_base = base_path + '/tdelay_output/raw/' + fname
         save_name_path = save_name_path_base + '/los_plus_subs' + name_append + '_shapelets/'
