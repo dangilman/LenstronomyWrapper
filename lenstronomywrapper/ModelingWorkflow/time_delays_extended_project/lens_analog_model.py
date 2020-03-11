@@ -117,9 +117,7 @@ class AnalogModel(object):
                 baseline = tbaseline
                 flux_anomalies = f
                 time_anomalies = t
-                # time_anomalies_geo = tgeo
-                # time_anomalies_grav = tgrav
-                #h0_inferred = h0_inf.ravel()
+                chi2_imaging = kw_fit['chi2_imaging'].ravel()
                 time_delays_model = tdelay_model
                 ddt_inferred = kw_fit['D_dt_samples'].ravel()
                 macromodel_parameters = macro_params
@@ -130,18 +128,17 @@ class AnalogModel(object):
                 flux_anomalies = np.vstack((flux_anomalies, f))
                 time_anomalies = np.vstack((time_anomalies, t))
                 time_delays_model = np.vstack((time_delays_model, tdelay_model))
-                # time_anomalies_geo = np.vstack((time_anomalies_geo, tgeo))
-                # time_anomalies_grav = np.vstack((time_anomalies_grav, tgrav))
+                chi2_imaging = np.append(chi2_imaging, kw_fit['chi2_imaging'].ravel())
                 ddt_inferred = np.append(ddt_inferred, kw_fit['D_dt_samples'].ravel())
                 #h0_inferred = np.append(h0_inferred, h0_inf.ravel()).flatten()
                 macromodel_parameters = np.vstack((macromodel_parameters, macro_params))
                 tsigma = np.vstack((tsigma, arrival_time_sigma))
 
         fnames = ['tbaseline_', 'flux_anomaly_', 'time_anomaly_', 'time_delays_', 'ddt_inferred', 'macroparams_',
-                  'time_delay_sigma_', 'kappares_']
+                  'time_delay_sigma_', 'kappares_', 'chi2_imaging_']
 
         arrays = [baseline, flux_anomalies, time_anomalies, time_delays_model,
-                  np.array(ddt_inferred), macromodel_parameters, tsigma, np.array(residual_mean_kappa)
+                  np.array(ddt_inferred), macromodel_parameters, tsigma, np.array(residual_mean_kappa),chi2_imaging
                   ]
 
         for fname, arr in zip(fnames, arrays):
@@ -372,6 +369,11 @@ class AnalogModel(object):
 
         modelPlot = ModelPlot(multi_band_list, kwargs_model, kwargs_result, arrow_size=0.02, cmap_string="gist_heat")
 
+        logL = modelPlot._imageModel.likelihood_data_given_model(
+            source_marg=False, linear_prior=None, **kwargs_result)
+        ndata_points = modelPlot._imageModel.num_data_evaluate
+        chi2_imaging = logL * 2/ndata_points
+
         observed_lens = modelPlot._select_band(0)._data
         modeled_lens = modelPlot._select_band(0)._model
         normalized_residuals = modelPlot._select_band(0)._norm_residuals
@@ -405,6 +407,7 @@ class AnalogModel(object):
         macro_params = chain_process.macro_params()
 
         return_kwargs = {'D_dt_true': D_dt_true,
+                         'chi2_imaging': chi2_imaging,
                          'kwargs_lens_macro_fit': macro_params, 'mean_kappa': np.mean(kappa),
                          'residual_convergence': kappa, 'time_delay_residuals': tdelay_res_map,
                          'observed_lens': observed_lens, 'modeled_lens': modeled_lens, 'normalized_residuals': normalized_residuals,

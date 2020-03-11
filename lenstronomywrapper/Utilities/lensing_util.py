@@ -40,9 +40,9 @@ def interpolate_ray_paths(x_image, y_image, lens_system, include_substructure=Fa
 def ddt_from_h(H, omega_matter, omega_matter_baryon, zlens, zsource):
     _astro = FlatLambdaCDM(H0=float(H), Om0=omega_matter, Ob0=omega_matter_baryon)
     lensCosmo = LensCosmo(zlens, zsource, _astro)
-    Dd = lensCosmo.D_d
-    Ds = lensCosmo.D_s
-    Dds = lensCosmo.D_ds
+    Dd = lensCosmo.dd
+    Ds = lensCosmo.ds
+    Dds = lensCosmo.dds
     return (1 + zlens) * Dd * Ds / Dds
 
 def interpolate_Ddt_h0(zlens, zsource, astropy_instance, h0_min=0.1, h0_max=300, steps=250):
