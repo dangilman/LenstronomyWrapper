@@ -43,7 +43,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
     elif Nstart < 301:
         print('SAMPLING LOS plus subs...... ')
         fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 200, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 300}
-        #fit_smooth_kwargs = {'n_particles': 2, 'n_iterations': 2, 'n_run': 3, 'walkerRatio': 4, 'n_burn': 0}
+        #fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 2, 'walkerRatio': 4, 'n_burn': 0}
         N0 = Nstart - 100
         save_name_path_base = base_path + '/tdelay_output/raw/' + fname
         save_name_path = save_name_path_base + '/los_plus_subs_onedelay' + name_append + '/'
@@ -83,6 +83,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
         shapelet_nmax = 10
 
     print('N0:', N0)
+    print('filename: ', save_name_path)
     run_real(lens_analog_model_class, save_name_path, N, N0, realization,
              arrival_time_sigma, position_sigma, gamma_prior_scale, fix_D_dt, window_size, exp_time, background_rms,
              time_delay_like=True, fit_smooth_kwargs=fit_smooth_kwargs, shapelet_nmax=shapelet_nmax)
