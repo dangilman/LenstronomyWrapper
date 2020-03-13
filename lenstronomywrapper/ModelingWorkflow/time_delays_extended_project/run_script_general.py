@@ -46,7 +46,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
         #fit_smooth_kwargs = {'n_particles': 2, 'n_iterations': 2, 'n_run': 3, 'walkerRatio': 4, 'n_burn': 0}
         N0 = Nstart - 100
         save_name_path_base = base_path + '/tdelay_output/raw/' + fname
-        save_name_path = save_name_path_base + '/los_plus_subs' + name_append + '/'
+        save_name_path = save_name_path_base + '/los_plus_subs_onedelay' + name_append + '/'
         if not os.path.exists(save_name_path):
             create_directory(save_name_path)
 
@@ -58,8 +58,11 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
         if not os.path.exists(save_name_path_base + '/realizations/'):
             create_directory(save_name_path_base + '/realizations/')
 
-        realization = lens_analog_model_class.pyhalo.render('composite_powerlaw', realization_kwargs)[0]
-        save_realization = True
+        #realization = lens_analog_model_class.pyhalo.render('composite_powerlaw', realization_kwargs)[0]
+        #save_realization = True
+        save_realization = False
+        realization = RealiztionFromFile(realization_file_name)
+        realization.log_mlow = log_mlow
         shapelet_nmax = None
 
     elif Nstart < 501:
