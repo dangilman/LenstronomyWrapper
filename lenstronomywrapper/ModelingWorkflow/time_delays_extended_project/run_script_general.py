@@ -84,6 +84,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
 
     print('N0:', N0)
     print('filename: ', save_name_path)
+    print('arrival time uncertainties: ', arrival_time_sigma)
     run_real(lens_analog_model_class, save_name_path, N, N0, realization,
              arrival_time_sigma, position_sigma, gamma_prior_scale, fix_D_dt, window_size, exp_time, background_rms,
              time_delay_like=True, fit_smooth_kwargs=fit_smooth_kwargs, shapelet_nmax=shapelet_nmax)
