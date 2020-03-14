@@ -56,7 +56,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
         LOS_norm = 1.
         realization_kwargs['sigma_sub'] = SHMF_norm
         realization_kwargs['LOS_normalization'] = LOS_norm
-        realization_file_name = save_name_path_base + '/realizations/realization_'+str(N0)
+        realization_file_name = save_name_path_base + '/realizations/realization_'+str(N0) + name_append
         if not os.path.exists(save_name_path_base + '/realizations/'):
             create_directory(save_name_path_base + '/realizations/')
 
@@ -78,7 +78,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
 
         if not os.path.exists(save_name_path):
             create_directory(save_name_path)
-        realization_file_name = save_name_path_base + '/realizations/realization_'+str(N0)
+        realization_file_name = save_name_path_base + '/realizations/realization_'+str(N0) + name_append
         assert os.path.exists(realization_file_name + '_kwargslist.txt')
         realization = RealiztionFromFile(realization_file_name)
         realization.log_mlow = log_mlow
