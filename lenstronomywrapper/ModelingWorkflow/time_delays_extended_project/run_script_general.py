@@ -2,10 +2,9 @@ from lenstronomywrapper.ModelingWorkflow.time_delays_extended_project.scripts im
 import os
 
 def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_rms, N=1,
-        subtract_exact_mass_sheets=False, name_append=''):
+        subtract_exact_mass_sheets=False, name_append='', fix_Ddt=False):
 
     position_sigma = [0.005]*4
-    fix_D_dt = False
     gamma_prior_scale = None
 
     arrival_time_sigma = [abs(delta_ti / max(abs(ti), 0.1)) for delta_ti, ti in
@@ -28,6 +27,9 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
     #base_path = os.getenv('HOME') + '/Code'
     print(base_path)
     assert os.path.exists(base_path)
+
+    if fix_Ddt:
+        name_append += '_fixDdt'
 
     if Nstart < 101:
         print('SAMPLING control...... ')
@@ -80,13 +82,13 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
         assert os.path.exists(realization_file_name + '_kwargslist.txt')
         realization = RealiztionFromFile(realization_file_name)
         realization.log_mlow = log_mlow
-        shapelet_nmax = 10
+        shapelet_nmax = 8
 
     print('N0:', N0)
     print('filename: ', save_name_path)
     print('arrival time uncertainties: ', arrival_time_sigma)
     run_real(lens_analog_model_class, save_name_path, N, N0, realization,
-             arrival_time_sigma, position_sigma, gamma_prior_scale, fix_D_dt, window_size, exp_time, background_rms,
+             arrival_time_sigma, position_sigma, gamma_prior_scale, fix_Ddt, window_size, exp_time, background_rms,
              time_delay_like=True, fit_smooth_kwargs=fit_smooth_kwargs, shapelet_nmax=shapelet_nmax)
 
     if save_realization:

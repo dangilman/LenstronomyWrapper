@@ -173,7 +173,7 @@ class AnalogModel(object):
             self.model_setup(realization, arrival_time_sigma, image_sigma, gamma_prior_scale, window_size,
                              exp_time, background_rms, shapelet_nmax)
 
-        return_kwargs_fit, kwargs_data_fit = self.fit_smooth(lens_system, data_class,
+        return_kwargs_fit, kwargs_data_fit = self.fit_smooth(lens_system, data_class, arrival_time_sigma,
                                                              time_delay_likelihood, fix_D_dt, window_size, **fit_smooth_kwargs)
 
         macromodel_params = np.round(return_kwargs_fit['kwargs_lens_macro_fit'], 5)
@@ -276,7 +276,7 @@ class AnalogModel(object):
         for t, delta_t in zip(arrival_times[1:]-arrival_times[0], arrival_time_sigma):
             arrival_time_uncertainties.append(abs(t*delta_t))
 
-        source_model_list = [SersicSource(kwargs_sersic_source, concentric_with_source=True)]
+        source_model_list = [SersicSource(kwargs_sersic_source, concentric_with_source=0)]
         source_x, source_y = lens_system_quad.source_centroid_x, lens_system_quad.source_centroid_y
         if self.lens.identifier == 'lens0408':
             kwargs_sersic_source_2 = [{'amp': 1500, 'R_sersic': 0.1, 'n_sersic': 4., 'center_x': source_x - 0.6,
@@ -287,6 +287,7 @@ class AnalogModel(object):
               'e1': 0.01, 'e2': -0.01}]
             source_model_list += [SersicSource(kwargs_sersic_source_2),
                                   SersicSource(kwargs_sersic_source_3)]
+
 
         if window_size is None:
 
@@ -328,8 +329,18 @@ class AnalogModel(object):
         if shapelet_nmax is not None:
             kwargs_shapelets = [{'amp': 100, 'beta': 0.01,
                                  'n_max': shapelet_nmax, 'center_x': 0., 'center_y': 0.}]
-            source_model_list += [Shapelet(kwargs_shapelets, concentric_with_source=True)]
+            source_model_list += [Shapelet(kwargs_shapelets, concentric_with_source=0)]
+
+            if self.lens.identifier == 'lens0408':
+                kwargs_shapelets_2 = [{'amp': 100, 'beta': 0.01,
+                                     'n_max': 3, 'center_x': 0., 'center_y': 0.}]
+                kwargs_shapelets_3 = [{'amp': 100, 'beta': 0.01,
+                                       'n_max': 3, 'center_x': 0., 'center_y': 0.}]
+                source_model_list += [Shapelet(kwargs_shapelets_2, concentric_with_source=1)]
+                source_model_list += [Shapelet(kwargs_shapelets_3, concentric_with_source=2)]
+
             source_model = LightModel(source_model_list)
+
             lens_system.source_light_model = source_model
 
         return_kwargs = {'imaging_data': imaging_data,
@@ -348,7 +359,7 @@ class AnalogModel(object):
 
         return lens_system, data_class, return_kwargs, return_kwargs_data
 
-    def fit_smooth(self, arc_quad_lens, data, time_delay_likelihood, fix_D_dt, window_size,
+    def fit_smooth(self, arc_quad_lens, data, arrival_time_sigma, time_delay_likelihood, fix_D_dt, window_size,
                    n_particles=100, n_iterations=200, n_run=100, n_burn=600, walkerRatio=4):
 
         lensModel_full, kwargs_lens_full = arc_quad_lens.get_lensmodel()
@@ -403,24 +414,32 @@ class AnalogModel(object):
                                          background_quasar=lens_system_simple.background_quasar)
 
         flux_ratios, source_x, source_y = chain_process.flux_ratios(self.lens.x, self.lens.y)
-        arrival_times, arrival_times_geo, arrival_times_grav = chain_process.time_delays(self.lens.x, self.lens.y)
+
         macro_params = chain_process.macro_params()
 
+        if fix_D_dt:
+
+            delta_time_delay = np.absolute(self.lens.relative_arrival_times * np.array(arrival_time_sigma))
+            ddt_samples, arrival_times = chain_process.maximum_likelihood_Ddt(self.lens.x, self.lens.y,
+                                                 self.lens.relative_arrival_times, delta_time_delay)
+
+        else:
+            arrival_times, _, _ = chain_process.time_delays(self.lens.x, self.lens.y)
+            ddt_samples = chain_samples[:,-1]
+
+        return_kwargs_data = {'flux_ratios': flux_ratios,
+                                'time_delays': arrival_times,
+                                  'source_x': source_x,
+                                  'source_y': source_y}
         return_kwargs = {'D_dt_true': D_dt_true,
                          'chi2_imaging': chi2_imaging,
                          'kwargs_lens_macro_fit': macro_params, 'mean_kappa': np.mean(kappa),
                          'residual_convergence': kappa, 'time_delay_residuals': tdelay_res_map,
-                         'observed_lens': observed_lens, 'modeled_lens': modeled_lens, 'normalized_residuals': normalized_residuals,
-                         'D_dt_samples': chain_samples[:,-1], 'source_x': lens_system_simple.source_centroid_x,
+                         'observed_lens': observed_lens, 'modeled_lens': modeled_lens,
+                         'normalized_residuals': normalized_residuals,
+                         'D_dt_samples': ddt_samples, 'source_x': lens_system_simple.source_centroid_x,
                          'source_y': lens_system_simple.source_centroid_y, 'zlens': self.zlens,
                          'zsource': self.zsource}
-
-        return_kwargs_data = {'flux_ratios': flux_ratios,
-                              'time_delays': arrival_times,
-                              'geo_delay': arrival_times_geo,
-                              'grav_delay': arrival_times_grav,
-                              'source_x': source_x,
-                              'source_y': source_y}
 
         return return_kwargs, return_kwargs_data
 

@@ -163,11 +163,20 @@ class SamplerInit(object):
     @property
     def linked_parameters_source_source(self):
 
-        out = []
+        joint_source_with_source, joint_source_with_point_source = [], []
         for k, source_model in enumerate(self.system.source_light_model.components):
-            if source_model.concentric_with_source is True:
-                out.append([0, k])
-        return out
+
+            if source_model.concentric_with_source is False or source_model.concentric_with_source is None:
+                continue
+            else:
+
+                idx = source_model.concentric_with_source
+                if idx == 0:
+                    joint_source_with_point_source.append([0, k])
+                else:
+                    joint_source_with_source.append([idx, k, ['center_x', 'center_y']])
+
+        return joint_source_with_point_source, joint_source_with_source
 
     @property
     def kwargs_model(self):
@@ -219,7 +228,7 @@ class SamplerInit(object):
     @property
     def kwargs_constraints(self):
 
-        joint_source_with_point_source = self.linked_parameters_source_source
+        joint_source_with_point_source, joint_source_with_source = self.linked_parameters_source_source
 
         if len(self.lens_data_class.x) == 4:
             solver_type = 'PROFILE_SHEAR'
@@ -234,9 +243,13 @@ class SamplerInit(object):
         else:
             Ddt_sampling = False
 
-        kwargs = {'joint_source_with_point_source': joint_source_with_point_source,
-                  'num_point_source_list': [nimg], 'solver_type': solver_type,
+        kwargs = {'num_point_source_list': [nimg], 'solver_type': solver_type,
                   'Ddt_sampling': Ddt_sampling}
+
+        if len(joint_source_with_point_source) > 0:
+            kwargs['joint_source_with_point_source'] = joint_source_with_point_source
+        if len(joint_source_with_source) > 0:
+            kwargs['joint_source_with_source'] = joint_source_with_source
 
         return kwargs
 
