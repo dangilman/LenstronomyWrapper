@@ -38,6 +38,7 @@ class AnalogModel(object):
         self.zlens, self.zsource = lens_class_instance.zlens, lens_class_instance.zsrc
         if pyhalo is None:
             pyhalo = pyHalo(self.zlens, self.zsource, cosmology_kwargs=self.kwargs_cosmology)
+
         self.pyhalo = pyhalo
         self.kwargs_quasar = kwargs_quasar
 
@@ -119,7 +120,7 @@ class AnalogModel(object):
                 time_anomalies = t
                 chi2_imaging = kw_fit['chi2_imaging'].ravel()
                 time_delays_model = tdelay_model
-                ddt_inferred = kw_fit['D_dt_samples'].ravel()
+                #ddt_inferred = kw_fit['D_dt_samples'].ravel()
                 macromodel_parameters = macro_params
                 tsigma = arrival_time_sigma
 
@@ -129,16 +130,16 @@ class AnalogModel(object):
                 time_anomalies = np.vstack((time_anomalies, t))
                 time_delays_model = np.vstack((time_delays_model, tdelay_model))
                 chi2_imaging = np.append(chi2_imaging, kw_fit['chi2_imaging'].ravel())
-                ddt_inferred = np.append(ddt_inferred, kw_fit['D_dt_samples'].ravel())
+                #ddt_inferred = np.append(ddt_inferred, kw_fit['D_dt_samples'].ravel())
                 #h0_inferred = np.append(h0_inferred, h0_inf.ravel()).flatten()
                 macromodel_parameters = np.vstack((macromodel_parameters, macro_params))
                 tsigma = np.vstack((tsigma, arrival_time_sigma))
 
-        fnames = ['tbaseline_', 'flux_anomaly_', 'time_anomaly_', 'time_delays_', 'ddt_inferred', 'macroparams_',
+        fnames = ['tbaseline_', 'flux_anomaly_', 'time_anomaly_', 'time_delays_', 'macroparams_',
                   'time_delay_sigma_', 'kappares_', 'chi2_imaging_']
 
         arrays = [baseline, flux_anomalies, time_anomalies, time_delays_model,
-                  np.array(ddt_inferred), macromodel_parameters, tsigma, np.array(residual_mean_kappa),chi2_imaging
+                  macromodel_parameters, tsigma, np.array(residual_mean_kappa),chi2_imaging
                   ]
 
         for fname, arr in zip(fnames, arrays):
@@ -152,7 +153,7 @@ class AnalogModel(object):
             np.savetxt(save_name_path + 'kappa_' + str(N_start + i) + '.txt', X=residual_convergence[i])
             np.savetxt(save_name_path + 'tdelayres_' + str(N_start + i) + '.txt', X=time_delay_residuals[i])
 
-        return [flux_anomalies, baseline, time_anomalies, ddt_inferred]
+        return [flux_anomalies, baseline, time_anomalies]
 
     def save_append(self, filename, array_to_save):
 
@@ -402,14 +403,13 @@ class AnalogModel(object):
         D_dt_true = lens_system_simple.lens_cosmo.ddt
 
         n_keep = 100
-        chain_samples = chain_list[mcmc_chain_idx][1]
-        nsamples = int(chain_samples[:,-1].shape[0])
+        _chain_samples = chain_list[mcmc_chain_idx][1]
+        nsamples = int(_chain_samples[:,0].shape[0])
 
-        keep_integers = np.arange(nsamples-n_keep, nsamples)
+        keep_inds = random.sample(list(np.arange(1, nsamples)), n_keep)
 
-        chain_samples = chain_samples[keep_integers, :]
+        chain_samples = _chain_samples[keep_inds,:]
 
-        lensModel, _ = lens_system_simple.get_lensmodel()
         chain_process = ChainPostProcess(lensModel, chain_samples, param_class,
                                          background_quasar=lens_system_simple.background_quasar)
 
@@ -417,20 +417,7 @@ class AnalogModel(object):
 
         macro_params = chain_process.macro_params()
 
-        gamma = chain_samples[:,0]
-
-        if fix_D_dt:
-
-            delta_time_delay = np.absolute(self.lens.relative_arrival_times * np.array(arrival_time_sigma))
-            ddt_samples, arrival_times = chain_process.maximum_likelihood_Ddt(self.lens.x, self.lens.y,
-                                                 self.lens.relative_arrival_times, delta_time_delay)
-
-        else:
-            arrival_times, _, _ = chain_process.time_delays(self.lens.x, self.lens.y)
-            ddt_samples = chain_samples[:,-1]
-
-        plt.scatter(gamma, ddt_samples, color='r')
-        plt.show()
+        arrival_times, _, _ = chain_process.time_delays(self.lens.x, self.lens.y)
 
         return_kwargs_data = {'flux_ratios': flux_ratios,
                                 'time_delays': arrival_times,
@@ -442,7 +429,7 @@ class AnalogModel(object):
                          'residual_convergence': kappa, 'time_delay_residuals': tdelay_res_map,
                          'observed_lens': observed_lens, 'modeled_lens': modeled_lens,
                          'normalized_residuals': normalized_residuals,
-                         'D_dt_samples': ddt_samples, 'source_x': lens_system_simple.source_centroid_x,
+                         'source_x': lens_system_simple.source_centroid_x,
                          'source_y': lens_system_simple.source_centroid_y, 'zlens': self.zlens,
                          'zsource': self.zsource}
 

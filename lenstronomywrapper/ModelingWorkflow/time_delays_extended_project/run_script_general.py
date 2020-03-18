@@ -25,7 +25,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
     save_realization = False
     base_path = os.getenv('HOME') + '/../../../../u/flashscratch/g/gilmanda'
     #base_path = os.getenv('HOME') + '/Code'
-    print(base_path)
+    #print(base_path)
     assert os.path.exists(base_path)
 
     if fix_Ddt:
@@ -43,7 +43,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
             create_directory(save_name_path)
         shapelet_nmax = None
         fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 100, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 200}
-        #fit_smooth_kwargs = {'n_particles': 50, 'n_iterations': 50, 'n_run': 50, 'walkerRatio': 4, 'n_burn': 100}
+        #fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 3, 'walkerRatio': 4, 'n_burn': 0}
 
     elif Nstart < 301:
         print('SAMPLING LOS plus subs...... ')

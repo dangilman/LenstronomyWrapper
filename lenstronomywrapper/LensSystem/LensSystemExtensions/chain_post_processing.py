@@ -169,3 +169,4 @@ class ChainPostProcess(object):
         mags, _ = self.background_quasar.magnification(x_image, y_image, self.lensModel, kwargs_lens, normed=False)
 
         return mags[1:] / mags[0], srcx, srcy
+
