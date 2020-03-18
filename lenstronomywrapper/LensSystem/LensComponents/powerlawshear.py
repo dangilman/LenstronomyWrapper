@@ -17,8 +17,6 @@ class PowerLawShear(ComponentBase):
             kwargs_init = [{'theta_E': theta_E, 'center_x': center_x, 'center_y': center_y, 'e1': e1, 'e2': e2, 'gamma': gamma},
                             {'gamma1': gamma1, 'gamma2': gamma2}]
 
-        self.x_center, self.y_center = center_x, center_y
-
         super(PowerLawShear, self).__init__(self.lens_model_list, [redshift]*self.n_models,
                                             kwargs_init, convention_index, False, reoptimize)
 

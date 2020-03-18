@@ -14,7 +14,8 @@ class MacroLensModel(object):
 
     def centroid(self):
         main = self.components[0]
-        return main.x_center, main.y_center
+        x_center, y_center = main.kwargs[0]['center_x'], main.kwargs[0]['center_y']
+        return x_center, y_center
 
     @property
     def zlens(self):

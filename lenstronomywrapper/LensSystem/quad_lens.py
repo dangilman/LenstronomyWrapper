@@ -33,7 +33,7 @@ class QuadLensSystem(LensBase):
         lens_system_init.initialize(lens_data_class, kwargs_optimizer={'particle_swarm': particle_swarm_init})
 
         lens_center_x, lens_center_y = lens_system_init.macromodel.centroid()
-
+        
         ray_interp_x, ray_interp_y = interpolate_ray_paths(
             [lens_center_x], [lens_center_y], lens_system_init)
 
