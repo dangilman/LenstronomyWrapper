@@ -366,7 +366,7 @@ class AnalogModel(object):
         lens_system_simple = arc_quad_lens.get_smooth_lens_system()
 
         pso_kwargs = {'sigma_scale': 0.5, 'n_particles': n_particles, 'n_iterations': n_iterations}
-        simplex_kwargs = {'n_iterations': 500}
+
         mcmc_kwargs = {'n_burn': n_burn, 'n_run': n_run, 'walkerRatio': walkerRatio, 'sigma_scale': 0.05}
 
         mcmc_chain_idx = 1
@@ -405,7 +405,7 @@ class AnalogModel(object):
         chain_samples = chain_list[mcmc_chain_idx][1]
         nsamples = int(chain_samples[:,-1].shape[0])
 
-        keep_integers = random.sample(range(0, nsamples-1), n_keep)
+        keep_integers = np.arange(nsamples-n_keep, nsamples)
 
         chain_samples = chain_samples[keep_integers, :]
 
@@ -417,6 +417,8 @@ class AnalogModel(object):
 
         macro_params = chain_process.macro_params()
 
+        gamma = chain_samples[:,0]
+
         if fix_D_dt:
 
             delta_time_delay = np.absolute(self.lens.relative_arrival_times * np.array(arrival_time_sigma))
@@ -426,6 +428,9 @@ class AnalogModel(object):
         else:
             arrival_times, _, _ = chain_process.time_delays(self.lens.x, self.lens.y)
             ddt_samples = chain_samples[:,-1]
+
+        plt.scatter(gamma, ddt_samples, color='r')
+        plt.show()
 
         return_kwargs_data = {'flux_ratios': flux_ratios,
                                 'time_delays': arrival_times,

@@ -30,6 +30,9 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
 
     if fix_Ddt:
         name_append += '_fixDdt'
+        time_delay_likelihood = False
+    else:
+        time_delay_likelihood = True
 
     if Nstart < 101:
         print('SAMPLING control...... ')
@@ -39,12 +42,12 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
         if not os.path.exists(save_name_path):
             create_directory(save_name_path)
         shapelet_nmax = None
-        fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 200, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 200}
-        #fit_smooth_kwargs = {'n_particles': 2, 'n_iterations': 2, 'n_run': 3, 'walkerRatio': 4, 'n_burn': 0}
+        fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 100, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 200}
+        #fit_smooth_kwargs = {'n_particles': 50, 'n_iterations': 50, 'n_run': 50, 'walkerRatio': 4, 'n_burn': 100}
 
     elif Nstart < 301:
         print('SAMPLING LOS plus subs...... ')
-        fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 200, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 300}
+        fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 200, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 250}
         #fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 2, 'walkerRatio': 4, 'n_burn': 0}
         N0 = Nstart - 100
         save_name_path_base = base_path + '/tdelay_output/raw/' + fname
@@ -70,7 +73,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
     elif Nstart < 501:
         print('SAMPLING LOS plus subs with shapelets...... ')
         fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 250,
-                             'n_run': 150, 'walkerRatio': 4, 'n_burn': 350}
+                             'n_run': 150, 'walkerRatio': 4, 'n_burn': 300}
         #fit_smooth_kwargs = {'n_particles': 2, 'n_iterations': 2, 'n_run': 3, 'walkerRatio': 4, 'n_burn': 0}
         N0 = Nstart - 300
         save_name_path_base = base_path + '/tdelay_output/raw/' + fname
@@ -89,7 +92,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
     print('arrival time uncertainties: ', arrival_time_sigma)
     run_real(lens_analog_model_class, save_name_path, N, N0, realization,
              arrival_time_sigma, position_sigma, gamma_prior_scale, fix_Ddt, window_size, exp_time, background_rms,
-             time_delay_like=True, fit_smooth_kwargs=fit_smooth_kwargs, shapelet_nmax=shapelet_nmax)
+             time_delay_like=time_delay_likelihood, fit_smooth_kwargs=fit_smooth_kwargs, shapelet_nmax=shapelet_nmax)
 
     if save_realization:
         realization.save_to_file(realization_file_name, log_mlow)
