@@ -1,8 +1,9 @@
 import numpy as np
 
-def sample_distribution(data, nbins, weights, nsamples):
 
-    hist, bins = np.histogram(data, bins=nbins, weights=weights)
+def sample_distribution(samples, nbins, weights, nsamples):
+
+    hist, bins = np.histogram(samples, bins=nbins, weights=weights)
     bin_midpoints = bins[:-1] + np.diff(bins) / 2
     cdf = np.cumsum(hist)
     cdf = cdf / cdf[-1]
