@@ -1,5 +1,6 @@
 from lenstronomywrapper.ModelingWorkflow.time_delays_extended_project.scripts import *
 import os
+from pyHalo.single_realization import RealiztionFromFile
 
 def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_rms, N=1,
         subtract_exact_mass_sheets=False, name_append='', fix_Ddt=False):

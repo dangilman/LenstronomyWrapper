@@ -273,8 +273,10 @@ class AnalogModel(object):
                                     kwargs_optimizer={'particle_swarm': False})
         magnifications, arrival_times, dtgeo, dtgrav = self.compute_observables(lens_system_quad)
 
+        relative_arrival_times = self.lens.relative_time_delays(arrival_times)
+
         arrival_time_uncertainties = []
-        for t, delta_t in zip(arrival_times[1:]-arrival_times[0], arrival_time_sigma):
+        for t, delta_t in zip(relative_arrival_times, arrival_time_sigma):
             arrival_time_uncertainties.append(abs(t*delta_t))
 
         source_model_list = [SersicSource(kwargs_sersic_source, concentric_with_source=0)]
@@ -309,7 +311,7 @@ class AnalogModel(object):
         data_kwargs = {'psf_type': 'GAUSSIAN', 'window_size': 2*window_size, 'deltaPix': 0.05, 'fwhm': 0.1,
                        'exp_time': exp_time, 'background_rms': background_rms}
 
-        data_class = ArcPlusQuad(data_to_fit.x, data_to_fit.y, magnifications, lens_system, arrival_times,
+        data_class = ArcPlusQuad(data_to_fit.x, data_to_fit.y, magnifications, lens_system, relative_arrival_times,
                            arrival_time_uncertainties, image_sigma, data_kwargs=data_kwargs, no_bkg=False, noiseless=False,
                                  normed_magnifications=False)
 
@@ -353,7 +355,7 @@ class AnalogModel(object):
                          'kwargs_lens_halos': kwargs_halos}
 
         return_kwargs_data = {'flux_ratios': magnifications[1:]/magnifications[0],
-                              'time_delays': arrival_times[1:]-arrival_times[0],
+                              'time_delays': relative_arrival_times,
                               'geo_delay': dtgeo[1:] - dtgeo[0],
                               'grav_delay': dtgrav[1:] - dtgrav[0],
                               'arrival_time_sigma': arrival_time_sigma}
@@ -417,12 +419,17 @@ class AnalogModel(object):
 
         macro_params = chain_process.macro_params()
 
-        arrival_times, _, _ = chain_process.time_delays(self.lens.x, self.lens.y)
+        arrival_times = chain_process.arrival_times(self.lens.x, self.lens.y)
+
+        relative_arrival_times = np.empty((n_keep, 3))
+        for row in range(0, n_keep):
+            relative_arrival_times[row,:] = self.lens.relative_time_delays(arrival_times[row,:])
 
         return_kwargs_data = {'flux_ratios': flux_ratios,
-                                'time_delays': arrival_times,
+                                'time_delays': relative_arrival_times,
                                   'source_x': source_x,
                                   'source_y': source_y}
+
         return_kwargs = {'D_dt_true': D_dt_true,
                          'chi2_imaging': chi2_imaging,
                          'kwargs_lens_macro_fit': macro_params, 'mean_kappa': np.mean(kappa),

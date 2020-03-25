@@ -10,7 +10,7 @@ from lenstronomy.ImSim.image_model import ImageModel
 
 class ArcPlusQuad(object):
 
-    def __init__(self, x_image, y_image, magnifications, lensSystem, t_arrival=None, time_delay_sigma=None, image_sigma=None,
+    def __init__(self, x_image, y_image, magnifications, lensSystem, relative_arrival_times=None, time_delay_sigma=None, image_sigma=None,
                  normed_magnifications=True,
                  data_kwargs={}, noiseless=True, no_bkg=True):
 
@@ -22,18 +22,16 @@ class ArcPlusQuad(object):
             image_sigma = [0.0001]*len(x_image)
         self.image_sigma = image_sigma
 
-        if t_arrival is not None:
-            assert len(t_arrival) == len(x_image)
-            assert len(time_delay_sigma) == len(t_arrival) - 1
+        if relative_arrival_times is not None:
+            assert len(relative_arrival_times) == len(x_image) - 1
+            assert len(time_delay_sigma) == len(relative_arrival_times)
 
         self.x = np.array(x_image)
         self.y = np.array(y_image)
         self.m = np.array(magnifications)
-        self.t_arrival = np.array(t_arrival)
-        self.time_delay_sigma = time_delay_sigma
 
-        if t_arrival is not None:
-            self.relative_arrival_times = self.t_arrival[1:] - self.t_arrival[0]
+        self.time_delay_sigma = time_delay_sigma
+        self.relative_arrival_times = relative_arrival_times
 
         if normed_magnifications:
             rescale_mag = 25
@@ -95,7 +93,7 @@ class ArcPlusQuad(object):
 
         if self.t_arrival is not None:
             self.t_arrival = self.t_arrival[min_indexes]
-            self.relative_arrival_times = self.t_arrival[1:] - self.t_arrival[0]
+
 
 class _LensData(object):
 

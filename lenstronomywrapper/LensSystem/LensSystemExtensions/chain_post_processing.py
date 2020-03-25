@@ -103,6 +103,15 @@ class ChainPostProcess(object):
 
         return tdelays, tdelays_geo, tdelays_grav
 
+    def arrival_times(self, x_image, y_image, n_keep='all'):
+
+        times = np.empty((self.n_samples, 4))
+
+        for n in range(0, self.n_samples):
+            times[n, :] = self._compute_arrivaltime_single(x_image, y_image, self.samples[n,:])
+
+        return times
+
     def flux_ratios(self, x_image, y_image, n_keep='all'):
 
         if n_keep == 'all':
@@ -147,6 +156,14 @@ class ChainPostProcess(object):
         kwargs_lens = kwargs_list['kwargs_lens']
         pot = self.lensModel.fermat_potential(x_image, y_image, kwargs_lens)
         return pot[1:] - pot[0]
+
+    def _compute_arrivaltime_single(self, x_image, y_image, mcmc_args):
+
+        kwargs_list = self.param_class.args2kwargs(tuple(mcmc_args))
+        kwargs_lens = kwargs_list['kwargs_lens']
+        tgeo, tgrav = self.lensModel.lens_model.geo_shapiro_delay(x_image, y_image, kwargs_lens)
+        t = tgeo + tgrav
+        return t
 
     def _compute_time_delay_single(self, x_image, y_image, mcmc_args):
 
