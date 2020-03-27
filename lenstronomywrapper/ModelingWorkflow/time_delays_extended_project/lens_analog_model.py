@@ -236,7 +236,12 @@ class AnalogModel(object):
                 r_sat = np.sqrt(xsat ** 2 + ysat ** 2)
                 r_sat_max = max(r_sat, r_sat_max)
                 satellite_redshift = self.lens.satellite_redshift[n]
-                prior_galaxy = [['theta_E', rein_sat, 0.1 * rein_sat], ['center_x', xsat, 0.05],
+
+                if self.lens.identifier == 'lens1115':
+                    prior_galaxy = [['theta_E', rein_sat, 0.25 * rein_sat], ['center_x', xsat, 0.15],
+                          ['center_y', ysat, 0.15]]
+                else:
+                    prior_galaxy = [['theta_E', rein_sat, 0.1 * rein_sat], ['center_x', xsat, 0.05],
                           ['center_y', ysat, 0.05]]
                 kwargs_init = [self.lens.satellite_kwargs[n]]
 
@@ -290,7 +295,6 @@ class AnalogModel(object):
               'e1': 0.01, 'e2': -0.01}]
             source_model_list += [SersicSource(kwargs_sersic_source_2),
                                   SersicSource(kwargs_sersic_source_3)]
-
 
         if window_size is None:
 
