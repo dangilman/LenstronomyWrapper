@@ -259,7 +259,6 @@ class AnalogModel(object):
                                    ['R_sersic', kwargs_light_satellite[0]['R_sersic'], 0.2 * kwargs_light_satellite[0]['R_sersic']],
                                    ['n_sersic', kwargs_light_satellite[0]['n_sersic'], 0.2 * kwargs_light_satellite[0]['n_sersic']]]
 
-
                     light_model_list += [SersicLens(kwargs_light_satellite, concentric_with_model=n+1,
                                                 prior=prior_sat_light)]
 

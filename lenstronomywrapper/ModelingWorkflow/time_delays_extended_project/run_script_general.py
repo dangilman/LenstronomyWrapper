@@ -39,11 +39,11 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
         print('SAMPLING control...... ')
         N0 = Nstart
         realization = None
-        save_name_path = base_path + '/tdelay_output/raw/' + fname + '/control' + name_append + '/'
+        save_name_path = base_path + '/tdelay_output/raw/' + fname + '/control_shapelets' + name_append + '/'
         if not os.path.exists(save_name_path):
             create_directory(save_name_path)
-        shapelet_nmax = None
-        fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 100, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 250}
+        shapelet_nmax = 8
+        fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 200, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 300}
         #fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 3, 'walkerRatio': 4, 'n_burn': 0}
 
     elif Nstart < 301:

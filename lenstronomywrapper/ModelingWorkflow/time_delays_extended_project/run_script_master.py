@@ -30,8 +30,8 @@ elif n_lens < 1001:
     lens_name = 'lens1115'
     half_window_size = 1.8
     lens_class = Lens1115()
-    exp_time = 20000
-    background_rms = 0.5
+    exp_time = 4000 # from 5000
+    background_rms = 0.75 # from 0.7
 
 elif n_lens < 1501:
     Nstart = n_lens - 1000
@@ -39,24 +39,26 @@ elif n_lens < 1501:
     half_window_size = 2.
     lens_class = Lens0435()
     # DONE
-    exp_time = 20000
-    background_rms = 0.18
+    exp_time = 30000
+    background_rms = 0.16 # from 0.18
 
 elif n_lens < 2001:
     Nstart = n_lens - 1500
     lens_name = 'lens1608'
     half_window_size = 1.9
     lens_class = Lens1608()
+    # DONE
     exp_time = 20000
     background_rms = 0.4
 
 elif n_lens < 2501:
     Nstart = n_lens - 2000
     lens_name = 'lens2033'
+    # DONE
     half_window_size = 2.5
     lens_class = WFI2033()
     exp_time = 3000
-    background_rms = 0.6
+    background_rms = 0.55 # from 0.5
 
 elif n_lens < 3001:
     Nstart = n_lens - 2500
@@ -64,7 +66,7 @@ elif n_lens < 3001:
     half_window_size = 3.8
     lens_class = Lens0408()
     exp_time = 60000
-    background_rms = 0.12
+    background_rms = 0.1 # from 0.12
 
 else:
     raise Exception('out of range.')
