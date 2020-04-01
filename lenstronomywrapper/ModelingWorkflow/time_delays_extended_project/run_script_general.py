@@ -35,39 +35,58 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
     else:
         time_delay_likelihood = True
 
-    if Nstart < 101:
+    save_realization = False
+    if Nstart < 51:
         print('SAMPLING control...... ')
         N0 = Nstart
+        save_name_path = base_path + '/tdelay_output/raw/' + fname + '/control' + name_append + '/'
+        if not os.path.exists(save_name_path):
+            create_directory(save_name_path)
+        shapelet_nmax = None
         realization = None
+        fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 200, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 300}
+        #fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 3, 'walkerRatio': 4, 'n_burn': 0}
+
+    elif Nstart < 101:
+
+        print('SAMPLING control...... ')
+        N0 = Nstart
         save_name_path = base_path + '/tdelay_output/raw/' + fname + '/control_shapelets' + name_append + '/'
         if not os.path.exists(save_name_path):
             create_directory(save_name_path)
         shapelet_nmax = 8
         fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 200, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 300}
-        #fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 3, 'walkerRatio': 4, 'n_burn': 0}
+        # fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 3, 'walkerRatio': 4, 'n_burn': 0}
 
-    elif Nstart < 301:
-        print('SAMPLING LOS plus subs...... ')
-        fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 200, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 300}
-        #fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 2, 'walkerRatio': 4, 'n_burn': 0}
-        N0 = Nstart - 100
-        save_name_path_base = base_path + '/tdelay_output/raw/' + fname
-        save_name_path = save_name_path_base + '/los_plus_subs' + name_append + '/'
-        if not os.path.exists(save_name_path):
-            create_directory(save_name_path)
-
+        #### CREATE REALIZATION ####
+        realization_file_name = base_path + '/tdelay_output/raw/' + fname + '/realizations/realization_' + \
+                                str(N0) + name_append
         SHMF_norm = 0.02
         LOS_norm = 1.
         realization_kwargs['sigma_sub'] = SHMF_norm
         realization_kwargs['LOS_normalization'] = LOS_norm
-        realization_file_name = save_name_path_base + '/realizations/realization_'+str(N0) + name_append
+        realization_to_save = lens_analog_model_class.pyhalo.render('composite_powerlaw',
+                                                                    realization_kwargs)[0]
+        realization = None
+        save_realization = True
+
+    elif Nstart < 301:
+
+        save_name_path_base = base_path + '/tdelay_output/raw/' + fname
+        save_name_path = save_name_path_base + '/los_plus_subs' + name_append + '/'
+        if not os.path.exists(save_name_path):
+            create_directory(save_name_path)
         if not os.path.exists(save_name_path_base + '/realizations/'):
             create_directory(save_name_path_base + '/realizations/')
 
-        realization = lens_analog_model_class.pyhalo.render('composite_powerlaw', realization_kwargs)[0]
-        save_realization = True
-        # save_realization = False
-        # realization = RealiztionFromFile(realization_file_name)
+        print('SAMPLING LOS plus subs...... ')
+        fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 250, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 350}
+        #fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 2, 'walkerRatio': 4, 'n_burn': 0}
+        N0 = Nstart - 100
+
+        realization_file_name = save_name_path_base + '/realizations/realization_' + str(N0) + name_append
+        assert os.path.exists(realization_file_name + '_kwargslist.txt')
+        realization = RealiztionFromFile(realization_file_name)
         realization.log_mlow = log_mlow
         shapelet_nmax = None
 
@@ -96,4 +115,4 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
              time_delay_like=time_delay_likelihood, fit_smooth_kwargs=fit_smooth_kwargs, shapelet_nmax=shapelet_nmax)
 
     if save_realization:
-        realization.save_to_file(realization_file_name, log_mlow)
+        realization_to_save.save_to_file(realization_file_name, log_mlow)
