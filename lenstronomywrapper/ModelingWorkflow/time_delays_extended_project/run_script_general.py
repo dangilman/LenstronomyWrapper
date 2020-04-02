@@ -56,9 +56,9 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
         save_name_path = save_name_path_base + '/control_shapelets' + name_append + '/'
         if not os.path.exists(save_name_path):
             create_directory(save_name_path)
-        if not os.path.exists(save_name_path_base + '/realizations/'):
-            create_directory(save_name_path_base + '/realizations/')
+
         shapelet_nmax = 8
+        realization = None
         fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 200, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 300}
         # fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 3, 'walkerRatio': 4, 'n_burn': 0}
 
@@ -68,6 +68,8 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
         save_name_path = save_name_path_base + '/los_plus_subs' + name_append + '/'
         if not os.path.exists(save_name_path):
             create_directory(save_name_path)
+        if not os.path.exists(save_name_path_base + '/realizations/'):
+            create_directory(save_name_path_base + '/realizations/')
 
         print('SAMPLING LOS plus subs...... ')
         fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 250, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 350}
@@ -93,7 +95,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
 
             save_realization = True
             realization.log_mlow = log_mlow
-            
+
         shapelet_nmax = None
 
     elif Nstart < 501:
