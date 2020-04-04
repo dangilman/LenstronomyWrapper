@@ -23,7 +23,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
 
     kwargs_cosmo = {'cosmo_kwargs': {'H0': 73.3}}
     lens_analog_model_class = AnalogModel(lens_class, kwargs_cosmo)
-    save_realization = False
+    
     base_path = os.getenv('HOME') + '/../../../../u/flashscratch/g/gilmanda'
     #base_path = os.getenv('HOME') + '/Code'
     #print(base_path)
@@ -34,8 +34,6 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
         time_delay_likelihood = False
     else:
         time_delay_likelihood = True
-
-    save_realization = False
 
     if Nstart < 51:
         print('SAMPLING control...... ')
@@ -93,7 +91,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
             realization = lens_analog_model_class.pyhalo.render('composite_powerlaw',
                                                                         realization_kwargs)[0]
 
-            save_realization = True
+            realization.save_to_file(realization_file_name, log_mlow)
             realization.log_mlow = log_mlow
 
         shapelet_nmax = None
@@ -122,5 +120,3 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
              arrival_time_sigma, position_sigma, gamma_prior_scale, fix_Ddt, window_size, exp_time, background_rms,
              time_delay_like=time_delay_likelihood, fit_smooth_kwargs=fit_smooth_kwargs, shapelet_nmax=shapelet_nmax)
 
-    if save_realization:
-        realization.save_to_file(realization_file_name, log_mlow)
