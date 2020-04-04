@@ -23,11 +23,13 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
 
     kwargs_cosmo = {'cosmo_kwargs': {'H0': 73.3}}
     lens_analog_model_class = AnalogModel(lens_class, kwargs_cosmo)
-    
-    base_path = os.getenv('HOME') + '/../../../../u/flashscratch/g/gilmanda'
-    #base_path = os.getenv('HOME') + '/Code'
-    #print(base_path)
-    assert os.path.exists(base_path)
+
+    try:
+        base_path = os.getenv('HOME') + '/../../../../u/flashscratch/g/gilmanda'
+        assert os.path.exists(base_path)
+    except:
+        base_path = os.getenv('HOME') + '/Code'
+        assert os.path.exists(base_path)
 
     if fix_Ddt:
         name_append += '_fixDdt'
@@ -64,6 +66,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
 
         save_name_path_base = base_path + '/tdelay_output/raw/' + fname
         save_name_path = save_name_path_base + '/los_plus_subs' + name_append + '/'
+
         if not os.path.exists(save_name_path):
             create_directory(save_name_path)
         if not os.path.exists(save_name_path_base + '/realizations/'):
@@ -79,9 +82,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
                                 str(N0) + name_append
 
         if os.path.exists(realization_file_name + '_kwargslist.txt'):
-            realization_file_name = save_name_path_base + '/realizations/realization_' + str(N0) + name_append
-            realization = RealiztionFromFile(realization_file_name)
-            realization.log_mlow = log_mlow
+            pass
 
         else:
             SHMF_norm = 0.02
@@ -93,6 +94,9 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
 
             realization.save_to_file(realization_file_name, log_mlow)
             realization.log_mlow = log_mlow
+
+        realization = RealiztionFromFile(realization_file_name)
+        realization.log_mlow = log_mlow
 
         shapelet_nmax = None
 
@@ -107,10 +111,13 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
 
         if not os.path.exists(save_name_path):
             create_directory(save_name_path)
+
         realization_file_name = save_name_path_base + '/realizations/realization_'+str(N0) + name_append
         assert os.path.exists(realization_file_name + '_kwargslist.txt')
+
         realization = RealiztionFromFile(realization_file_name)
         realization.log_mlow = log_mlow
+
         shapelet_nmax = 8
 
     print('N0:', N0)
