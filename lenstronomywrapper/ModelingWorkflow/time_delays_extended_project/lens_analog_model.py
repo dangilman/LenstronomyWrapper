@@ -19,6 +19,7 @@ from lenstronomywrapper.LensSystem.BackgroundSource.shapelet import Shapelet
 import numpy as np
 from pyHalo.pyhalo import pyHalo
 import os
+import dill as pickle
 
 import matplotlib.pyplot as plt
 
@@ -26,7 +27,8 @@ class AnalogModel(object):
 
     def __init__(self, lens_class_instance, kwargs_cosmology,
                  kwargs_quasar=None, makeplots=False, pyhalo=None,
-                 free_convergence=False):
+                 free_convergence=False, pickle_directory=None,
+                 class_idx=None, log_mlow=None):
 
         if kwargs_quasar is None:
             kwargs_quasar = {'center_x': 0, 'center_y': 0, 'source_fwhm_pc': 25}
@@ -35,6 +37,10 @@ class AnalogModel(object):
         self._makeplots = makeplots
         self.lens = lens_class_instance
         self.kwargs_cosmology = kwargs_cosmology
+        self._pickle_directory = pickle_directory
+        self._class_idx = class_idx
+        self._log_mlow = log_mlow
+
         self.zlens, self.zsource = lens_class_instance.zlens, lens_class_instance.zsrc
         if pyhalo is None:
             pyhalo = pyHalo(self.zlens, self.zsource, cosmology_kwargs=self.kwargs_cosmology)
@@ -240,13 +246,7 @@ class AnalogModel(object):
                 if self.lens.identifier == 'lens1115':
                     prior_galaxy = [['theta_E', rein_sat, 0.3 * rein_sat], ['center_x', xsat, 0.25],
                           ['center_y', ysat, 0.25]]
-                elif self.lens.identifier == 'lens0408':
-                    if n==0:
-                        prior_galaxy = [['theta_E', rein_sat, 0.1 * rein_sat], ['center_x', xsat, 0.05],
-                                        ['center_y', ysat, 0.05]]
-                    else:
-                        prior_galaxy = [['theta_E', rein_sat, 0.05 * rein_sat], ['center_x', xsat, 0.04],
-                                    ['center_y', ysat, 0.04]]
+
                 else:
                     prior_galaxy = [['theta_E', rein_sat, 0.1 * rein_sat], ['center_x', xsat, 0.05],
                           ['center_y', ysat, 0.05]]
@@ -272,16 +272,34 @@ class AnalogModel(object):
         macromodel = MacroLensModel(deflector_list)
 
         if realization is not None:
-            lens_system_quad = QuadLensSystem.shift_background_auto(data_to_fit, macromodel,
+
+            fname = self._pickle_directory + 'macromodel_'+str(self._class_idx)
+            if shapelet_nmax is None:
+                print('fitting macromodel')
+                # we want to pickle the macromodel to re-use it when fitting substructure with shapelets
+                lens_system_quad = QuadLensSystem.shift_background_auto(data_to_fit, macromodel,
                                                                     self.zsource, background_quasar, realization,
                                                                     self.pyhalo._cosmology)
+                lens_system_quad.initialize(data_to_fit, include_substructure=True, verbose=True,
+                                            kwargs_optimizer={'particle_swarm': False})
+
+                file = open(fname, 'wb')
+                pickle.dump(lens_system_quad, file)
+                file.close()
+
+            else:
+                file = open(fname, 'rb')
+                lens_system_quad = pickle.load(file)
+                realization = lens_system_quad.realization
+
 
         else:
             lens_system_quad = QuadLensSystem(macromodel, self.zsource, background_quasar, None,
                                           pyhalo_cosmology=self.pyhalo._cosmology)
+            lens_system_quad.initialize(data_to_fit, verbose=True,
+                                        kwargs_optimizer={'particle_swarm': False})
 
-        lens_system_quad.initialize(data_to_fit, include_substructure=True, verbose=True,
-                                    kwargs_optimizer={'particle_swarm': False})
+
         magnifications, arrival_times, dtgeo, dtgrav = self.compute_observables(lens_system_quad)
 
         relative_arrival_times = self.lens.relative_time_delays(arrival_times)
@@ -328,11 +346,7 @@ class AnalogModel(object):
         imaging_data = data_class.get_lensed_image()
 
         if realization is not None:
-            try:
-                log_mlow = realization.log_mlow
-            except:
-                print('realization instance has no attribute log_mlow; defaulting to 6.7')
-                log_mlow = 6.7
+            log_mlow = self._log_mlow
 
             halo_model_names, redshift_list_halos, kwargs_halos, _ = \
                 realization.lensing_quantities(log_mlow, log_mlow)

@@ -11,11 +11,9 @@ import os
 import time
 import sys
 
-n_lens = int(sys.argv[1])
 #n_lens = 1.
-log_mlow = 6.7
+log_mlow = 8.7
 #time.sleep(180)
-
 
 def index_read(idx):
     if idx < 51:
@@ -29,93 +27,127 @@ def index_read(idx):
 
 def lens1131_exposure(index):
     vary_shapelets = index_read(index)
+
     if vary_shapelets:
-        return 1500, 0.7
+        # DONE
+        return 2000, 0.5
     else:
-        return 1500, 0.8
+        # run again
+        return 2000, 0.65
 
 def lens1115_exposure(index):
     vary_shapelets = index_read(index)
     if vary_shapelets:
-        return 4000, 0.65
+        return 4000, 0.45
     else:
-        return 4000, 0.75
+        return 4000, 0.5
 
 def lens0435_exposure(index):
     vary_shapelets = index_read(index)
     if vary_shapelets:
-        return 50000, 0.12
+        # run again
+        return 50000, 0.1
     else:
-        return 30000, 0.16
+        # DONE
+        return 30000, 0.13
 
 def lens1608_exposure(index):
     vary_shapelets = index_read(index)
     if vary_shapelets:
-        return 20000, 0.3
+        # run again
+        return 20000, 0.43
     else:
-        return 20000, 0.4
+        # run again
+        return 20000, 0.53
 
 def lens2033_exposure(index):
     vary_shapelets = index_read(index)
     if vary_shapelets:
         return 3000, 0.5
     else:
-        return 3000, 0.55
+        return 3000, 0.5
 
 def lens0408_exposure(index):
     vary_shapelets = index_read(index)
     if vary_shapelets:
+        # DONE
         return 60000, 0.08
     else:
+        # DONE
         return 60000, 0.1
 
-if n_lens < 501:
-    Nstart = n_lens
-    lens_name = 'lens1131'
-    half_window_size = 3.
-    lens_class = Lens1131()
-    # DONE
-    exp_time, background_rms = lens1131_exposure(Nstart)
+run_control = True
+run_control_shapelets = True
+run_los_plus_subs = True
+run_los_plus_subs_shapelets = True
 
-elif n_lens < 1001:
-    Nstart = n_lens - 500
-    lens_name = 'lens1115'
-    half_window_size = 1.8
-    lens_class = Lens1115()
-    exp_time, background_rms = lens1115_exposure(Nstart)
+n_lens_start = int(sys.argv[1])
 
-elif n_lens < 1501:
-    Nstart = n_lens - 1000
-    lens_name = 'lens0435'
-    half_window_size = 2.
-    lens_class = Lens0435()
-    exp_time, background_rms = lens0435_exposure(Nstart)
+try:
+    n_lens_end = int(sys.argv[2])
+    assert n_lens_end is not None
+    assert n_lens_end > n_lens_start
+except:
+    n_lens_end = n_lens_start + 1
 
-elif n_lens < 2001:
-    Nstart = n_lens - 1500
-    lens_name = 'lens1608'
-    half_window_size = 1.9
-    lens_class = Lens1608()
-    exp_time, background_rms = lens1608_exposure(Nstart)
+for n_lens in range(n_lens_start, n_lens_end):
 
-elif n_lens < 2501:
-    Nstart = n_lens - 2000
-    lens_name = 'lens2033'
-    # DONE
-    half_window_size = 2.5
-    lens_class = WFI2033()
-    exp_time, background_rms = lens2033_exposure(Nstart)
+    if n_lens < 501:
+        Nstart = n_lens
+        lens_name = 'lens1131'
+        half_window_size = 3.
+        lens_class = Lens1131()
+        # DONE
+        exp_time, background_rms = lens1131_exposure(Nstart)
 
-elif n_lens < 3001:
-    Nstart = n_lens - 2500
-    lens_name = 'lens0408'
-    half_window_size = 3.8
-    lens_class = Lens0408()
-    exp_time, background_rms = lens0408_exposure(Nstart)
+    elif n_lens < 1001:
+        Nstart = n_lens - 500
+        lens_name = 'lens1115'
+        half_window_size = 1.8
+        lens_class = Lens1115()
+        exp_time, background_rms = lens1115_exposure(Nstart)
 
-else:
-    raise Exception('out of range.')
+    elif n_lens < 1501:
+        Nstart = n_lens - 1000
+        lens_name = 'lens0435'
+        half_window_size = 2.
+        lens_class = Lens0435()
+        exp_time, background_rms = lens0435_exposure(Nstart)
 
-run_lens(Nstart, lens_class, lens_name, log_mlow, half_window_size, exp_time,
-         background_rms=background_rms, subtract_exact_mass_sheets=False, name_append='',
-         fix_Ddt=True)
+    elif n_lens < 2001:
+        Nstart = n_lens - 1500
+        lens_name = 'lens1608'
+        half_window_size = 1.9
+        lens_class = Lens1608()
+        exp_time, background_rms = lens1608_exposure(Nstart)
+
+    elif n_lens < 2501:
+        Nstart = n_lens - 2000
+        lens_name = 'lens2033'
+        # DONE
+        half_window_size = 2.5
+        lens_class = WFI2033()
+        exp_time, background_rms = lens2033_exposure(Nstart)
+
+    elif n_lens < 3001:
+        Nstart = n_lens - 2500
+        lens_name = 'lens0408'
+        half_window_size = 3.8
+        lens_class = Lens0408()
+        exp_time, background_rms = lens0408_exposure(Nstart)
+
+    else:
+        raise Exception('out of range.')
+
+    if Nstart > 0 and Nstart < 51:
+        if not run_control: exit(1)
+    if Nstart > 50 and Nstart < 101:
+        if not run_control_shapelets: exit(1)
+    if Nstart > 100 and Nstart < 301:
+        if not run_los_plus_subs: exit(1)
+    if Nstart > 300 and Nstart < 501:
+        if not run_los_plus_subs_shapelets: exit(1)
+
+    run_lens(Nstart, lens_class, lens_name, log_mlow, half_window_size, exp_time,
+             background_rms=background_rms, subtract_exact_mass_sheets=False, name_append='',
+             fix_Ddt=True)

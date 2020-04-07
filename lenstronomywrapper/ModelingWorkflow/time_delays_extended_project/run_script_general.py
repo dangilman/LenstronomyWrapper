@@ -1,5 +1,6 @@
 from lenstronomywrapper.ModelingWorkflow.time_delays_extended_project.scripts import *
 import os
+import dill
 from pyHalo.single_realization import RealiztionFromFile
 
 def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_rms, N=1,
@@ -22,7 +23,6 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
                           'subtract_subhalo_mass_sheet': True, 'subhalo_mass_sheet_scale': 1}
 
     kwargs_cosmo = {'cosmo_kwargs': {'H0': 73.3}}
-    lens_analog_model_class = AnalogModel(lens_class, kwargs_cosmo)
 
     try:
         base_path = os.getenv('HOME') + '/../../../../u/flashscratch/g/gilmanda'
@@ -40,6 +40,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
     if Nstart < 51:
         print('SAMPLING control...... ')
         N0 = Nstart
+        lens_analog_model_class = AnalogModel(lens_class, kwargs_cosmo)
         save_name_path = base_path + '/tdelay_output/raw/' + fname + '/control' + name_append + '/'
         if not os.path.exists(save_name_path):
             create_directory(save_name_path)
@@ -52,6 +53,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
 
         print('SAMPLING control...... ')
         N0 = Nstart - 50
+        lens_analog_model_class = AnalogModel(lens_class, kwargs_cosmo)
         save_name_path_base = base_path + '/tdelay_output/raw/' + fname
         save_name_path = save_name_path_base + '/control_shapelets' + name_append + '/'
         if not os.path.exists(save_name_path):
@@ -60,7 +62,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
         shapelet_nmax = 8
         realization = None
         fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 200, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 300}
-        # fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 3, 'walkerRatio': 4, 'n_burn': 0}
+        #fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 3, 'walkerRatio': 4, 'n_burn': 0}
 
     elif Nstart < 301:
 
@@ -76,13 +78,15 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
         fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 250, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 300}
         #fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 2, 'walkerRatio': 4, 'n_burn': 0}
         N0 = Nstart - 100
-
+        lens_analog_model_class = AnalogModel(lens_class, kwargs_cosmo,
+                                              pickle_directory=save_name_path_base + '/realizations/',
+                                              class_idx=N0, log_mlow=log_mlow)
         #### CREATE REALIZATION ####
-        realization_file_name = base_path + '/tdelay_output/raw/' + fname + '/realizations/realization_' + \
-                                str(N0) + name_append
-
-        if os.path.exists(realization_file_name + '_kwargslist.txt'):
-            pass
+        lens_system_file_name = base_path + '/tdelay_output/raw/' + fname + '/realizations/macromodel_' + str(N0)
+        if os.path.exists(lens_system_file_name):
+            file = open(lens_system_file_name, 'rb')
+            system = dill.load(file)
+            realization = system.realization
 
         else:
             SHMF_norm = 0.02
@@ -91,12 +95,10 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
             realization_kwargs['LOS_normalization'] = LOS_norm
             realization = lens_analog_model_class.pyhalo.render('composite_powerlaw',
                                                                         realization_kwargs)[0]
-
-            realization.save_to_file(realization_file_name, log_mlow)
             realization.log_mlow = log_mlow
 
-        realization = RealiztionFromFile(realization_file_name)
-        realization.log_mlow = log_mlow
+        #realization = RealiztionFromFile(realization_file_name)
+        #realization.log_mlow = log_mlow
 
         shapelet_nmax = None
 
@@ -108,15 +110,19 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
         N0 = Nstart - 300
         save_name_path_base = base_path + '/tdelay_output/raw/' + fname
         save_name_path = save_name_path_base + '/los_plus_subs' + name_append + '_shapelets/'
+        lens_analog_model_class = AnalogModel(lens_class, kwargs_cosmo,
+                                              pickle_directory=save_name_path_base + '/realizations/',
+                                              class_idx=N0, log_mlow=log_mlow)
 
         if not os.path.exists(save_name_path):
             create_directory(save_name_path)
 
-        realization_file_name = save_name_path_base + '/realizations/realization_'+str(N0) + name_append
-        assert os.path.exists(realization_file_name + '_kwargslist.txt')
+        #realization_file_name = save_name_path_base + '/realizations/realization_'+str(N0) + name_append
+        #assert os.path.exists(realization_file_name + '_kwargslist.txt')
 
-        realization = RealiztionFromFile(realization_file_name)
-        realization.log_mlow = log_mlow
+        #realization = RealiztionFromFile(realization_file_name)
+        #realization.log_mlow = log_mlow
+        realization = True
 
         shapelet_nmax = 8
 
