@@ -238,8 +238,15 @@ class AnalogModel(object):
                 satellite_redshift = self.lens.satellite_redshift[n]
 
                 if self.lens.identifier == 'lens1115':
-                    prior_galaxy = [['theta_E', rein_sat, 0.25 * rein_sat], ['center_x', xsat, 0.15],
-                          ['center_y', ysat, 0.15]]
+                    prior_galaxy = [['theta_E', rein_sat, 0.3 * rein_sat], ['center_x', xsat, 0.25],
+                          ['center_y', ysat, 0.25]]
+                elif self.lens.identifier == 'lens0408':
+                    if n==0:
+                        prior_galaxy = [['theta_E', rein_sat, 0.1 * rein_sat], ['center_x', xsat, 0.05],
+                                        ['center_y', ysat, 0.05]]
+                    else:
+                        prior_galaxy = [['theta_E', rein_sat, 0.05 * rein_sat], ['center_x', xsat, 0.04],
+                                    ['center_y', ysat, 0.04]]
                 else:
                     prior_galaxy = [['theta_E', rein_sat, 0.1 * rein_sat], ['center_x', xsat, 0.05],
                           ['center_y', ysat, 0.05]]
