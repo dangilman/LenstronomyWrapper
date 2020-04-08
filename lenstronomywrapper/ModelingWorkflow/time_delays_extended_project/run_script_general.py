@@ -61,7 +61,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
 
         shapelet_nmax = 8
         realization = None
-        fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 200, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 300}
+        fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 250, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 300}
         #fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 3, 'walkerRatio': 4, 'n_burn': 0}
 
     elif Nstart < 301:
