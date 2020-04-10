@@ -4,7 +4,12 @@ import dill
 from pyHalo.single_realization import RealiztionFromFile
 
 def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_rms, N=1,
-        subtract_exact_mass_sheets=False, name_append='', fix_Ddt=False):
+        subtract_exact_mass_sheets=False, name_append='', fix_Ddt=False,
+        fit_smooth_kwargs=None):
+
+    if fit_smooth_kwargs is None:
+        # default
+        fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 250, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 300}
 
     position_sigma = [0.005]*4
     gamma_prior_scale = None
@@ -46,7 +51,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
             create_directory(save_name_path)
         shapelet_nmax = None
         realization = None
-        fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 200, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 300}
+        #fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 200, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 300}
         #fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 3, 'walkerRatio': 4, 'n_burn': 0}
 
     elif Nstart < 101:
@@ -61,7 +66,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
 
         shapelet_nmax = 8
         realization = None
-        fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 250, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 300}
+        #fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 250, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 300}
         #fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 3, 'walkerRatio': 4, 'n_burn': 0}
 
     elif Nstart < 301:
@@ -75,7 +80,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
             create_directory(save_name_path_base + '/realizations/')
 
         print('SAMPLING LOS plus subs...... ')
-        fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 250, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 300}
+        #fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 250, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 300}
         #fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 2, 'walkerRatio': 4, 'n_burn': 0}
         N0 = Nstart - 100
         lens_analog_model_class = AnalogModel(lens_class, kwargs_cosmo,
@@ -104,8 +109,8 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
 
     elif Nstart < 501:
         print('SAMPLING LOS plus subs with shapelets...... ')
-        fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 250,
-                             'n_run': 150, 'walkerRatio': 4, 'n_burn': 300}
+        #fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 250,
+        #                     'n_run': 150, 'walkerRatio': 4, 'n_burn': 300}
         #fit_smooth_kwargs = {'n_particles': 2, 'n_iterations': 2, 'n_run': 3, 'walkerRatio': 4, 'n_burn': 0}
         N0 = Nstart - 300
         save_name_path_base = base_path + '/tdelay_output/raw/' + fname

@@ -12,7 +12,7 @@ import time
 import sys
 
 #n_lens = 1.
-log_mlow = 8.7
+log_mlow = 6.7
 #time.sleep(180)
 
 def index_read(idx):
@@ -29,42 +29,47 @@ def lens1131_exposure(index):
     vary_shapelets = index_read(index)
 
     if vary_shapelets:
-        # DONE
-        return 2000, 0.5
+        # run again
+        return 2000, 0.46
     else:
         # run again
-        return 2000, 0.65
+        return 2000, 0.77
 
 def lens1115_exposure(index):
     vary_shapelets = index_read(index)
+
     if vary_shapelets:
+        # DONE
         return 4000, 0.45
     else:
-        return 4000, 0.5
+        # DONE
+        return 4000, 0.6
 
 def lens0435_exposure(index):
     vary_shapelets = index_read(index)
     if vary_shapelets:
-        # run again
-        return 50000, 0.1
+        # DONE
+        return 50000, 0.085
     else:
         # DONE
-        return 30000, 0.13
+        return 30000, 0.14
 
 def lens1608_exposure(index):
     vary_shapelets = index_read(index)
     if vary_shapelets:
-        # run again
+        # DONE
         return 20000, 0.43
     else:
-        # run again
-        return 20000, 0.53
+        # DONE
+        return 20000, 0.6
 
 def lens2033_exposure(index):
     vary_shapelets = index_read(index)
     if vary_shapelets:
-        return 3000, 0.5
+        # DONE
+        return 3000, 0.3
     else:
+        # DONE
         return 3000, 0.5
 
 def lens0408_exposure(index):
@@ -124,7 +129,6 @@ for n_lens in range(n_lens_start, n_lens_end):
     elif n_lens < 2501:
         Nstart = n_lens - 2000
         lens_name = 'lens2033'
-        # DONE
         half_window_size = 2.5
         lens_class = WFI2033()
         exp_time, background_rms = lens2033_exposure(Nstart)
@@ -148,6 +152,10 @@ for n_lens in range(n_lens_start, n_lens_end):
     if Nstart > 300 and Nstart < 501:
         if not run_los_plus_subs_shapelets: exit(1)
 
+    fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 250, 'n_run': 150,
+                         'walkerRatio': 4, 'n_burn': 600}
+    name_append = 'convergencetest'
+
     run_lens(Nstart, lens_class, lens_name, log_mlow, half_window_size, exp_time,
-             background_rms=background_rms, subtract_exact_mass_sheets=False, name_append='',
-             fix_Ddt=True)
+             background_rms=background_rms, subtract_exact_mass_sheets=False, name_append=name_append,
+             fix_Ddt=True, fit_smooth_kwargs=fit_smooth_kwargs)
