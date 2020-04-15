@@ -41,6 +41,9 @@ class AnalogModel(object):
         self._class_idx = class_idx
         self._log_mlow = log_mlow
 
+        self.lens.x += np.random.normal(0, self.lens.sigma_x)
+        self.lens.y += np.random.normal(0, self.lens.sigma_y)
+
         self.zlens, self.zsource = lens_class_instance.zlens, lens_class_instance.zsrc
         if pyhalo is None:
             pyhalo = pyHalo(self.zlens, self.zsource, cosmology_kwargs=self.kwargs_cosmology)

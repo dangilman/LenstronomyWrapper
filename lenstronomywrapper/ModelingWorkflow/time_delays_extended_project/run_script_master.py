@@ -29,27 +29,27 @@ def lens1131_exposure(index):
     vary_shapelets = index_read(index)
 
     if vary_shapelets:
-        # run again
-        return 2000, 0.46
+        # DONE
+        return 2000, 0.425
     else:
         # run again
-        return 2000, 0.77
+        return 2000, 0.64
 
 def lens1115_exposure(index):
     vary_shapelets = index_read(index)
 
     if vary_shapelets:
         # DONE
-        return 4000, 0.45
+        return 4000, 0.43
     else:
         # DONE
-        return 4000, 0.6
+        return 4000, 0.575
 
 def lens0435_exposure(index):
     vary_shapelets = index_read(index)
     if vary_shapelets:
         # DONE
-        return 50000, 0.085
+        return 50000, 0.07
     else:
         # DONE
         return 30000, 0.14
@@ -57,20 +57,20 @@ def lens0435_exposure(index):
 def lens1608_exposure(index):
     vary_shapelets = index_read(index)
     if vary_shapelets:
-        # DONE
-        return 20000, 0.43
+        # run again
+        return 20000, 0.34
     else:
         # DONE
-        return 20000, 0.6
+        return 20000, 0.5
 
 def lens2033_exposure(index):
     vary_shapelets = index_read(index)
     if vary_shapelets:
         # DONE
-        return 3000, 0.3
+        return 3000, 0.28
     else:
         # DONE
-        return 3000, 0.5
+        return 3000, 0.4
 
 def lens0408_exposure(index):
     vary_shapelets = index_read(index)
@@ -154,8 +154,7 @@ for n_lens in range(n_lens_start, n_lens_end):
 
     fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 250, 'n_run': 150,
                          'walkerRatio': 4, 'n_burn': 600}
-    name_append = 'convergencetest'
-
+    name_append = ''
     run_lens(Nstart, lens_class, lens_name, log_mlow, half_window_size, exp_time,
              background_rms=background_rms, subtract_exact_mass_sheets=False, name_append=name_append,
              fix_Ddt=True, fit_smooth_kwargs=fit_smooth_kwargs)
