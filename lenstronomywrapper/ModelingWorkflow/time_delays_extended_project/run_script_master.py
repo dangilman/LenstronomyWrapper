@@ -67,10 +67,10 @@ def lens2033_exposure(index):
     vary_shapelets = index_read(index)
     if vary_shapelets:
         # DONE
-        return 3000, 0.28
+        return 3000, 0.2
     else:
         # DONE
-        return 3000, 0.4
+        return 3000, 0.3
 
 def lens0408_exposure(index):
     vary_shapelets = index_read(index)
