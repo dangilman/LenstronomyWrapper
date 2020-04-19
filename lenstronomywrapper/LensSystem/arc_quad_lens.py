@@ -82,8 +82,10 @@ class ArcQuadLensSystem(LensBase):
                         component._kwargs[i]['center_x'] = self.source_centroid_x
                         component._kwargs[i]['center_y'] = self.source_centroid_y
                     else:
-                        component._kwargs[i]['center_x'] = component._kwargs[match_idx]['center_x']
-                        component._kwargs[i]['center_y'] = component._kwargs[match_idx]['center_y']
+                        comp = self.source_light_model.components[match_idx]
+                        
+                        component._kwargs[i]['center_x'] = comp._source_x
+                        component._kwargs[i]['center_y'] = comp._source_y
 
     def fit(self, data_to_fit, pso_kwargs=None, mcmc_kwargs=None, simplex_kwargs=None,
             **kwargs):
