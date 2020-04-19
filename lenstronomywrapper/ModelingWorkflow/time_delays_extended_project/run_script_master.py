@@ -76,10 +76,10 @@ def lens0408_exposure(index):
     vary_shapelets = index_read(index)
     if vary_shapelets:
         # DONE
-        return 5000, 0.08
+        return 15000, 0.08
     else:
         # DONE
-        return 5000, 0.1
+        return 15000, 0.1
 
 run_control = True
 run_control_shapelets = True
@@ -152,7 +152,7 @@ for n_lens in range(n_lens_start, n_lens_end):
     if Nstart > 300 and Nstart < 501:
         if not run_los_plus_subs_shapelets: exit(1)
 
-    fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 250, 'n_run': 150,
+    fit_smooth_kwargs = {'n_particles': 120, 'n_iterations': 300, 'n_run': 150,
                          'walkerRatio': 4, 'n_burn': 600}
     name_append = ''
     run_lens(Nstart, lens_class, lens_name, log_mlow, half_window_size, exp_time,

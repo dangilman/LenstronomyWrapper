@@ -253,9 +253,13 @@ class AnalogModel(object):
                     prior_galaxy = [['theta_E', rein_sat, 0.3 * rein_sat], ['center_x', xsat, 0.25],
                           ['center_y', ysat, 0.25]]
 
+                elif self.lens.identifier == 'lens0408':
+                    prior_galaxy = [['theta_E', rein_sat, 0.05 * rein_sat], ['center_x', xsat, 0.05],
+                                    ['center_y', ysat, 0.05]]
                 else:
                     prior_galaxy = [['theta_E', rein_sat, 0.1 * rein_sat], ['center_x', xsat, 0.05],
                           ['center_y', ysat, 0.05]]
+
                 kwargs_init = [self.lens.satellite_kwargs[n]]
 
                 satellite_galaxy = SISsatellite(satellite_redshift, kwargs_init=kwargs_init,

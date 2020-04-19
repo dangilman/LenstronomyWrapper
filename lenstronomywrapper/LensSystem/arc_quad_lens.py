@@ -83,7 +83,7 @@ class ArcQuadLensSystem(LensBase):
                         component._kwargs[i]['center_y'] = self.source_centroid_y
                     else:
                         comp = self.source_light_model.components[match_idx]
-                        
+
                         component._kwargs[i]['center_x'] = comp._source_x
                         component._kwargs[i]['center_y'] = comp._source_y
 
