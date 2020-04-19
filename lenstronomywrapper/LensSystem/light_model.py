@@ -63,6 +63,12 @@ class LightModel(object):
         for component in self.components:
             redshift_list.append(component.redshift)
 
+        if redshift_list.count(None) == len(redshift_list):
+            redshift_list = None
+        else:
+            raise Exception('If one of the source redshifts is specified, all source redshifts should be specified.'
+                            'The specified redshifts are: '+str(redshift_list))
+
         return redshift_list
 
     @property
