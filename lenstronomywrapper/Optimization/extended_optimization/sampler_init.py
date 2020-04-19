@@ -186,9 +186,13 @@ class SamplerInit(object):
         source_light_model_list = self.sourcelight_instance.light_model_list
         point_source_model_list = self.pointsource_instance.point_source_list
         lens_light_model_list = self.lenslight_instance.light_model_list
+        source_redshift_list = self.sourcelight_instance.redshift_list
 
         additional_images_list = [False]
         fixed_magnification_list = [False]
+
+        if source_redshift_list is not None:
+            assert len(source_redshift_list) == len(source_light_model_list)
 
         kwargs = {'lens_model_list': lens_model_list,
                   'source_light_model_list': source_light_model_list,
@@ -197,7 +201,8 @@ class SamplerInit(object):
                   'additional_images_list': additional_images_list,
                   'fixed_magnification_list': fixed_magnification_list,
                   'z_lens': self.system.zlens, 'z_source': self.system.zsource,
-                  'multi_plane': True, 'lens_redshift_list': lens_redshift_list}
+                  'multi_plane': True, 'lens_redshift_list': lens_redshift_list,
+                  'source_redshift_list': source_redshift_list}
 
         return kwargs
 

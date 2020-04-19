@@ -16,7 +16,7 @@ class Quasar(SourceBase):
         self._grid_rmax = grid_rmax
         self._initialized = False
 
-        super(Quasar, self).__init__(False, [], None, None)
+        super(Quasar, self).__init__(False, [], None, None, None)
 
     @property
     def light_model_list(self):

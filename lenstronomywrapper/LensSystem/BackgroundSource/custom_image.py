@@ -65,14 +65,14 @@ def resize_image(image, z_initial, z_final, resize_factor=10):
 
 class CustomImage(SourceBase):
 
-    def __init__(self, kwargs, concentric_with_source=None):
+    def __init__(self, kwargs, concentric_with_source=None, redshift=None):
 
         self.interpol = Interpol()
         self.image = kwargs[0]['image']
 
         self._kwargs = kwargs
         source_x, source_y = kwargs[0]['center_x'], kwargs[0]['center_y']
-        super(CustomImage, self).__init__(concentric_with_source, [], source_x, source_y)
+        super(CustomImage, self).__init__(concentric_with_source, [], source_x, source_y, redshift)
 
     def surface_brightness(self, xgrid, ygrid, lensmodel, lensmodel_kwargs):
 

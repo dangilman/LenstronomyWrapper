@@ -94,7 +94,6 @@ class ArcPlusQuad(object):
         if self.t_arrival is not None:
             self.t_arrival = self.t_arrival[min_indexes]
 
-
 class _LensData(object):
 
     def __init__(self, point_source, lensSystem, data_class, psf_class, data_settings,

@@ -2,11 +2,15 @@ from lenstronomywrapper.LensSystem.light_reconstruct_base import LightReconstruc
 
 class SourceBase(LightReconstructBase):
 
-    def __init__(self, concentric_with_source, prior, source_x, source_y):
+    def __init__(self, concentric_with_source, prior, source_x, source_y, redshift):
 
         self.concentric_with_source = concentric_with_source
         self._prior = prior
         self._source_x, self._source_y = source_x, source_y
+
+        self.redshift = redshift
+
+        self.is_source_light = True
 
         super(SourceBase, self).__init__()
 
@@ -27,9 +31,12 @@ class SourceBase(LightReconstructBase):
         return surf_bright
 
     @property
+    def component_redshift(self):
+        return self.redshift
+
+    @property
     def source_centroid(self):
         return self._source_x, self._source_y
-
 
     @property
     def sourceLight(self):

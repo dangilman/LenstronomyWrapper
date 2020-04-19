@@ -2,7 +2,8 @@ from lenstronomywrapper.LensSystem.BackgroundSource.source_base import SourceBas
 
 class Shapelet(SourceBase):
 
-    def __init__(self, kwargs_shapelet, reoptimize=True, prior=[], concentric_with_source=None):
+    def __init__(self, kwargs_shapelet, reoptimize=True, prior=[], concentric_with_source=None,
+                 redshift=None):
 
         self.reoptimize = reoptimize
 
@@ -11,7 +12,7 @@ class Shapelet(SourceBase):
         self._kwargs = kwargs_shapelet
         self._nmax = int(kwargs_shapelet[0]['n_max'])
 
-        super(Shapelet, self).__init__(concentric_with_source, prior, source_x, source_y)
+        super(Shapelet, self).__init__(concentric_with_source, prior, source_x, source_y, redshift)
 
     @property
     def fixed_models(self):

@@ -4,13 +4,14 @@ import numpy as np
 class SersicSource(SourceBase):
 
     def __init__(self, kwargs_sersic, reoptimize=False, prior=[],
-                 concentric_with_source=None):
+                 concentric_with_source=None, redshift=None):
 
         self.reoptimize = reoptimize
         self._kwargs = kwargs_sersic
         source_x, source_y = kwargs_sersic[0]['center_x'], kwargs_sersic[0]['center_y']
 
-        super(SersicSource, self).__init__(concentric_with_source, prior, source_x, source_y)
+        super(SersicSource, self).__init__(concentric_with_source, prior, source_x, source_y,
+                                           redshift)
 
     @property
     def fixed_models(self):

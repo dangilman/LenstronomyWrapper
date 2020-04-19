@@ -6,6 +6,7 @@ class LightBase(LightReconstructBase):
 
         self._prior = priors
         self.concentric_with_model = concentric_with_model
+        self.is_source_light = False
         super(LightBase, self).__init__()
 
     def surface_brightness(self, xgrid, ygrid, lensmodel, lensmodel_kwargs):
@@ -21,6 +22,11 @@ class LightBase(LightReconstructBase):
             surf_bright = surf_bright.reshape(shape0, shape0)
 
         return surf_bright
+
+    @property
+    def component_redshift(self):
+        # not implemented for lens light instances
+        return None
 
     @property
     def lensLight(self):

@@ -237,6 +237,9 @@ class AnalogModel(object):
 
             n_max = min(n_satellites, 2)
 
+            if self.lens.identifier == 'lens0408':
+                n_max = 3
+
             for n in range(0, n_max):
 
                 rein_sat = self.lens.satellite_kwargs[n]['theta_E']
@@ -311,17 +314,21 @@ class AnalogModel(object):
         for t, delta_t in zip(relative_arrival_times, arrival_time_sigma):
             arrival_time_uncertainties.append(abs(t*delta_t))
 
-        source_model_list = [SersicSource(kwargs_sersic_source, concentric_with_source=0)]
         source_x, source_y = lens_system_quad.source_centroid_x, lens_system_quad.source_centroid_y
+
         if self.lens.identifier == 'lens0408':
-            kwargs_sersic_source_2 = [{'amp': 1500, 'R_sersic': 0.1, 'n_sersic': 4., 'center_x': source_x - 0.6,
-                                       'center_y': source_y + 0.8,
-                                       'e1': 0.2, 'e2': -0.05}]
-            kwargs_sersic_source_3 = [{'amp': 1000, 'R_sersic': 0.2, 'n_sersic': 2., 'center_x': source_x + 0.35,
-              'center_y': source_y + 1.3,
-              'e1': 0.01, 'e2': -0.01}]
-            source_model_list += [SersicSource(kwargs_sersic_source_2),
-                                  SersicSource(kwargs_sersic_source_3)]
+
+            kwargs_sersic_source_2 = [{'amp': 2000, 'R_sersic': 0.03, 'n_sersic': 1.5, 'center_x': source_x - 0.65,
+                                       'center_y': source_y + 0.65, 'e1': 0.12, 'e2': -0.05}]
+            kwargs_sersic_source_3 = [{'amp': 1000, 'R_sersic': 0.07, 'n_sersic': 2., 'center_x': source_x + 0.2,
+                                       'center_y': source_y + 1.,
+                                       'e1': 0.1, 'e2': 0.35}]
+            source_model_list = [SersicSource(kwargs_sersic_source, concentric_with_source=0),
+                                 SersicSource(kwargs_sersic_source_3),
+                                  SersicSource(kwargs_sersic_source_2)]
+
+        else:
+            source_model_list = [SersicSource(kwargs_sersic_source, concentric_with_source=0)]
 
         if window_size is None:
 
@@ -363,7 +370,7 @@ class AnalogModel(object):
 
             if self.lens.identifier == 'lens0408':
                 kwargs_shapelets_2 = [{'amp': 100, 'beta': 0.01,
-                                     'n_max': 3, 'center_x': 0., 'center_y': 0.}]
+                                     'n_max': 5, 'center_x': 0., 'center_y': 0.}]
                 kwargs_shapelets_3 = [{'amp': 100, 'beta': 0.01,
                                        'n_max': 3, 'center_x': 0., 'center_y': 0.}]
                 source_model_list += [Shapelet(kwargs_shapelets_2, concentric_with_source=1)]

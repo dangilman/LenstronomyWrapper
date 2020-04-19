@@ -30,10 +30,10 @@ def lens1131_exposure(index):
 
     if vary_shapelets:
         # DONE
-        return 2000, 0.425
+        return 2000, 0.465
     else:
         # run again
-        return 2000, 0.64
+        return 2000, 0.575
 
 def lens1115_exposure(index):
     vary_shapelets = index_read(index)
@@ -67,19 +67,19 @@ def lens2033_exposure(index):
     vary_shapelets = index_read(index)
     if vary_shapelets:
         # DONE
-        return 3000, 0.2
+        return 3000, 0.17
     else:
         # DONE
-        return 3000, 0.3
+        return 3000, 0.25
 
 def lens0408_exposure(index):
     vary_shapelets = index_read(index)
     if vary_shapelets:
         # DONE
-        return 60000, 0.08
+        return 5000, 0.08
     else:
         # DONE
-        return 60000, 0.1
+        return 5000, 0.1
 
 run_control = True
 run_control_shapelets = True
@@ -136,7 +136,7 @@ for n_lens in range(n_lens_start, n_lens_end):
     elif n_lens < 3001:
         Nstart = n_lens - 2500
         lens_name = 'lens0408'
-        half_window_size = 3.8
+        half_window_size = 3.5
         lens_class = Lens0408()
         exp_time, background_rms = lens0408_exposure(Nstart)
 

@@ -49,12 +49,31 @@ class LightModel(object):
             count += n
 
     @property
+    def redshift_list(self):
+
+        redshift_list = None
+
+        for component in self.components:
+            if component.is_source_light:
+                break
+        else:
+            return redshift_list
+
+        redshift_list = []
+        for component in self.components:
+            redshift_list.append(component.redshift)
+
+        return redshift_list
+
+    @property
     def lensLight(self):
         return LenstronomyLightModel(self.light_model_list)
 
     @property
     def sourceLight(self):
-        return LenstronomyLightModel(self.light_model_list)
+
+        return LenstronomyLightModel(self.light_model_list,
+                                     source_redshift_list=self.redshift_list)
 
     @staticmethod
     def _count_models(components):
