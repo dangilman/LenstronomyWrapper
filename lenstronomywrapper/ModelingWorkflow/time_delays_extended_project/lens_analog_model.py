@@ -253,9 +253,6 @@ class AnalogModel(object):
                     prior_galaxy = [['theta_E', rein_sat, 0.3 * rein_sat], ['center_x', xsat, 0.25],
                           ['center_y', ysat, 0.25]]
 
-                elif self.lens.identifier == 'lens0408':
-                    prior_galaxy = [['theta_E', rein_sat, 0.05 * rein_sat], ['center_x', xsat, 0.05],
-                                    ['center_y', ysat, 0.05]]
                 else:
                     prior_galaxy = [['theta_E', rein_sat, 0.1 * rein_sat], ['center_x', xsat, 0.05],
                           ['center_y', ysat, 0.05]]
@@ -322,11 +319,12 @@ class AnalogModel(object):
 
         if self.lens.identifier == 'lens0408':
 
-            kwargs_sersic_source_2 = [{'amp': 2000, 'R_sersic': 0.03, 'n_sersic': 1.5, 'center_x': source_x - 0.65,
-                                       'center_y': source_y + 0.65, 'e1': 0.12, 'e2': -0.05}]
-            kwargs_sersic_source_3 = [{'amp': 1000, 'R_sersic': 0.07, 'n_sersic': 2., 'center_x': source_x + 0.2,
-                                       'center_y': source_y + 1.,
-                                       'e1': 0.1, 'e2': 0.35}]
+            kwargs_sersic_source_2 = [{'amp': 2800, 'R_sersic': 0.06, 'n_sersic': 2., 'center_x': source_x - 0.6,
+                                       'center_y': source_y + 0.5, 'e1': 0.1, 'e2': -0.05}]
+            kwargs_sersic_source_3 = [{'amp': 1200, 'R_sersic': 0.14, 'n_sersic': 2.2, 'center_x': source_x + 0.3,
+                                       'center_y': source_y + 1.0,
+                                       'e1': 0.24, 'e2': 0.25}]
+
             source_model_list = [SersicSource(kwargs_sersic_source, concentric_with_source=0),
                                  SersicSource(kwargs_sersic_source_3),
                                   SersicSource(kwargs_sersic_source_2)]
@@ -374,7 +372,7 @@ class AnalogModel(object):
 
             if self.lens.identifier == 'lens0408':
                 kwargs_shapelets_2 = [{'amp': 100, 'beta': 0.01,
-                                     'n_max': 5, 'center_x': 0., 'center_y': 0.}]
+                                     'n_max': 3, 'center_x': 0., 'center_y': 0.}]
                 kwargs_shapelets_3 = [{'amp': 100, 'beta': 0.01,
                                        'n_max': 3, 'center_x': 0., 'center_y': 0.}]
                 source_model_list += [Shapelet(kwargs_shapelets_2, concentric_with_source=1)]

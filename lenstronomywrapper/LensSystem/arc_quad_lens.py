@@ -71,7 +71,7 @@ class ArcQuadLensSystem(LensBase):
                 for i in range(0, len(component._kwargs)):
                     component._kwargs[i]['center_x'], component._kwargs[i]['center_y'] = model.x_center, model.y_center
 
-        for component in self.source_light_model.components:
+        for component_idx, component in enumerate(self.source_light_model.components):
 
             if component.concentric_with_source is not None:
                 for i in range(0, len(component._kwargs)):

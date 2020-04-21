@@ -171,6 +171,7 @@ class SamplerInit(object):
             else:
 
                 idx = source_model.concentric_with_source
+
                 if idx == 0:
                     joint_source_with_point_source.append([0, k])
                 else:
