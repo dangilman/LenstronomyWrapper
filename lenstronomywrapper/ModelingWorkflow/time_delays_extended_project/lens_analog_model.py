@@ -238,7 +238,7 @@ class AnalogModel(object):
             n_max = min(n_satellites, 2)
 
             if self.lens.identifier == 'lens0408':
-                n_max = 3
+                n_max = 2
 
             for n in range(0, n_max):
 
