@@ -92,6 +92,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
             file = open(lens_system_file_name, 'rb')
             system = dill.load(file)
             realization = system.realization
+            realization._has_been_shifted = True
 
         else:
             SHMF_norm = 0.02

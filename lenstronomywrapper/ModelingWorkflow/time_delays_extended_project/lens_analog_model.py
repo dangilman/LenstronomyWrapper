@@ -254,8 +254,8 @@ class AnalogModel(object):
                           ['center_y', ysat, 0.25]]
 
                 elif self.lens.identifier == 'lens0435':
-                    prior_galaxy = [['theta_E', rein_sat, 0.05 * rein_sat], ['center_x', xsat, 0.025],
-                          ['center_y', ysat, 0.025]]
+                    prior_galaxy = [['theta_E', rein_sat, 0.03], ['center_x', xsat, 0.001],
+                          ['center_y', ysat, 0.001]]
 
                 else:
                     prior_galaxy = [['theta_E', rein_sat, 0.1 * rein_sat], ['center_x', xsat, 0.05],
