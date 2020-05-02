@@ -1,30 +1,104 @@
 from lenstronomywrapper.Optimization.quad_optimization.optimization_base import OptimizationBase
 from lenstronomywrapper.Optimization.quad_optimization.brute import BruteOptimization
-from lenstronomywrapper.Utilities.data_util import image_separation_vectors_quad
+from lenstronomy.LensModel.lens_model import LensModel
+from lenstronomywrapper.Utilities.lensing_util import interpolate_ray_paths
+import numpy as np
+from copy import deepcopy
+
+from lenstronomywrapper.LensSystem.quad_lens import QuadLensSystem
 
 class DynamicOptimization(OptimizationBase):
 
     def __init__(self, lens_system, pyhalo_dynamic, kwargs_rendering, global_log_mlow,
-                 log_mass_cuts, aperture_sizes, refit, aperture_setting,
+                 log_mass_cuts, aperture_sizes, refit,
                  particle_swarm, re_optimize, realization_type,
-                 n_particles=35, simplex_n_iter=300, reoptimize=False,
-                 ):
+                 n_particles=35, simplex_n_iter=300):
 
+        """
+        :param lens_system: an instance of QuadLensSystem (see documentation in LensSystem.quad_lens
+        :param pyhalo_dynamic: an instance of pyhalo_dynamic
+        :param kwargs_rendering: key word arguments for the realization, see documentation in pyHalo
+        :param global_log_mlow: the lowest-mass halos to render everywhere in the lens system
+        Everything with mass below 10**global_log_mlow will be rendered iteratively around images in
+        progressively smaller apertures defined by the next two arguments
+
+        :param log_mass_cuts: list of floats corresponding to minimum halo masses to render
+        :param aperture_sizes: list of floats corresponding to aperture size in which to render halos
+
+        # The following control how lenstronomy goes about fitting the lens.
+        :param refit: list of bool telling the code whether or not to re-fit a lens model with the new halos.
+            - It may not be necessary to re-fit the lens model if the number of new halos added is small
+            and/or they are not very massive
+
+        :param particle_swarm: list of bools telling the optimizer routine (lenstronomy->Optimizer)
+        whether or not to perform a particle swarm optimization
+            - particle swarm algorithms are good at finding the minimum of a large-dimension parameter space
+            - if particle_swarm = False, then refit key word is irrelvant
+
+        :param re_optimize: list of bools telling the optimizer routine (lenstronomy->Optimizer) whether
+        or not to treat each new re-fit of a lensmodel as a reoptimization
+            - re-optimizing is fast if you're starting from a lens model you know is close to the 'truth'
+            - Note: this key word only has an effect if you're doing a particle swarm optimization
+
+        :param realization_type: specifies the kind of realization to generate (see documentation in pyHalo)
+            - examples are 'composite_powerlaw', 'line_of_sight', 'main_lens'
+
+        ###########################################
+        EXAMPLE INPUT FOR A CDM MASS FUNCTION:
+
+        minimum_mass_global = 8. # render 10^8 everywhere in the lensing volume
+        log_mass_cuts_list = [7., 6]
+        aperture_sizes_list = [0.2, 0.1]
+        # add 10^7 halos in 0.2 arcsec apertures around each image along the ray path
+        # add 10^6 halos in 0.1 arcsec apertures around each image along the ray path
+
+        refit_list = [True, False]
+        # re-optimize the lens model after adding 10^7 halos, but not after 10^6 because their
+        # deflection angles are tiny
+        particle_swarm_list = [True, False]
+        # don't really need a particle swarm for low-mass halos
+        (code will automatically do a particle swarm with the largest halos specified by minimum_mass_global)
+        re_optimize_list = [True, False]
+        #
+        realization_type = 'composite_powerlaw'
+        ###########################################
+
+        ###########################################
+        EXAMPLE INPUT FOR A DELTA FUNCTION MASS FUNCTION:
+
+        log_mass_cuts_list = [delta_function_mass]
+        aperture_sizes_list = [0.1] #arcsec
+        refit_list = [True]
+        particle_swarm_list = [False]
+        re_optimize_list = [False]
+        realization_type = 'line_of_sight'
+        ###########################################
+        """
         assert len(log_mass_cuts) == len(aperture_sizes)
         assert len(refit) == len(log_mass_cuts)
+        assert pyhalo_dynamic.zsource == lens_system.zsource
+
+        if len(log_mass_cuts) > 0:
+            assert global_log_mlow > log_mass_cuts[0]
+
+            for i in range(0, len(log_mass_cuts)-1):
+                if log_mass_cuts[i] <= log_mass_cuts[i+1]:
+                    raise Exception('Aperture masses must be decreasing, you provided: ' + str(aperture_sizes))
+            for i in range(0, len(log_mass_cuts)-1):
+                if aperture_sizes[i] < aperture_sizes[i+1]:
+                    print('WARNING: Aperture sizes are not monotically decreasing functions of halo mass.'
+                          'This is probably not what you want to do....')
 
         self.log_mass_cuts = log_mass_cuts
         self.aperture_sizes = aperture_sizes
-        self.aperture_setting = aperture_setting
         self.refit = refit
         self.ps = particle_swarm
         self.re_optimize = re_optimize
-        self.kwargs_rendering = kwargs_rendering
+        self.kwargs_rendering = deepcopy(kwargs_rendering)
         self.realization_type = realization_type
 
         self.n_particles = n_particles
         self.n_iterations = simplex_n_iter
-        self.reoptimize = reoptimize
 
         self._global_log_mlow = global_log_mlow
 
@@ -35,88 +109,176 @@ class DynamicOptimization(OptimizationBase):
 
         super(DynamicOptimization, self).__init__(lens_system)
 
-    def _setup(self, verbose):
+    def optimize(self, data_to_fit, opt_routine='fixed_powerlaw_shear',
+                 constrain_params=None, verbose=False):
 
-        if verbose: print('initializing with log(mlow) = ' + str(self._global_log_mlow) + '.... ')
-        macro_lens_model_init, kwargs_macro_init = self.lens_system.get_lensmodel(include_substructure=False)
+        """
 
-        self.pyhalo_dynamic.set_macro_lensmodel(macro_lens_model_init, kwargs_macro_init, self._global_log_mlow)
+        This class fits a lens model to four lensed image positions in the presence of dark matter halos.
 
-        realization_global = self.pyhalo_dynamic.render(self.realization_type,
-                                                        self.kwargs_rendering, verbose=verbose)[0]
+        The algorithm adds halos dynamically, meaning that they are rendered around paths traversed by the
+        light, in contrast to rendering the halos all at once everywhere.
 
-        return realization_global, self._global_log_mlow
+        :param data_to_fit: instance of LensedQuasar data class (see LensData.lensed_quasar)
+        :param opt_routine: optimization routine, can be fixed_powerlaw_shear or fixedshearpowerlaw
+        :param constrain_params: penalize parameters if they don't have certain values
+        (see documentation in lenstronomy.Optimizer)
+        :param verbose: print things
+        :return: optimized lens model and keyword arguments
+        """
 
-    def _auto_aperture_size(self, data_to_fit):
+        # Fit a smooth model (macromodel + satellites) to the image positions
+        self.lens_system.initialize(data_to_fit, opt_routine, constrain_params,
+                                    include_substructure=False)
 
-        raise Exception('not yet implemented')
-
-    def optimize(self, data_to_fit, opt_routine='fixed_powerlaw_shear', constrain_params=None, verbose=False):
-
-        self.lens_system.initialize(data_to_fit, opt_routine, constrain_params, verbose,
-                   include_substructure=False)
-
-        realization_global, log_mhigh = self._setup(verbose)
+        # set up initial realization with large halos generated everywhere
+        realization_global, log_mhigh, lens_plane_redshifts, delta_zs = self._initialize(verbose)
 
         if verbose:
             print('fitting with log(mlow) = ' + str(self._global_log_mlow) + '.... ')
             print('n foreground halos: ',
                       realization_global.number_of_halos_before_redshift(self.lens_system.zlens))
+            print('n subhalos: ',
+                  realization_global.number_of_halos_at_redshift(self.lens_system.zlens))
             print('n background halos: ', realization_global.number_of_halos_after_redshift(self.lens_system.zlens))
 
-        kwargs_lens_final, _, lens_model_full, _, _, source = self._brute.fit(data_to_fit, 30, opt_routine, constrain_params,
-                                                                     self.n_iterations, {}, verbose, re_optimize=False,
-                                                                     particle_swarm=True, realization=realization_global)
+        # Add the large halos, fit a lens model
+        kwargs_lens_final, _, lens_model_full, _, _, source = self._brute.fit(data_to_fit, self.n_particles,
+                                              opt_routine, constrain_params, self.n_iterations,
+                                              {}, verbose, re_optimize=True, particle_swarm=True,
+                                              realization=realization_global)
 
         self.lens_system.clear_static_lensmodel()
-        self.lens_system.update_kwargs_macro(kwargs_lens_final)
         self.lens_system.update_realization(realization_global)
+        self.lens_system.set_lensmodel_static(lens_model_full, kwargs_lens_final)
+        self.lens_system.update_kwargs_macro(kwargs_lens_final)
 
-        lens_model, kwargs_macro = self.lens_system.get_lensmodel()
-
-        if self.aperture_setting == 'images':
-            aperture_center_x, aperture_center_y = data_to_fit.x, data_to_fit.y
-
-        else:
-            aperture_center_x, aperture_center_y = self.aperture_setting['center_x'], self.aperture_setting['center_y']
-
-        for (log_m_low, aperture_size, fit, particle_swarm, re_optimize) in zip(self.log_mass_cuts, self.aperture_sizes,
+        # Iterate through lower masses and smaller progressively smaller rendering apertures
+        for (log_mlow, aperture_size, fit, particle_swarm, re_optimize) in zip(self.log_mass_cuts, self.aperture_sizes,
                                                                    self.refit, self.ps, self.re_optimize):
 
+            # iteratively add lower mass halos in progressively smaller apertures around the lensed light rays
             if verbose:
-                print('log_mlow:', log_m_low)
+                print('log_mlow:', log_mlow)
                 print('log_mhigh:', log_mhigh)
                 print('aperture_size:', aperture_size)
                 print('fitting:', fit)
 
-            assert log_m_low < log_mhigh
+            assert log_mlow < log_mhigh
+
+            x_interp_list, y_interp_list = self._get_interp(data_to_fit.x, data_to_fit.y,
+                                                                          lens_plane_redshifts)
+            lens_centroid_x, lens_centroid_y = self.lens_system.macromodel.centroid
+
+            self.kwargs_rendering['log_mlow'], self.kwargs_rendering['log_mhigh'] = log_mlow, log_mhigh
             realization_global = self.pyhalo_dynamic.render_dynamic(self.realization_type, self.kwargs_rendering,
-                       aperture_center_x, aperture_center_y, aperture_size, log_m_low, log_mhigh, lens_model, kwargs_macro,
-                                                                    realization_global, verbose)
+                       realization_global, lens_centroid_x, lens_centroid_y, x_interp_list, y_interp_list, aperture_size,
+                       lens_plane_redshifts, delta_zs, verbose)
 
             if verbose:
+                print('fitting with log(mlow) = ' + str(self._global_log_mlow) + '.... ')
                 print('n foreground halos: ',
                       realization_global.number_of_halos_before_redshift(self.lens_system.zlens))
+                print('n subhalos: ',
+                      realization_global.number_of_halos_at_redshift(self.lens_system.zlens))
                 print('n background halos: ', realization_global.number_of_halos_after_redshift(self.lens_system.zlens))
 
             if fit:
 
-                kwargs_lens_final, _, lens_model_full, _, _, source = self._brute.fit(data_to_fit, 30, opt_routine,
+                kwargs_lens_final, _, lens_model_full, _, _, source = self._brute.fit(data_to_fit,
+                                                                    self.n_particles, opt_routine,
                                                                              constrain_params,
                                                                              self.n_iterations, {}, verbose, True,
-                                                                             particle_swarm=True,
+                                                                             particle_swarm=particle_swarm,
                                                                              realization=realization_global)
+
                 self.lens_system.clear_static_lensmodel()
-                self.lens_system.update_kwargs_macro(kwargs_lens_final)
                 self.lens_system.update_realization(realization_global)
-                lens_model, kwargs_macro = self.lens_system.get_lensmodel()
+                self.lens_system.set_lensmodel_static(lens_model_full, kwargs_lens_final)
+                self.lens_system.update_kwargs_macro(kwargs_lens_final)
 
             else:
 
+                self.lens_system.clear_static_lensmodel()
                 self.lens_system.update_realization(realization_global)
+                lens_model_full, kwargs_lens_final = self.lens_system.get_lensmodel()
+                self.lens_system.set_lensmodel_static(lens_model_full, kwargs_lens_final)
+                self.lens_system.update_kwargs_macro(kwargs_lens_final)
 
-                lens_model, kwargs_lens_final = self.lens_system.get_lensmodel()
+            log_mhigh = log_mlow
 
-            log_mhigh = log_m_low
+        self.pyhalo_dynamic.reset(self.lens_system.zlens, self.lens_system.zsource)
 
-        return self._return_results(source, kwargs_lens_final, lens_model, {'realization_final': realization_global})
+        return self._return_results(source, kwargs_lens_final, lens_model_full,
+                                    {'realization_final': realization_global})
+
+    def _initialize(self, verbose):
+
+        if verbose: print('initializing with log(mlow) = ' + str(self._global_log_mlow) + '.... ')
+
+        redshifts, delta_zs = self.pyhalo_dynamic.lens_plane_redshifts(self.kwargs_rendering)
+        lens_plane_redshifts = list(np.round(redshifts, 2))
+
+        lens_centroid_x, lens_centroid_y = self.lens_system.macromodel.centroid
+        x_interp_list, y_interp_list = self._get_interp([lens_centroid_x], [lens_centroid_y],
+                                                        lens_plane_redshifts)
+
+        kwargs_init = deepcopy(self.kwargs_rendering)
+
+        if 'log_mlow' in kwargs_init.keys():
+            kwargs_init['log_mlow_subs'] = kwargs_init['log_mlow']
+            kwargs_init['log_mhigh_subs'] = kwargs_init['log_mhigh']
+
+        kwargs_init['log_mlow'] = self._global_log_mlow
+        if 'log_mhigh' not in kwargs_init.keys():
+            kwargs_init['log_mhigh'] = None
+
+        aperture_radius = 0.5 * kwargs_init['cone_opening_angle']
+
+        realization_global = self.pyhalo_dynamic.render_dynamic(self.realization_type, kwargs_init,
+                                                                None, lens_centroid_x, lens_centroid_y,
+                                                                x_interp_list, y_interp_list, aperture_radius,
+                                                                lens_plane_redshifts, delta_zs,
+                                                                verbose, include_mass_sheet_correction=True)
+
+        return realization_global, self._global_log_mlow, lens_plane_redshifts, delta_zs
+
+    def _get_interp(self, x_coords, y_coords, lens_plane_redshifts):
+
+        lens_model, kwargs = self.lens_system.get_lensmodel()
+
+        if not hasattr(self, '_lens_model_list_empty'):
+            self._lens_model_list_empty = []
+            self._zlist_empty = []
+            self._kwargs_empty = []
+            for i, zi in enumerate(lens_plane_redshifts):
+                self._lens_model_list_empty.append('CONVERGENCE')
+                self._zlist_empty.append(zi)
+                self._kwargs_empty.append({'kappa_ext': 0.})
+
+        lens_model_list, redshift_list, convention_index = \
+            self._lenstronomy_args_from_lensmodel(lens_model)
+
+        lens_model_list += self._lens_model_list_empty
+        redshift_list += self._zlist_empty
+        kwargs += self._kwargs_empty
+
+        lensmodel_new = LensModel(lens_model_list, z_lens=self.pyhalo_dynamic.zlens,
+                                  z_source=self.pyhalo_dynamic.zsource, lens_redshift_list=redshift_list,
+                                  cosmo=lens_model.cosmo, multi_plane=True,
+                                  numerical_alpha_class=self.lens_system._numerical_alpha_class)
+
+        source_x, source_y = self.lens_system.source_centroid_x, self.lens_system.source_centroid_y
+        x_interp, y_interp = interpolate_ray_paths(x_coords, y_coords,
+                              lensmodel_new, kwargs, self.pyhalo_dynamic.zsource, terminate_at_source=True,
+                                                   source_x=source_x, source_y=source_y)
+
+        return x_interp, y_interp
+
+    @staticmethod
+    def _lenstronomy_args_from_lensmodel(lensmodel):
+
+        lens_model_list = lensmodel.lens_model_list
+        redshift_list = lensmodel.redshift_list
+        convention_index = lensmodel.lens_model._observed_convention_index
+        return lens_model_list, redshift_list, convention_index

@@ -25,6 +25,8 @@ class LensBase(object):
 
         self.clear_static_lensmodel()
 
+        self._numerical_alpha_class = None
+
     def fit(self, data_to_fit, optimization_class, verbose=False, **kwargs_optimizer):
 
         optimizer = optimization_class(self)
@@ -77,6 +79,8 @@ class LensBase(object):
         names, redshifts, kwargs, numercial_alpha_class, convention_index = self.get_lenstronomy_args(
             include_substructure, substructure_realization)
 
+        self._numerical_alpha_class = numercial_alpha_class
+
         if convention_index is None:
             if self.position_convention_halo is None:
                 pass
@@ -121,11 +125,13 @@ class LensBase(object):
 
         return names, redshifts, kwargs, kwargs_lenstronomy, convention_index
 
-    def solve_lens_equation(self, lensmodel, kwargs_lens, precision_limit=10**-4):
+    def solve_lens_equation(self, lensmodel, kwargs_lens, precision_limit=10**-4,
+                            arrival_time_sort=False):
 
         solver = LensEquationSolver(lensmodel)
         x_image, y_image = solver.findBrightImage(self.source_centroid_x, self.source_centroid_y, kwargs_lens,
-                                                  search_window=4., precision_limit=precision_limit**2)
+                                                  search_window=4.,
+                                                  precision_limit=precision_limit**2, arrival_time_sort=arrival_time_sort)
         return x_image, y_image
 
 

@@ -1,7 +1,7 @@
 from lenstronomywrapper.Optimization.quad_optimization.brute import BruteOptimization
 import numpy as np
 from lenstronomywrapper.Optimization.quad_optimization.settings import *
-from lenstronomywrapper.Utilities.lensing_util import interpolate_ray_paths
+from lenstronomywrapper.Utilities.lensing_util import interpolate_ray_paths_system
 
 class HierarchicalOptimization(BruteOptimization):
 
@@ -66,12 +66,12 @@ class HierarchicalOptimization(BruteOptimization):
         for run in range(0, self.settings.n_iterations_foreground):
 
             if run == 0:
-                ray_x_interp, ray_y_interp = interpolate_ray_paths(data_to_fit.x, data_to_fit.y, self.lens_system,
+                ray_x_interp, ray_y_interp = interpolate_ray_paths_system(data_to_fit.x, data_to_fit.y, self.lens_system,
                                                                    include_substructure=False)
 
             else:
 
-                ray_x_interp, ray_y_interp = interpolate_ray_paths(data_to_fit.x, data_to_fit.y, self.lens_system,
+                ray_x_interp, ray_y_interp = interpolate_ray_paths_system(data_to_fit.x, data_to_fit.y, self.lens_system,
                                                                    realization=realization_filtered)
 
             filter_kwargs = {'aperture_radius_front': window_sizes[run],
@@ -154,10 +154,10 @@ class HierarchicalOptimization(BruteOptimization):
         for run in range(0, self.settings.n_iterations_background):
 
             if run == 0:
-                ray_x_interp, ray_y_interp = interpolate_ray_paths(data_to_fit.x, data_to_fit.y, self.lens_system,
+                ray_x_interp, ray_y_interp = interpolate_ray_paths_system(data_to_fit.x, data_to_fit.y, self.lens_system,
                                                                    realization=foreground_realization_filtered)
             else:
-                ray_x_interp, ray_y_interp = interpolate_ray_paths(data_to_fit.x, data_to_fit.y, self.lens_system,
+                ray_x_interp, ray_y_interp = interpolate_ray_paths_system(data_to_fit.x, data_to_fit.y, self.lens_system,
                                                                    realization=realization_filtered)
 
             filter_kwargs = {'aperture_radius_front': 10.,
@@ -175,6 +175,7 @@ class HierarchicalOptimization(BruteOptimization):
 
                 if foreground_realization_filtered is not None:
                     N_foreground_halos = foreground_realization_filtered.number_of_halos_before_redshift(self.lens_system.zlens)
+                    N_foreground_halos += foreground_realization_filtered.number_of_halos_at_redshift(self.lens_system.zlens)
                     real = realization_background.filter(**filter_kwargs)
                     realization_filtered = foreground_realization_filtered.join(real)
 
@@ -200,8 +201,9 @@ class HierarchicalOptimization(BruteOptimization):
 
             self.lens_system.update_realization(realization_filtered)
 
-            if verbose and realization_filtered is not None:
+            if realization_filtered is not None:
                 ntotal_halos = realization_filtered.number_of_halos_after_redshift(0)
+
                 assert ntotal_halos == N_foreground_halos + N_background_halos
 
             if verbose:

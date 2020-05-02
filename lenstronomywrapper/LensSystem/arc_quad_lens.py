@@ -9,6 +9,7 @@ class ArcQuadLensSystem(LensBase):
     def __init__(self, macromodel, z_source, background_quasar_class, lens_light_model, source_light_model,
                  substructure_realization=None, pyhalo_cosmology=None):
 
+
         self.lens_light_model = lens_light_model
         self.source_light_model = source_light_model
         self.background_quasar = background_quasar_class

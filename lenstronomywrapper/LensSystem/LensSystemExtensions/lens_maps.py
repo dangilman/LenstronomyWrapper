@@ -143,4 +143,3 @@ class ResidualLensMaps(object):
         if mean0:
             residual -= np.mean(residual)
         return residual.reshape(shape0)
-

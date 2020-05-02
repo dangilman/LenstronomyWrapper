@@ -6,6 +6,20 @@ class BruteOptimization(OptimizationBase):
     def __init__(self, lens_system, n_particles=None, simplex_n_iter=None, reoptimize=None,
                  log_mass_sheet_front=None, log_mass_sheet_back=None):
 
+        """
+        This class executes a lens model fit to the data using the Optimizer class in lenstronomy
+
+        More sophisticated optimization routines are wrappers around this main class
+
+        :param lens_system: the lens system class to optimize (instance of lenstronomywrapper.LensSystem.quad_lens
+        :param n_particles: the number of particle swarm particles to use
+        :param simplex_n_iter: the number of iterations for the downhill simplex routine
+        :param reoptimize: whether to start the particle swarm particles close together if the initial
+        guess for the lens model is close to the `true model'
+        :param log_mass_sheet_front: the log(mass) used when subtracting foreground convergence sheets from the lens mdoel
+        :param log_mass_sheet_back: same as ^ but for the background lens planes
+        """
+
         settings = BruteSettingsDefault()
 
         if n_particles is None:

@@ -11,6 +11,7 @@ class Quasar(SourceBase):
 
     def __init__(self, kwargs_quasars, grid_resolution=None, grid_rmax=None):
 
+
         self._kwargs_init = kwargs_quasars
         self._grid_resolution = grid_resolution
         self._grid_rmax = grid_rmax

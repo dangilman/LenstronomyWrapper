@@ -2,6 +2,19 @@ class MacroLensModel(object):
 
     def __init__(self, components):
 
+        """
+        This class defines a 'macromodel'. In lensing terminology this is the global mass profile
+        for the main deflector, satellite galaxies, and galaxies along the line of sight (everything
+        except substructure).
+
+        :param components: a list of macromodel components
+
+        example:
+        components = [PowerLawShear(zlens, kwargs), SISsatellite(zlens, kwargs), ... etc.]
+
+        For description of the component classes, see the classes in LensComponents
+        """
+
         if not isinstance(components, list):
             components = [components]
         self.components = components
@@ -12,6 +25,7 @@ class MacroLensModel(object):
         for component in self.components:
             component.reoptimize = reoptimize
 
+    @property
     def centroid(self):
         main = self.components[0]
         x_center, y_center = main.kwargs[0]['center_x'], main.kwargs[0]['center_y']

@@ -1,7 +1,5 @@
 import numpy as np
 
-
-
 def write_data_to_file(filename, data):
 
     vec = ''

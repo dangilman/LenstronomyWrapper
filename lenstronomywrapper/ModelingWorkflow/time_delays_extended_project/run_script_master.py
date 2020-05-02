@@ -12,7 +12,7 @@ import time
 import sys
 
 #n_lens = 1.
-log_mlow = 6.7
+log_mlow = 6.
 #time.sleep(180)
 
 def index_read(idx):
@@ -30,10 +30,10 @@ def lens1131_exposure(index):
 
     if vary_shapelets:
         # DONE
-        return 2000, 0.465
+        return 2000, 0.37
     else:
         # run again
-        return 2000, 0.575
+        return 2000, 0.45
 
 def lens1115_exposure(index):
     vary_shapelets = index_read(index)
@@ -49,10 +49,10 @@ def lens0435_exposure(index):
     vary_shapelets = index_read(index)
     if vary_shapelets:
         # DONE
-        return 4000, 0.45
+        return 4000, 0.07
     else:
         # DONE
-        return 4000, 0.4
+        return 4000, 0.13
 
 def lens1608_exposure(index):
     vary_shapelets = index_read(index)
@@ -76,10 +76,10 @@ def lens0408_exposure(index):
     vary_shapelets = index_read(index)
     if vary_shapelets:
         # DONE
-        return 15000, 0.08
+        return 3000, 0.15
     else:
         # DONE
-        return 15000, 0.1
+        return 3000, 0.35
 
 run_control = True
 run_control_shapelets = True
@@ -152,9 +152,10 @@ for n_lens in range(n_lens_start, n_lens_end):
     if Nstart > 300 and Nstart < 501:
         if not run_los_plus_subs_shapelets: exit(1)
 
-    fit_smooth_kwargs = {'n_particles': 150, 'n_iterations': 400, 'n_run': 150,
+    fit_smooth_kwargs = {'n_particles': 150, 'n_iterations': 350, 'n_run': 150,
                          'walkerRatio': 4, 'n_burn': 600}
-    name_append = ''
+
+    name_append = '_mlow6'
     run_lens(Nstart, lens_class, lens_name, log_mlow, half_window_size, exp_time,
              background_rms=background_rms, subtract_exact_mass_sheets=False, name_append=name_append,
              fix_Ddt=True, fit_smooth_kwargs=fit_smooth_kwargs)
