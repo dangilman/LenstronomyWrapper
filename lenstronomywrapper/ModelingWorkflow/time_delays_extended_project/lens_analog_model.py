@@ -298,7 +298,8 @@ class AnalogModel(object):
                               'kwargs_rendering': realization_kwargs, 'global_log_mlow': minimum_mass_global,
                               'log_mass_cuts': log_mass_cuts_list, 'aperture_sizes': aperture_sizes_list,
                               'refit': refit_list, 'particle_swarm': particle_swarm_list,
-                              're_optimize': re_optimize_list, 'realization_type': realization_type}
+                              're_optimize': re_optimize_list, 'realization_type': realization_type,
+                              'initial_pso': False, 'simplex_n_iter': 400}
 
                 solve_dynamic = DynamicOptimization(**input_args)
                 _ = solve_dynamic.optimize(data_to_fit, verbose=True)

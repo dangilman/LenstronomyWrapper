@@ -23,9 +23,9 @@ class LensBase(object):
 
         self.position_convention_halo = []
 
-        self.clear_static_lensmodel()
-
         self._numerical_alpha_class = None
+
+        self.clear_static_lensmodel()
 
     def fit(self, data_to_fit, optimization_class, verbose=False, **kwargs_optimizer):
 
@@ -74,6 +74,12 @@ class LensBase(object):
     def get_lensmodel(self, include_substructure=True, set_multiplane=True, substructure_realization=None):
 
         if self._static_lensmodel and include_substructure is True:
+
+            _, _, _, numercial_alpha_class, _ = self.get_lenstronomy_args(
+                True)
+
+            self._numerical_alpha_class = numercial_alpha_class
+
             return self._lensmodel_static, self._kwargs_static
 
         names, redshifts, kwargs, numercial_alpha_class, convention_index = self.get_lenstronomy_args(

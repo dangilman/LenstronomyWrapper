@@ -12,7 +12,7 @@ class DynamicOptimization(OptimizationBase):
     def __init__(self, lens_system, pyhalo_dynamic, kwargs_rendering, global_log_mlow,
                  log_mass_cuts, aperture_sizes, refit,
                  particle_swarm, re_optimize, realization_type,
-                 n_particles=35, simplex_n_iter=300, global_log_mhigh=None):
+                 n_particles=35, simplex_n_iter=300, initial_pso=True):
 
         """
         :param lens_system: an instance of QuadLensSystem (see documentation in LensSystem.quad_lens
@@ -99,6 +99,7 @@ class DynamicOptimization(OptimizationBase):
 
         self.n_particles = n_particles
         self.n_iterations = simplex_n_iter
+        self.initial_pso = initial_pso
 
         self._global_log_mlow = global_log_mlow
 
@@ -127,8 +128,10 @@ class DynamicOptimization(OptimizationBase):
         """
 
         # Fit a smooth model (macromodel + satellites) to the image positions
+
+        kwargs_optimizer = {'particle_swarm': self.initial_pso}
         self.lens_system.initialize(data_to_fit, opt_routine, constrain_params,
-                                    include_substructure=False)
+                                    include_substructure=False, kwargs_optimizer=kwargs_optimizer)
 
         # set up initial realization with large halos generated everywhere
         realization_global, log_mhigh, lens_plane_redshifts, delta_zs = self._initialize(verbose)
@@ -144,7 +147,7 @@ class DynamicOptimization(OptimizationBase):
         # Add the large halos, fit a lens model
         kwargs_lens_final, _, lens_model_full, _, _, source = self._brute.fit(data_to_fit, self.n_particles,
                                               opt_routine, constrain_params, self.n_iterations,
-                                              {}, verbose, re_optimize=True, particle_swarm=True,
+                                              {}, verbose, re_optimize=True, particle_swarm=self.initial_pso,
                                               realization=realization_global)
 
         self.lens_system.clear_static_lensmodel()
