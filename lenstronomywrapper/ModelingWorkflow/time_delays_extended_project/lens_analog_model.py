@@ -17,11 +17,10 @@ from lenstronomywrapper.LensSystem.LensSystemExtensions.chain_post_processing im
 from lenstronomywrapper.LensSystem.LensSystemExtensions.lens_maps import ResidualLensMaps
 from lenstronomywrapper.LensSystem.BackgroundSource.shapelet import Shapelet
 import numpy as np
-from pyHalo.pyhalo import pyHalo
+from pyHalo.pyhalo_dynamic import pyHaloDynamic
+from lenstronomywrapper.Optimization.quad_optimization.dynamic import DynamicOptimization
 import os
 import dill as pickle
-
-import matplotlib.pyplot as plt
 
 class AnalogModel(object):
 
@@ -45,10 +44,8 @@ class AnalogModel(object):
         #self.lens.y += np.random.normal(0, self.lens.sigma_y)
 
         self.zlens, self.zsource = lens_class_instance.zlens, lens_class_instance.zsrc
-        if pyhalo is None:
-            pyhalo = pyHalo(self.zlens, self.zsource, cosmology_kwargs=self.kwargs_cosmology)
 
-        self.pyhalo = pyhalo
+        self.pyhalo = pyHaloDynamic(self.zlens, self.zsource, cosmology_kwargs=self.kwargs_cosmology)
         self.kwargs_quasar = kwargs_quasar
 
     def background_quasar_class(self):
@@ -74,11 +71,6 @@ class AnalogModel(object):
         r *= 0.5
         return amp, r, n
 
-    def gen_realization(self, realization_type, realization_kwargs):
-
-        realization = self.pyhalo.render(realization_type, realization_kwargs)[0]
-        return realization
-
     def flux_anomaly(self, f1, f2):
 
         return f1 - f2
@@ -88,7 +80,7 @@ class AnalogModel(object):
         return t1 - t2
 
     def run(self, save_name_path, N_start, N, realization, arrival_time_sigma,
-            image_positions_sigma, gamma_prior_scale, time_delay_likelihood, fix_D_dt, fit_smooth_kwargs,
+            image_positions_sigma, realization_kwargs, time_delay_likelihood, fix_D_dt, fit_smooth_kwargs,
             window_size, exp_time, background_rms, shapelet_nmax):
 
         observed_lens, modeled_lens, normalized_residuals, residual_convergence = [], [], [], []
@@ -104,7 +96,7 @@ class AnalogModel(object):
             tbaseline, f, t, tdelay_model, macro_params, kw_fit, kw_setup= self.run_once(realization,
                                                                 arrival_time_sigma,
                                                                 image_positions_sigma,
-                                                                gamma_prior_scale,
+                                                                realization_kwargs,
                                                                 time_delay_likelihood,
                                                                 fix_D_dt, window_size,
                                                                 exp_time, background_rms,
@@ -175,12 +167,12 @@ class AnalogModel(object):
 
         np.savetxt(filename, X=array_to_save, fmt='%.5f')
 
-    def run_once(self, realization, arrival_time_sigma, image_sigma, gamma_prior_scale,
+    def run_once(self, realization, arrival_time_sigma, image_sigma, realization_kwargs,
             time_delay_likelihood, fix_D_dt, window_size, exp_time, background_rms, shapelet_nmax,
                  **fit_smooth_kwargs):
 
         lens_system, data_class, return_kwargs_setup, kwargs_data_setup = \
-            self.model_setup(realization, arrival_time_sigma, image_sigma, gamma_prior_scale, window_size,
+            self.model_setup(realization, arrival_time_sigma, image_sigma, realization_kwargs, window_size,
                              exp_time, background_rms, shapelet_nmax)
 
         return_kwargs_fit, kwargs_data_fit = self.fit_smooth(lens_system, data_class, arrival_time_sigma,
@@ -212,7 +204,7 @@ class AnalogModel(object):
 
         return magnifications, arrival_times, dtgeo, dtgrav
 
-    def model_setup(self, realization, arrival_time_sigma, image_sigma, gamma_prior_scale,
+    def model_setup(self, realization, arrival_time_sigma, image_sigma, realization_kwargs,
                     window_size, exp_time, background_rms, shapelet_nmax):
 
         data_to_fit = LensedQuasar(self.lens.x, self.lens.y, self.lens.m)
@@ -285,14 +277,33 @@ class AnalogModel(object):
         if realization is not None:
 
             fname = self._pickle_directory + 'macromodel_'+str(self._class_idx)
+
             if shapelet_nmax is None:
+
                 print('fitting macromodel')
-                # we want to pickle the macromodel to re-use it when fitting substructure with shapelets
-                lens_system_quad = QuadLensSystem.shift_background_auto(data_to_fit, macromodel,
-                                                                    self.zsource, background_quasar, realization,
-                                                                    self.pyhalo._cosmology)
-                lens_system_quad.initialize(data_to_fit, include_substructure=True, verbose=True,
-                                            kwargs_optimizer={'particle_swarm': False})
+
+                lens_system_quad = QuadLensSystem(macromodel, self.zsource, background_quasar,
+                                                 None, self.pyhalo._cosmology)
+
+                realization_type = 'composite_powerlaw'
+                minimum_mass_global = realization_kwargs['log_mlow']
+
+                log_mass_cuts_list = []
+                aperture_sizes_list = []
+                refit_list = []
+                particle_swarm_list = []
+                re_optimize_list = []
+
+                input_args = {'lens_system': lens_system_quad, 'pyhalo_dynamic': self.pyhalo,
+                              'kwargs_rendering': realization_kwargs, 'global_log_mlow': minimum_mass_global,
+                              'log_mass_cuts': log_mass_cuts_list, 'aperture_sizes': aperture_sizes_list,
+                              'refit': refit_list, 'particle_swarm': particle_swarm_list,
+                              're_optimize': re_optimize_list, 'realization_type': realization_type}
+
+                solve_dynamic = DynamicOptimization(**input_args)
+                _ = solve_dynamic.optimize(data_to_fit, verbose=True)
+
+                realization = lens_system_quad.realization
 
                 file = open(fname, 'wb')
                 pickle.dump(lens_system_quad, file)
@@ -303,12 +314,12 @@ class AnalogModel(object):
                 lens_system_quad = pickle.load(file)
                 realization = lens_system_quad.realization
 
-
         else:
             lens_system_quad = QuadLensSystem(macromodel, self.zsource, background_quasar, None,
                                           pyhalo_cosmology=self.pyhalo._cosmology)
             lens_system_quad.initialize(data_to_fit, verbose=True,
                                         kwargs_optimizer={'particle_swarm': False})
+            realization = lens_system_quad.realization
 
 
         magnifications, arrival_times, dtgeo, dtgrav = self.compute_observables(lens_system_quad)
@@ -362,10 +373,9 @@ class AnalogModel(object):
         imaging_data = data_class.get_lensed_image()
 
         if realization is not None:
-            log_mlow = self._log_mlow
 
             halo_model_names, redshift_list_halos, kwargs_halos, _ = \
-                realization.lensing_quantities(log_mlow, log_mlow)
+                realization.lensing_quantities()
         else:
             halo_model_names, redshift_list_halos, kwargs_halos = [], [], []
 

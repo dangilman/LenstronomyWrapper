@@ -3,8 +3,7 @@ from lenstronomywrapper.Optimization.quad_optimization.optimization_base import 
 
 class BruteOptimization(OptimizationBase):
 
-    def __init__(self, lens_system, n_particles=None, simplex_n_iter=None, reoptimize=None,
-                 log_mass_sheet_front=None, log_mass_sheet_back=None):
+    def __init__(self, lens_system, n_particles=None, simplex_n_iter=None, reoptimize=None):
 
         """
         This class executes a lens model fit to the data using the Optimizer class in lenstronomy
@@ -32,9 +31,6 @@ class BruteOptimization(OptimizationBase):
         self.n_particles = n_particles
         self.n_iterations = simplex_n_iter
         self.reoptimize = reoptimize
-
-        self._log_mass_sheet_front = log_mass_sheet_front
-        self._log_mass_sheet_back = log_mass_sheet_back
 
         self.realization_initial = lens_system.realization
 
@@ -67,9 +63,7 @@ class BruteOptimization(OptimizationBase):
         """
 
         lens_model_list, redshift_list, kwargs_lens, numerical_alpha_class, convention_index = \
-            self.lens_system.get_lenstronomy_args(include_substructure, realization=realization,
-                                                  log_mass_sheet_front=self._log_mass_sheet_front,
-                                                  log_mass_sheet_back=self._log_mass_sheet_back)
+            self.lens_system.get_lenstronomy_args(include_substructure, realization=realization)
 
         run_kwargs = {'optimizer_routine': opt_routine, 'constrain_params': constrain_params,
                       'simplex_n_iterations': simplex_n_iter,

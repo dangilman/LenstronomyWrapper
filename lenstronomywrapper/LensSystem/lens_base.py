@@ -94,28 +94,18 @@ class LensBase(object):
                               observed_convention_index=convention_index, cosmo=self.astropy)
         return lensModel, kwargs
 
-    def get_lenstronomy_args(self, include_substructure=True, realization=None, log_mass_sheet_front=None,
-                             log_mass_sheet_back=None):
+    def get_lenstronomy_args(self, include_substructure=True, realization=None):
 
-        lens_model_names, macro_redshifts, macro_kwargs, convention_index = self.macromodel.get_lenstronomy_args()
+        lens_model_names, macro_redshifts, macro_kwargs, convention_index = \
+            self.macromodel.get_lenstronomy_args()
 
         if realization is None:
             realization = self.realization
 
         if realization is not None and include_substructure:
 
-            if hasattr(realization, '_logmlow'):
-                log_mlow = realization._logmlow
-            else:
-                log_mlow = None
-
-            if log_mass_sheet_front is None:
-                log_mass_sheet_front = log_mlow
-            if log_mass_sheet_back is None:
-                log_mass_sheet_back = log_mlow
-
             halo_names, halo_redshifts, kwargs_halos, kwargs_lenstronomy = \
-                realization.lensing_quantities(log_mass_sheet_front, log_mass_sheet_back)
+                realization.lensing_quantities()
         else:
             halo_names, halo_redshifts, kwargs_halos, kwargs_lenstronomy = [], [], [], None
         halo_redshifts = list(halo_redshifts)

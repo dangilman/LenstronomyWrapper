@@ -25,12 +25,10 @@ class HierarchicalOptimization(BruteOptimization):
 
         self.settings = settings_class
 
-        super(HierarchicalOptimization, self).__init__(lens_system,
-                                                       log_mass_sheet_front=settings_class.log_mass_cut_global,
-                                                       log_mass_sheet_back=settings_class.log_mass_cut_global)
+        super(HierarchicalOptimization, self).__init__(lens_system)
 
     def optimize(self, data_to_fit, opt_routine='fixed_powerlaw_shear', constrain_params=None, verbose=False,
-                 include_substructure=True):
+                 include_substructure=True, kwargs_optimizer={}):
 
         self._check_routine(opt_routine, constrain_params)
 

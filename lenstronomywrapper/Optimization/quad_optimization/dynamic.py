@@ -12,7 +12,7 @@ class DynamicOptimization(OptimizationBase):
     def __init__(self, lens_system, pyhalo_dynamic, kwargs_rendering, global_log_mlow,
                  log_mass_cuts, aperture_sizes, refit,
                  particle_swarm, re_optimize, realization_type,
-                 n_particles=35, simplex_n_iter=300):
+                 n_particles=35, simplex_n_iter=300, global_log_mhigh=None):
 
         """
         :param lens_system: an instance of QuadLensSystem (see documentation in LensSystem.quad_lens
@@ -104,8 +104,7 @@ class DynamicOptimization(OptimizationBase):
 
         self.pyhalo_dynamic = pyhalo_dynamic
 
-        self._brute = BruteOptimization(lens_system, n_particles, simplex_n_iter, log_mass_sheet_front=global_log_mlow,
-                                        log_mass_sheet_back=global_log_mlow)
+        self._brute = BruteOptimization(lens_system, n_particles, simplex_n_iter)
 
         super(DynamicOptimization, self).__init__(lens_system)
 
@@ -158,11 +157,6 @@ class DynamicOptimization(OptimizationBase):
                                                                    self.refit, self.ps, self.re_optimize):
 
             # iteratively add lower mass halos in progressively smaller apertures around the lensed light rays
-            if verbose:
-                print('log_mlow:', log_mlow)
-                print('log_mhigh:', log_mhigh)
-                print('aperture_size:', aperture_size)
-                print('fitting:', fit)
 
             assert log_mlow < log_mhigh
 
@@ -176,7 +170,10 @@ class DynamicOptimization(OptimizationBase):
                        lens_plane_redshifts, delta_zs, verbose)
 
             if verbose:
-                print('fitting with log(mlow) = ' + str(self._global_log_mlow) + '.... ')
+                print('log_mlow:', log_mlow)
+                print('log_mhigh:', log_mhigh)
+                print('aperture_size:', aperture_size)
+                print('fitting:', fit)
                 print('n foreground halos: ',
                       realization_global.number_of_halos_before_redshift(self.lens_system.zlens))
                 print('n subhalos: ',

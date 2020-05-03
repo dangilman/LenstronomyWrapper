@@ -7,7 +7,6 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
         fit_smooth_kwargs=None, window_scale=10):
 
     position_sigma = [0.005]*4
-    gamma_prior_scale = None
 
     arrival_time_sigma = [abs(delta_ti / max(abs(ti), 0.1)) for delta_ti, ti in
                           zip(lens_class.delta_time_delay, lens_class.relative_arrival_times)]
@@ -16,12 +15,15 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
 
     mdef = 'TNFW'
     realization_kwargs = {'mdef_main': mdef, 'mdef_los': mdef, 'mass_func_type': 'POWER_LAW',
-                          'log_mlow': log_mlow, 'log_mhigh': 10., 'power_law_index': -1.9,
+                          'log_mlow': log_mlow, 'log_mhigh': 9., 'power_law_index': -1.9,
                           'parent_m200': 10 ** 13, 'r_tidal': '0.5Rs',
                           'cone_opening_angle': 10 * window_size,
+                          'log_mass_sheet_min': log_mlow,
+                          'sigma_sub': 0.02,
+                          'log_mass_sheet_max': 9.,
                           'opening_angle_factor': window_scale * window_size,
                           'subtract_exact_mass_sheets': subtract_exact_mass_sheets,
-                          'subtract_subhalo_mass_sheet': True, 'subhalo_mass_sheet_scale': 1}
+                          'subtract_subhalo_mass_sheet': True}
 
     kwargs_cosmo = {'cosmo_kwargs': {'H0': 73.3}}
 
@@ -77,7 +79,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
 
         print('SAMPLING LOS plus subs...... ')
         #fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 250, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 300}
-        #fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 2, 'walkerRatio': 4, 'n_burn': 0}
+        fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 2, 'walkerRatio': 4, 'n_burn': 0}
         N0 = Nstart - 100
         lens_analog_model_class = AnalogModel(lens_class, kwargs_cosmo,
                                     pickle_directory=save_name_path_base + '/realizations'+name_append+'/',
@@ -89,19 +91,8 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
             file = open(lens_system_file_name, 'rb')
             system = dill.load(file)
             realization = system.realization
-            realization._has_been_shifted = True
-
         else:
-            SHMF_norm = 0.02
-            LOS_norm = 1.
-            realization_kwargs['sigma_sub'] = SHMF_norm
-            realization_kwargs['LOS_normalization'] = LOS_norm
-            realization = lens_analog_model_class.pyhalo.render('composite_powerlaw',
-                                                                        realization_kwargs)[0]
-            realization.log_mlow = log_mlow
-
-        #realization = RealiztionFromFile(realization_file_name)
-        #realization.log_mlow = log_mlow
+            realization = True
 
         shapelet_nmax = None
 
@@ -126,6 +117,6 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
     print('filename: ', save_name_path)
     print('arrival time uncertainties: ', arrival_time_sigma)
     run_real(lens_analog_model_class, save_name_path, N, N0, realization,
-             arrival_time_sigma, position_sigma, gamma_prior_scale, fix_Ddt, window_size, exp_time, background_rms,
+             arrival_time_sigma, position_sigma, realization_kwargs, fix_Ddt, window_size, exp_time, background_rms,
              time_delay_like=time_delay_likelihood, fit_smooth_kwargs=fit_smooth_kwargs, shapelet_nmax=shapelet_nmax)
 
