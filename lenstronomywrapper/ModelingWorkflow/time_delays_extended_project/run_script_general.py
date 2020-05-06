@@ -17,7 +17,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
     realization_kwargs = {'mdef_main': mdef, 'mdef_los': mdef, 'mass_func_type': 'POWER_LAW',
                           'log_mlow': log_mlow, 'log_mhigh': 9., 'power_law_index': -1.9,
                           'parent_m200': 10 ** 13, 'r_tidal': '0.5Rs',
-                          'cone_opening_angle': 10 * window_size,
+                          'cone_opening_angle': window_scale * window_size,
                           'log_mass_sheet_min': log_mlow,
                           'sigma_sub': 0.02,
                           'log_mass_sheet_max': 9.,

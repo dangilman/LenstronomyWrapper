@@ -12,7 +12,7 @@ import time
 import sys
 
 #n_lens = 1.
-log_mlow = 8.
+log_mlow = 6.
 #time.sleep(180)
 
 def index_read(idx):
@@ -155,7 +155,9 @@ for n_lens in range(n_lens_start, n_lens_end):
     fit_smooth_kwargs = {'n_particles': 150, 'n_iterations': 350, 'n_run': 150,
                          'walkerRatio': 4, 'n_burn': 600}
 
-    name_append = '_mlow6'
+    name_append = '_mlow6_largevolume'
+    # window_scale = 10
+    window_scale = 20
     run_lens(Nstart, lens_class, lens_name, log_mlow, half_window_size, exp_time,
              background_rms=background_rms, subtract_exact_mass_sheets=False, name_append=name_append,
-             fix_Ddt=True, fit_smooth_kwargs=fit_smooth_kwargs)
+             fix_Ddt=True, fit_smooth_kwargs=fit_smooth_kwargs, window_scale=window_scale)
