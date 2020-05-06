@@ -12,7 +12,7 @@ import time
 import sys
 
 #n_lens = 1.
-log_mlow = 6.
+log_mlow = 8.
 #time.sleep(180)
 
 def index_read(idx):

@@ -86,6 +86,7 @@ class AnalogModel(object):
         observed_lens, modeled_lens, normalized_residuals, residual_convergence = [], [], [], []
         residual_mean_kappa = []
         time_delay_residuals = []
+        reconstructed_source = []
 
         if os.path.exists(save_name_path + 'residuals_' + str(N_start) + '.txt'):
             print('output file exists, quitting.')
@@ -114,6 +115,7 @@ class AnalogModel(object):
             residual_convergence.append(kw_fit['residual_convergence'])
             residual_mean_kappa.append(kw_fit['mean_kappa'])
             time_delay_residuals.append(kw_fit['time_delay_residuals'])
+            reconstructed_source.append(kw_fit['reconstructed_source'])
 
             if n == 0:
                 baseline = tbaseline
@@ -140,8 +142,7 @@ class AnalogModel(object):
                   'time_delay_sigma_', 'kappares_', 'chi2_imaging_']
 
         arrays = [baseline, flux_anomalies, time_anomalies, time_delays_model,
-                  macromodel_parameters, tsigma, np.array(residual_mean_kappa),chi2_imaging
-                  ]
+                  macromodel_parameters, tsigma, np.array(residual_mean_kappa), chi2_imaging]
 
         for fname, arr in zip(fnames, arrays):
             write_data_to_file(save_name_path + fname + str(N_start) + '.txt', arr)
@@ -153,6 +154,8 @@ class AnalogModel(object):
             np.savetxt(save_name_path + 'residuals_' + str(N_start + i) + '.txt', X=normalized_residuals[i])
             np.savetxt(save_name_path + 'kappa_' + str(N_start + i) + '.txt', X=residual_convergence[i])
             np.savetxt(save_name_path + 'tdelayres_' + str(N_start + i) + '.txt', X=time_delay_residuals[i])
+            np.savetxt(save_name_path + 'source_' + str(N_start + i) + '.txt', X=reconstructed_source[i])
+
 
         return [flux_anomalies, baseline, time_anomalies]
 
@@ -443,6 +446,19 @@ class AnalogModel(object):
         modeled_lens = modelPlot._select_band(0)._model
         normalized_residuals = modelPlot._select_band(0)._norm_residuals
 
+        reconstructed_source, coord_transform = \
+            modelPlot._select_band(0).source(numPix=200, deltaPix=0.025)
+
+        import matplotlib.pyplot as plt
+
+        reconstructed_source_log = np.log10(reconstructed_source)
+        vmin, vmax = max(np.min(reconstructed_source_log), -5), min(np.max(reconstructed_source_log), 10)
+        reconstructed_source_log[np.where(reconstructed_source_log < vmin)] = vmin
+        reconstructed_source_log[np.where(reconstructed_source_log > vmax)] = vmax
+        plt.imshow(reconstructed_source_log, origin='lower', vmin=vmin,
+                   vmax=vmax)
+        plt.show()
+
         residual_maps = ResidualLensMaps(lensModel_full, lensModel, kwargs_lens_full, kwargs_lens)
         kappa = residual_maps.convergence(window_size, 200)
         #
@@ -485,6 +501,7 @@ class AnalogModel(object):
                          'chi2_imaging': chi2_imaging,
                          'kwargs_lens_macro_fit': macro_params, 'mean_kappa': np.mean(kappa),
                          'residual_convergence': kappa, 'time_delay_residuals': tdelay_res_map,
+                         'reconstructed_source': reconstructed_source,
                          'observed_lens': observed_lens, 'modeled_lens': modeled_lens,
                          'normalized_residuals': normalized_residuals,
                          'source_x': lens_system_simple.source_centroid_x,
