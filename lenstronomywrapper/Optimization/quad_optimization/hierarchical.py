@@ -130,11 +130,18 @@ class HierarchicalOptimization(BruteOptimization):
 
                 N_foreground_halos_last = N_foreground_halos
 
-                self.lens_system.update_kwargs_macro(kwargs_lens_final)
                 self.lens_system.clear_static_lensmodel()
+                self.lens_system.update_realization(realization_filtered)
+                self.lens_system.set_lensmodel_static(lens_model_full, kwargs_lens_final)
+                self.lens_system.update_kwargs_macro(kwargs_lens_final)
 
             else:
-
+                self.lens_system.clear_static_lensmodel()
+                self.lens_system.update_realization(realization_filtered)
+                lens_model_full, kwargs_lens_final = self.lens_system.get_lensmodel(
+                    substructure_realization=realization_filtered)
+                self.lens_system.set_lensmodel_static(lens_model_full, kwargs_lens_final)
+                self.lens_system.update_kwargs_macro(kwargs_lens_final)
                 N_foreground_halos_last = N_foreground_halos
 
         return foreground_rays, lens_model_raytracing, lens_model_full, realization_filtered, [source_x, source_y]
@@ -234,12 +241,21 @@ class HierarchicalOptimization(BruteOptimization):
                               re_optimize=re_optimize_iteration[run], tol_mag=None, realization=realization_filtered)
 
                 reoptimized_realizations.append(realization_filtered)
+                self.lens_system.clear_static_lensmodel()
+                self.lens_system.update_realization(realization_filtered)
+                self.lens_system.set_lensmodel_static(lens_model_full, kwargs_lens_final)
                 self.lens_system.update_kwargs_macro(kwargs_lens_final)
 
                 N_background_halos_last = N_background_halos
 
             else:
                 reoptimized_realizations.append(realization_filtered)
+                self.lens_system.clear_static_lensmodel()
+                self.lens_system.update_realization(realization_filtered)
+                lens_model_full, kwargs_lens_final = self.lens_system.get_lensmodel(
+                    substructure_realization=realization_filtered)
+                self.lens_system.set_lensmodel_static(lens_model_full, kwargs_lens_final)
+                self.lens_system.update_kwargs_macro(kwargs_lens_final)
 
         info_array = (reoptimized_realizations, ray_x_interp, ray_y_interp)
 

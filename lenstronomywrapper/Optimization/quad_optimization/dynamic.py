@@ -164,7 +164,9 @@ class DynamicOptimization(OptimizationBase):
             assert log_mlow < log_mhigh
 
             x_interp_list, y_interp_list = self._get_interp(data_to_fit.x, data_to_fit.y,
-                                                                          lens_plane_redshifts)
+                                                                          lens_plane_redshifts,
+                                                            terminate_at_source=False)
+
             lens_centroid_x, lens_centroid_y = self.lens_system.macromodel.centroid
 
             self.kwargs_rendering['log_mlow'], self.kwargs_rendering['log_mhigh'] = log_mlow, log_mhigh
@@ -226,7 +228,7 @@ class DynamicOptimization(OptimizationBase):
         macro_redshifts = np.unique(macro_redshifts)
 
         x_interp_list, y_interp_list = self._get_interp([lens_centroid_x], [lens_centroid_y],
-                                                        macro_redshifts)
+                                                        macro_redshifts, terminate_at_source=True)
 
         kwargs_init = deepcopy(self.kwargs_rendering)
 
@@ -252,7 +254,7 @@ class DynamicOptimization(OptimizationBase):
 
         return realization_global, self._global_log_mlow, lens_plane_redshifts, delta_zs
 
-    def _get_interp(self, x_coords, y_coords, lens_plane_redshifts):
+    def _get_interp(self, x_coords, y_coords, lens_plane_redshifts, terminate_at_source):
 
         lens_model, kwargs = self.lens_system.get_lensmodel()
 
@@ -279,7 +281,8 @@ class DynamicOptimization(OptimizationBase):
 
         source_x, source_y = self.lens_system.source_centroid_x, self.lens_system.source_centroid_y
         x_interp, y_interp = interpolate_ray_paths(x_coords, y_coords,
-                              lensmodel_new, kwargs, self.pyhalo_dynamic.zsource, terminate_at_source=True,
+                              lensmodel_new, kwargs, self.pyhalo_dynamic.zsource,
+                                                   terminate_at_source=terminate_at_source,
                                                    source_x=source_x, source_y=source_y)
 
         return x_interp, y_interp
