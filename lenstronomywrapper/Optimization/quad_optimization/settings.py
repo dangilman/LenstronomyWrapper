@@ -129,7 +129,7 @@ class HierarchicalSettingsDefault(object):
         # determines whether to use PSO for re-optimizations
         particle_swarm_reopt = [True, False, False]
         # wheter to actually re-fit the lens model
-        optimize_iteration = [True, True, False]
+        optimize_iteration = [True, True, True]
         # whether to re-optimize (aka start from a model very close to input model)
         re_optimize_iteration = [True, True, True]
 

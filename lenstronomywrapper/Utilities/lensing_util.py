@@ -58,10 +58,12 @@ def interpolate_ray_paths(x_image, y_image, lens_model, kwargs_lens, zsource,
     :return: Instances of interp1d (scipy) that return the angular coordinate of a ray given a
     comoving distance
     """
+
     ray_angles_x = []
     ray_angles_y = []
 
     for (xi, yi) in zip(x_image, y_image):
+
         x, y, redshifts, tz = lens_model.lens_model.ray_shooting_partial_steps(0., 0., xi, yi, 0, zsource,
                                                                                kwargs_lens)
 

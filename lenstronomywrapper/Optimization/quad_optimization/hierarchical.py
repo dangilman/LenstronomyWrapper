@@ -7,6 +7,8 @@ class HierarchicalOptimization(BruteOptimization):
 
     def __init__(self, lens_system, n_particles=None, simplex_n_iter=None, settings_class='default',
                  settings_kwargs={}):
+        
+        raise Exception('this class is currently being developed and is not ready for use.')
 
         if settings_class == 'default':
             settings_class = HierarchicalSettingsDefault()
@@ -52,7 +54,7 @@ class HierarchicalOptimization(BruteOptimization):
                          'realization_initial': self.realization_initial,
                          'realization_final': realization_final}
 
-        return self._return_results(source, kwargs_lens_final, lens_model_full, return_kwargs)
+        return self._return_results(source, kwargs_lens_final, lens_model_raytracing, return_kwargs)
 
     def _fit_foreground(self, data_to_fit, realization_foreground, opt_routine, constrain_params=None, verbose=False):
 
@@ -245,17 +247,20 @@ class HierarchicalOptimization(BruteOptimization):
                 self.lens_system.update_realization(realization_filtered)
                 self.lens_system.set_lensmodel_static(lens_model_full, kwargs_lens_final)
                 self.lens_system.update_kwargs_macro(kwargs_lens_final)
+                self.lens_system.update_source_centroid(source_x, source_y)
 
                 N_background_halos_last = N_background_halos
 
             else:
+
                 reoptimized_realizations.append(realization_filtered)
                 self.lens_system.clear_static_lensmodel()
                 self.lens_system.update_realization(realization_filtered)
                 lens_model_full, kwargs_lens_final = self.lens_system.get_lensmodel(
                     substructure_realization=realization_filtered)
-                self.lens_system.set_lensmodel_static(lens_model_full, kwargs_lens_final)
+                self.lens_system.set_lensmodel_static(lens_model_raytracing, kwargs_lens_final)
                 self.lens_system.update_kwargs_macro(kwargs_lens_final)
+                self.lens_system.update_source_centroid(source_x, source_y)
 
         info_array = (reoptimized_realizations, ray_x_interp, ray_y_interp)
 

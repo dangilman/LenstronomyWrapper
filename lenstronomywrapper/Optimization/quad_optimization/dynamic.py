@@ -134,7 +134,7 @@ class DynamicOptimization(OptimizationBase):
                                     include_substructure=False, kwargs_optimizer=kwargs_optimizer)
 
         # set up initial realization with large halos generated everywhere
-        realization_global, log_mhigh, lens_plane_redshifts, delta_zs = self._initialize(verbose)
+        realization_global, log_mhigh = self._initialize(verbose)
 
         if verbose:
             print('fitting with log(mlow) = ' + str(self._global_log_mlow) + '.... ')
@@ -155,6 +155,7 @@ class DynamicOptimization(OptimizationBase):
         self.lens_system.set_lensmodel_static(lens_model_full, kwargs_lens_final)
         self.lens_system.update_kwargs_macro(kwargs_lens_final)
 
+        lens_plane_redshifts, _ = self.pyhalo_dynamic.lens_plane_redshifts(self.kwargs_rendering)
         # Iterate through lower masses and smaller progressively smaller rendering apertures
         for (log_mlow, aperture_size, fit, particle_swarm, re_optimize) in zip(self.log_mass_cuts, self.aperture_sizes,
                                                                    self.refit, self.ps, self.re_optimize):
@@ -172,7 +173,7 @@ class DynamicOptimization(OptimizationBase):
             self.kwargs_rendering['log_mlow'], self.kwargs_rendering['log_mhigh'] = log_mlow, log_mhigh
             realization_global = self.pyhalo_dynamic.render_dynamic(self.realization_type, self.kwargs_rendering,
                        realization_global, lens_centroid_x, lens_centroid_y, x_interp_list, y_interp_list, aperture_size,
-                       lens_plane_redshifts, delta_zs, verbose, global_render=False)
+                       verbose, global_render=False)
 
             if verbose:
                 print('log_mlow:', log_mlow)
@@ -242,17 +243,13 @@ class DynamicOptimization(OptimizationBase):
 
         aperture_radius = 0.5 * kwargs_init['cone_opening_angle']
 
-        redshifts, delta_zs = self.pyhalo_dynamic.lens_plane_redshifts(self.kwargs_rendering)
-        lens_plane_redshifts = list(np.round(redshifts, 2))
-
         realization_global = self.pyhalo_dynamic.render_dynamic(self.realization_type, kwargs_init,
                                                                 None, lens_centroid_x, lens_centroid_y,
                                                                 x_interp_list, y_interp_list, aperture_radius,
-                                                                lens_plane_redshifts, delta_zs,
                                                                 verbose, include_mass_sheet_correction=True,
                                                                 global_render=True)
 
-        return realization_global, self._global_log_mlow, lens_plane_redshifts, delta_zs
+        return realization_global, self._global_log_mlow
 
     def _get_interp(self, x_coords, y_coords, lens_plane_redshifts, terminate_at_source):
 
