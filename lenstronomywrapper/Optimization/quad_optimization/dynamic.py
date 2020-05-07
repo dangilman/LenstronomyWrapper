@@ -170,7 +170,7 @@ class DynamicOptimization(OptimizationBase):
             self.kwargs_rendering['log_mlow'], self.kwargs_rendering['log_mhigh'] = log_mlow, log_mhigh
             realization_global = self.pyhalo_dynamic.render_dynamic(self.realization_type, self.kwargs_rendering,
                        realization_global, lens_centroid_x, lens_centroid_y, x_interp_list, y_interp_list, aperture_size,
-                       lens_plane_redshifts, delta_zs, verbose)
+                       lens_plane_redshifts, delta_zs, verbose, global_render=False)
 
             if verbose:
                 print('log_mlow:', log_mlow)
@@ -216,12 +216,17 @@ class DynamicOptimization(OptimizationBase):
 
         if verbose: print('initializing with log(mlow) = ' + str(self._global_log_mlow) + '.... ')
 
-        redshifts, delta_zs = self.pyhalo_dynamic.lens_plane_redshifts(self.kwargs_rendering)
-        lens_plane_redshifts = list(np.round(redshifts, 2))
+        macro_lens_model, _ = self.lens_system.get_lensmodel(include_substructure=False)
 
         lens_centroid_x, lens_centroid_y = self.lens_system.macromodel.centroid
+
+        lens_model_macro, macro_model_z, _ = self.lenstronomy_args_from_lensmodel(macro_lens_model)
+
+        macro_redshifts = [0.] + self.lens_system.macromodel.redshift_list
+        macro_redshifts = np.unique(macro_redshifts)
+
         x_interp_list, y_interp_list = self._get_interp([lens_centroid_x], [lens_centroid_y],
-                                                        lens_plane_redshifts)
+                                                        macro_redshifts)
 
         kwargs_init = deepcopy(self.kwargs_rendering)
 
@@ -235,11 +240,15 @@ class DynamicOptimization(OptimizationBase):
 
         aperture_radius = 0.5 * kwargs_init['cone_opening_angle']
 
+        redshifts, delta_zs = self.pyhalo_dynamic.lens_plane_redshifts(self.kwargs_rendering)
+        lens_plane_redshifts = list(np.round(redshifts, 2))
+
         realization_global = self.pyhalo_dynamic.render_dynamic(self.realization_type, kwargs_init,
                                                                 None, lens_centroid_x, lens_centroid_y,
                                                                 x_interp_list, y_interp_list, aperture_radius,
                                                                 lens_plane_redshifts, delta_zs,
-                                                                verbose, include_mass_sheet_correction=True)
+                                                                verbose, include_mass_sheet_correction=True,
+                                                                global_render=True)
 
         return realization_global, self._global_log_mlow, lens_plane_redshifts, delta_zs
 
@@ -257,7 +266,7 @@ class DynamicOptimization(OptimizationBase):
                 self._kwargs_empty.append({'kappa_ext': 0.})
 
         lens_model_list, redshift_list, convention_index = \
-            self._lenstronomy_args_from_lensmodel(lens_model)
+            self.lenstronomy_args_from_lensmodel(lens_model)
 
         lens_model_list += self._lens_model_list_empty
         redshift_list += self._zlist_empty
@@ -276,7 +285,7 @@ class DynamicOptimization(OptimizationBase):
         return x_interp, y_interp
 
     @staticmethod
-    def _lenstronomy_args_from_lensmodel(lensmodel):
+    def lenstronomy_args_from_lensmodel(lensmodel):
 
         lens_model_list = lensmodel.lens_model_list
         redshift_list = lensmodel.redshift_list
