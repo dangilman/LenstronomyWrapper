@@ -7,7 +7,7 @@ class HierarchicalOptimization(BruteOptimization):
 
     def __init__(self, lens_system, n_particles=None, simplex_n_iter=None, settings_class='default',
                  settings_kwargs={}):
-        
+
         raise Exception('this class is currently being developed and is not ready for use.')
 
         if settings_class == 'default':
