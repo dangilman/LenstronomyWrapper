@@ -154,7 +154,7 @@ class QuadLensSystem(LensBase):
 
         return self.background_quasar.magnification(x, y, lens_model, kwargs_lensmodel, normed)
 
-    def plot_images(self, x, y, lens_model=None, kwargs_lensmodel=None):
+    def plot_images(self, x, y, lens_model=None, kwargs_lensmodel=None, source_fwhm_pc=None):
 
         if lens_model is None or kwargs_lensmodel is None:
             if self._static_lensmodel:
@@ -162,7 +162,19 @@ class QuadLensSystem(LensBase):
             else:
                 raise Exception('must either specify the LensModel class instance and keywords,'
                                 'or have a precomputed static lens model instance saved in this class.')
-        return self.background_quasar.plot_images(x, y, lens_model, kwargs_lensmodel)
 
+        if source_fwhm_pc is None:
 
+            return self.background_quasar.plot_images(x, y, lens_model, kwargs_lensmodel)
+
+        else:
+
+            source_x, source_y = self.source_centroid_x, self.source_centroid_y
+            kwargs_new = {'center_x': source_x, 'center_y': source_y, 'source_fwhm_pc': source_fwhm_pc}
+            quasar = Quasar(kwargs_new)
+            pc_per_arcsec_zsource = 1000 * self.pyhalo_cosmology.astropy.\
+                arcsec_per_kpc_proper(self.zsource).value ** -1
+            quasar.setup(pc_per_arcsec_zsource)
+
+            return quasar.plot_images(x, y, lens_model, kwargs_lensmodel)
 
