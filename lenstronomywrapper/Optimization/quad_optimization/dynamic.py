@@ -5,14 +5,12 @@ from lenstronomywrapper.Utilities.lensing_util import interpolate_ray_paths
 import numpy as np
 from copy import deepcopy
 
-from lenstronomywrapper.LensSystem.quad_lens import QuadLensSystem
-
 class DynamicOptimization(OptimizationBase):
 
     def __init__(self, lens_system, pyhalo_dynamic, kwargs_rendering, global_log_mlow,
                  log_mass_cuts, aperture_sizes, refit,
                  particle_swarm, re_optimize, realization_type,
-                 n_particles=35, simplex_n_iter=300, initial_pso=True):
+                 n_particles=30, simplex_n_iter=300, initial_pso=True):
 
         """
         :param lens_system: an instance of QuadLensSystem (see documentation in LensSystem.quad_lens
@@ -131,7 +129,8 @@ class DynamicOptimization(OptimizationBase):
 
         kwargs_optimizer = {'particle_swarm': self.initial_pso}
         self.lens_system.initialize(data_to_fit, opt_routine, constrain_params,
-                                    include_substructure=False, kwargs_optimizer=kwargs_optimizer)
+                                    include_substructure=False, kwargs_optimizer=kwargs_optimizer,
+                                    verbose=verbose)
 
         # set up initial realization with large halos generated everywhere
         realization_global, log_mhigh = self._initialize(verbose)

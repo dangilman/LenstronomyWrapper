@@ -1,5 +1,6 @@
 from lenstronomywrapper.Optimization.quad_optimization.brute import BruteOptimization
 import numpy as np
+from lenstronomy.LensModel.Optimizer.optimizer import Optimizer
 from lenstronomywrapper.Optimization.quad_optimization.settings import *
 from lenstronomywrapper.Utilities.lensing_util import interpolate_ray_paths_system
 
@@ -7,8 +8,6 @@ class HierarchicalOptimization(BruteOptimization):
 
     def __init__(self, lens_system, n_particles=None, simplex_n_iter=None, settings_class='default',
                  settings_kwargs={}):
-
-        raise Exception('this class is currently being developed and is not ready for use.')
 
         if settings_class == 'default':
             settings_class = HierarchicalSettingsDefault()
@@ -125,6 +124,13 @@ class HierarchicalOptimization(BruteOptimization):
             if do_optimization:
 
                 optimizer_kwargs = {'re_optimize_scale': scale[run]}
+
+                opt = Optimizer(data_to_fit.x, data_to_fit.y, redshift_list, lens_model_list, kwargs_lens,
+                                numerical_alpha_class,
+                                magnification_target=data_to_fit.m, **run_kwargs)
+
+                kwargs_lens_final, [source_x, source_y], [x_image, y_image] = opt.optimize(nparticles)
+
                 kwargs_lens_final, lens_model_raytracing, lens_model_full, foreground_rays, images, [source_x, source_y] = \
                     self.fit(data_to_fit, self._n_particles, opt_routine, constrain_params, self._n_iterations,
                               optimizer_kwargs, verbose, particle_swarm=particle_swarm_reopt[run],

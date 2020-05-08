@@ -37,13 +37,13 @@ class BruteOptimization(OptimizationBase):
         super(BruteOptimization, self).__init__(lens_system)
 
     def optimize(self, data_to_fit, opt_routine='fixed_powerlaw_shear', constrain_params=None, verbose=False,
-                 include_substructure=True, kwargs_optimizer={}):
+                 include_substructure=True, kwargs_optimizer={}, tol_centroid=0.1):
 
         self._check_routine(opt_routine, constrain_params)
 
         kwargs_lens_final, _, lens_model_full, _, images, source = self.fit(data_to_fit, self.n_particles, opt_routine,
                                   constrain_params, self.n_iterations, {}, verbose,
-                                      re_optimize=self.reoptimize, tol_mag=None,
+                                      re_optimize=self.reoptimize, tol_mag=None, tol_centroid=tol_centroid,
                                           include_substructure=include_substructure,
                                         kwargs_optimizer=kwargs_optimizer, realization=self.realization_initial)
 
@@ -55,7 +55,7 @@ class BruteOptimization(OptimizationBase):
 
     def fit(self, data_to_fit, nparticles, opt_routine, constrain_params, simplex_n_iter, optimizer_kwargs, verbose,
                             re_optimize=False, tol_mag=None, include_substructure=True, particle_swarm=None,
-                                            kwargs_optimizer={}, realization=None):
+                                            kwargs_optimizer={}, realization=None, centroid_0=[0, 0], tol_centroid=0.1):
 
         """
         run_kwargs: {'optimizer_routine', 'constrain_params', 'simplex_n_iter'}
@@ -67,9 +67,10 @@ class BruteOptimization(OptimizationBase):
 
         run_kwargs = {'optimizer_routine': opt_routine, 'constrain_params': constrain_params,
                       'simplex_n_iterations': simplex_n_iter,
+                      'centroid_0': centroid_0, 'tol_centroid': tol_centroid,
                       're_optimize': re_optimize, 'tol_mag': tol_mag, 'multiplane': True,
                       'z_main': self.lens_system.zlens, 'z_source': self.lens_system.zsource,
-                      'astropy_instance': self.lens_system.astropy, 'verbose': verbose, 'pso_convergence_mean': 40000,
+                      'astropy_instance': self.lens_system.astropy, 'verbose': verbose, 'pso_convergence_mean': 50000,
                       'observed_convention_index': convention_index, 'optimizer_kwargs': optimizer_kwargs,
                       }
 

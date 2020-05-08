@@ -1,4 +1,16 @@
 import numpy as np
+from lenstronomywrapper.LensData.lensed_quasar import LensedQuasar
+
+def load_data_from_file(fname):
+
+    nimg, _, _, x1, y1, f1, t1, x2, y2, f2, t2, x3, y3, \
+    f3, t3, x4, y4, f4, t4 = np.loadtxt(fname, unpack=True)
+
+    x_image = np.array([x1, x2, x3, x4])
+    y_image = np.array([y1, y2, y3, y4])
+    fluxes = np.array([f1, f2, f3, f4])
+
+    return LensedQuasar(x_image, y_image, fluxes)
 
 def write_data_to_file(filename, data):
 
