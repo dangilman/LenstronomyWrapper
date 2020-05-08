@@ -1,6 +1,4 @@
 from lenstronomywrapper.Optimization.quad_optimization.brute import BruteOptimization
-import numpy as np
-from lenstronomy.LensModel.Optimizer.optimizer import Optimizer
 from lenstronomywrapper.Optimization.quad_optimization.settings import *
 from lenstronomywrapper.Utilities.lensing_util import interpolate_ray_paths_system
 
@@ -14,22 +12,19 @@ class HierarchicalOptimization(BruteOptimization):
         elif settings_class == 'delta_function':
             settings_class = HierarchicalSettingsDeltaFunction(**settings_kwargs)
         else:
+
             settings_class = settings_class()
 
         if n_particles is None:
             n_particles = settings_class.n_particles
         if simplex_n_iter is None:
-            n_iterations = settings_class.n_iterations
-
-        self._n_particles = n_particles
-        self._n_iterations = n_iterations
+            simplex_n_iter = settings_class.n_iterations
 
         self.settings = settings_class
 
-        super(HierarchicalOptimization, self).__init__(lens_system)
+        super(HierarchicalOptimization, self).__init__(lens_system, n_particles, simplex_n_iter)
 
-    def optimize(self, data_to_fit, opt_routine='fixed_powerlaw_shear', constrain_params=None, verbose=False,
-                 include_substructure=True, kwargs_optimizer={}):
+    def optimize(self, data_to_fit, opt_routine='fixed_powerlaw_shear', constrain_params=None, verbose=False):
 
         self._check_routine(opt_routine, constrain_params)
 
@@ -40,20 +35,20 @@ class HierarchicalOptimization(BruteOptimization):
         else:
             foreground_realization, background_realization = None, None
 
-        foreground_rays, lens_model_raytracing, lens_model_full, foreground_realization_filtered, [source_x, source_y] = \
+        lens_model_full, kwargs_lens_final, foreground_realization_filtered, [source_x, source_y] = \
             self._fit_foreground(data_to_fit, foreground_realization, opt_routine, constrain_params, verbose)
 
-        kwargs_lens_final, lens_model_raytracing, lens_model_full, info_array, source, realization_final = \
-            self._fit_background(data_to_fit, foreground_realization_filtered, background_realization, foreground_rays,
-                                 opt_routine, lens_model_raytracing, lens_model_full, source_x, source_y,
+        lens_model_full, kwargs_lens_final, realization_filtered, \
+        [source_x, source_y], reoptimized_realizations = \
+            self._fit_background(data_to_fit, foreground_realization_filtered, background_realization,
+                                 opt_routine, lens_model_full, source_x, source_y,
                                  constrain_params, verbose)
 
-        return_kwargs = {'info_array': info_array,
-                         'lens_model_raytracing': lens_model_raytracing,
-                         'realization_initial': self.realization_initial,
-                         'realization_final': realization_final}
-
-        return self._return_results(source, kwargs_lens_final, lens_model_raytracing, return_kwargs)
+        kwargs_return = {'reoptimized_realizations': reoptimized_realizations}
+        return self.return_results(
+            [source_x, source_y], kwargs_lens_final, lens_model_full,
+            realization_filtered, kwargs_return
+        )
 
     def _fit_foreground(self, data_to_fit, realization_foreground, opt_routine, constrain_params=None, verbose=False):
 
@@ -61,6 +56,9 @@ class HierarchicalOptimization(BruteOptimization):
         re_optimize_iteration = self.settings.foreground_settings
 
         N_foreground_halos_last = 0
+
+        lens_model_full, kwargs_lens_final = self.lens_system.get_lensmodel(include_substructure=False)
+        source_x, source_y = None, None
 
         for run in range(0, self.settings.n_iterations_foreground):
 
@@ -100,16 +98,20 @@ class HierarchicalOptimization(BruteOptimization):
 
             if realization_foreground is not None:
                 N_foreground_halos = realization_filtered.number_of_halos_before_redshift(self.lens_system.zlens)
+                N_subhalos = realization_filtered.number_of_halos_at_redshift(self.lens_system.zlens)
             else:
                 N_foreground_halos = 0
+                N_subhalos = 0
 
             self.lens_system.update_realization(realization_filtered)
+            self.lens_system.clear_static_lensmodel()
 
             if verbose:
                 print('aperture size: ', window_sizes[run])
                 print('minimum mass in aperture: ', aperture_masses[run])
                 print('minimum global mass: ', globalmin_masses[run])
                 print('N foreground halos: ', N_foreground_halos)
+                print('N subhalos: ', N_subhalos)
 
             do_optimization = True
 
@@ -123,18 +125,10 @@ class HierarchicalOptimization(BruteOptimization):
 
             if do_optimization:
 
-                optimizer_kwargs = {'re_optimize_scale': scale[run]}
-
-                opt = Optimizer(data_to_fit.x, data_to_fit.y, redshift_list, lens_model_list, kwargs_lens,
-                                numerical_alpha_class,
-                                magnification_target=data_to_fit.m, **run_kwargs)
-
-                kwargs_lens_final, [source_x, source_y], [x_image, y_image] = opt.optimize(nparticles)
-
-                kwargs_lens_final, lens_model_raytracing, lens_model_full, foreground_rays, images, [source_x, source_y] = \
-                    self.fit(data_to_fit, self._n_particles, opt_routine, constrain_params, self._n_iterations,
-                              optimizer_kwargs, verbose, particle_swarm=particle_swarm_reopt[run],
-                              re_optimize=re_optimize_iteration[run], tol_mag=None, realization=realization_filtered)
+                kwargs_lens_final, lens_model_full, [source_x, source_y] = self.fit(data_to_fit, opt_routine, constrain_params,
+                   verbose=verbose, include_substructure=True, realization=realization_filtered,
+                   opt_kwargs={'re_optimize_scale': scale[run]}, re_optimize=re_optimize_iteration[run],
+                 particle_swarm=particle_swarm_reopt[run])
 
                 N_foreground_halos_last = N_foreground_halos
 
@@ -144,6 +138,7 @@ class HierarchicalOptimization(BruteOptimization):
                 self.lens_system.update_kwargs_macro(kwargs_lens_final)
 
             else:
+
                 self.lens_system.clear_static_lensmodel()
                 self.lens_system.update_realization(realization_filtered)
                 lens_model_full, kwargs_lens_final = self.lens_system.get_lensmodel(
@@ -152,15 +147,18 @@ class HierarchicalOptimization(BruteOptimization):
                 self.lens_system.update_kwargs_macro(kwargs_lens_final)
                 N_foreground_halos_last = N_foreground_halos
 
-        return foreground_rays, lens_model_raytracing, lens_model_full, realization_filtered, [source_x, source_y]
+        return lens_model_full, kwargs_lens_final, realization_filtered, [source_x, source_y]
 
-    def _fit_background(self, data_to_fit, foreground_realization_filtered, realization_background, foreground_rays,
-                        opt_routine, lens_model_raytracing, lens_model_full, source_x, source_y, constrain_params=None, verbose=False):
+    def _fit_background(self, data_to_fit, foreground_realization_filtered, realization_background,
+                                 opt_routine, lens_model_full, source_x, source_y,
+                                 constrain_params, verbose):
 
         aperture_masses, globalmin_masses, window_sizes, scale, optimize_iteration, particle_swarm_reopt, \
         re_optimize_iteration = self.settings.background_settings
 
         N_background_halos_last = 0
+
+        realization_filtered = None
 
         backx, backy, background_Tzs, background_zs, reoptimized_realizations = [], [], [], [], []
 
@@ -188,12 +186,13 @@ class HierarchicalOptimization(BruteOptimization):
 
                 if foreground_realization_filtered is not None:
                     N_foreground_halos = foreground_realization_filtered.number_of_halos_before_redshift(self.lens_system.zlens)
-                    N_foreground_halos += foreground_realization_filtered.number_of_halos_at_redshift(self.lens_system.zlens)
+                    N_subhalos = foreground_realization_filtered.number_of_halos_at_redshift(self.lens_system.zlens)
                     real = realization_background.filter(**filter_kwargs)
                     realization_filtered = foreground_realization_filtered.join(real)
 
                 else:
                     N_foreground_halos = 0
+                    N_subhalos = 0
                     realization_filtered = None
 
                 if verbose: print('optimization ' + str(1))
@@ -213,11 +212,12 @@ class HierarchicalOptimization(BruteOptimization):
                 N_background_halos = realization_filtered.number_of_halos_after_redshift(self.lens_system.zlens)
 
             self.lens_system.update_realization(realization_filtered)
+            self.lens_system.clear_static_lensmodel()
 
             if realization_filtered is not None:
                 ntotal_halos = realization_filtered.number_of_halos_after_redshift(0)
 
-                assert ntotal_halos == N_foreground_halos + N_background_halos
+                assert ntotal_halos == N_foreground_halos + N_background_halos + N_subhalos
 
             if verbose:
                 print('nhalos: ', N_background_halos+N_foreground_halos)
@@ -225,9 +225,11 @@ class HierarchicalOptimization(BruteOptimization):
                 print('minimum mass in aperture: ', aperture_masses[run])
                 print('minimum global mass: ', globalmin_masses[run])
                 print('N foreground halos: ', N_foreground_halos)
+                print('N subhalos: ', N_subhalos)
                 print('N background halos: ', N_background_halos)
 
             do_optimization = True
+
             if run > 0:
                 if N_background_halos == 0:
                     do_optimization = False
@@ -238,17 +240,17 @@ class HierarchicalOptimization(BruteOptimization):
 
             if do_optimization:
 
-                optimizer_kwargs = {'save_background_path': True,
-                                  're_optimize_scale': scale[run],
-                                  'precomputed_rays': foreground_rays}
+                opt_kwargs = {'re_optimize_scale': scale[run]}
 
-                kwargs_lens_final, lens_model_raytracing, lens_model_full, foreground_rays, images, [source_x, source_y] = \
-                    self.fit(data_to_fit, self._n_particles, opt_routine, constrain_params,
-                              self._n_iterations, optimizer_kwargs, verbose,
-                              particle_swarm=particle_swarm_reopt[run],
-                              re_optimize=re_optimize_iteration[run], tol_mag=None, realization=realization_filtered)
+                kwargs_lens_final, lens_model_full, [source_x, source_y] = self.fit(
+                    data_to_fit, opt_routine, constrain_params, verbose=verbose,
+                    include_substructure=True, realization=realization_filtered,
+                    opt_kwargs=opt_kwargs, re_optimize=re_optimize_iteration[run],
+                    particle_swarm=particle_swarm_reopt[run]
+                )
 
                 reoptimized_realizations.append(realization_filtered)
+
                 self.lens_system.clear_static_lensmodel()
                 self.lens_system.update_realization(realization_filtered)
                 self.lens_system.set_lensmodel_static(lens_model_full, kwargs_lens_final)
@@ -263,12 +265,12 @@ class HierarchicalOptimization(BruteOptimization):
                 self.lens_system.clear_static_lensmodel()
                 self.lens_system.update_realization(realization_filtered)
                 lens_model_full, kwargs_lens_final = self.lens_system.get_lensmodel(
-                    substructure_realization=realization_filtered)
-                self.lens_system.set_lensmodel_static(lens_model_raytracing, kwargs_lens_final)
+                    include_substructure=True,
+                    substructure_realization=realization_filtered
+                )
+                self.lens_system.set_lensmodel_static(lens_model_full, kwargs_lens_final)
                 self.lens_system.update_kwargs_macro(kwargs_lens_final)
                 self.lens_system.update_source_centroid(source_x, source_y)
 
-        info_array = (reoptimized_realizations, ray_x_interp, ray_y_interp)
-
-        return kwargs_lens_final, lens_model_raytracing, lens_model_full, info_array, \
-               [source_x, source_y], realization_filtered
+        return lens_model_full, kwargs_lens_final, realization_filtered, \
+               [source_x, source_y], reoptimized_realizations

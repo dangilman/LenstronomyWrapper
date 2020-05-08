@@ -18,7 +18,7 @@ class HierarchicalSettingsDeltaFunction(object):
 
     @property
     def n_iterations(self):
-        return 250
+        return 300
 
     @property
     def n_iterations_background(self):
@@ -104,7 +104,7 @@ class HierarchicalSettingsDefault(object):
         # add this everywhere
         globalmin_masses = [self.log_mass_cut_global]*3
         # window size
-        window_sizes = [20, 0.4, 0.1]
+        window_sizes = [20, 0.3, 0.1]
         # controls starting points for re-optimizations
         scale = [1, 0.5, 0.1]
         # determines whether to use PSO for re-optimizations
@@ -123,13 +123,13 @@ class HierarchicalSettingsDefault(object):
         # add this everywhere
         globalmin_masses = [self.log_mass_cut_global]*3
         # window size
-        window_sizes = [20, 0.35, 0.075]
+        window_sizes = [20, 0.3, 0.075]
         # controls starting points for re-optimizations
         scale = [1, 0.5, 0.1]
         # determines whether to use PSO for re-optimizations
         particle_swarm_reopt = [True, False, False]
         # wheter to actually re-fit the lens model
-        optimize_iteration = [True, True, True]
+        optimize_iteration = [True, True, False]
         # whether to re-optimize (aka start from a model very close to input model)
         re_optimize_iteration = [True, True, True]
 

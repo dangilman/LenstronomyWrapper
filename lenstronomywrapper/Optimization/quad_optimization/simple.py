@@ -21,4 +21,4 @@ class Simple(OptimizationBase):
 
         source = [float(beta_x), float(beta_y)]
 
-        return self._return_results(source, kwargs_lens_final, self._lens_model, None)
+        return self.return_results(source, kwargs_lens_final, self._lens_model, None)

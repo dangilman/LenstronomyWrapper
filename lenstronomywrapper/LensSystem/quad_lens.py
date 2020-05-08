@@ -66,6 +66,7 @@ class QuadLensSystem(LensBase):
         More efficient optimization routines are detailed in Optimization.quad_optimization
 
         """
+
         lens_system_init = QuadLensSystem(macromodel, zsource, background_quasar, None,
                                           pyhalo_cosmology=cosmo)
 
@@ -126,9 +127,10 @@ class QuadLensSystem(LensBase):
         """
 
         optimizer = BruteOptimization(self)
-        kwargs_lens_final, lens_model_full, _ = optimizer.optimize(data_to_fit, opt_routine, constrain_params,
-                                                                       verbose, include_substructure, kwargs_optimizer,
-                                                                       )
+        kwargs_lens_final, lens_model_full, _ = optimizer.optimize(
+            data_to_fit, opt_routine, constrain_params, verbose,
+            include_substructure, kwargs_optimizer
+        )
 
         return
 

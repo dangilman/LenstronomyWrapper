@@ -144,15 +144,11 @@ class DynamicOptimization(OptimizationBase):
             print('n background halos: ', realization_global.number_of_halos_after_redshift(self.lens_system.zlens))
 
         # Add the large halos, fit a lens model
-        kwargs_lens_final, _, lens_model_full, _, _, source = self._brute.fit(data_to_fit, self.n_particles,
-                                              opt_routine, constrain_params, self.n_iterations,
-                                              {}, verbose, re_optimize=True, particle_swarm=self.initial_pso,
-                                              realization=realization_global)
-
-        self.lens_system.clear_static_lensmodel()
-        self.lens_system.update_realization(realization_global)
-        self.lens_system.set_lensmodel_static(lens_model_full, kwargs_lens_final)
-        self.lens_system.update_kwargs_macro(kwargs_lens_final)
+        kwargs_lens_final, lens_model_full, source = self._brute.fit(
+            data_to_fit, opt_routine, constrain_params=constrain_params, verbose=verbose,
+                 include_substructure=True, realization=realization_global, re_optimize=False,
+                 particle_swarm=True)
+        self.update_lens_system(source, kwargs_lens_final, lens_model_full, realization_global)
 
         lens_plane_redshifts, _ = self.pyhalo_dynamic.lens_plane_redshifts(self.kwargs_rendering)
         # Iterate through lower masses and smaller progressively smaller rendering apertures
@@ -187,32 +183,25 @@ class DynamicOptimization(OptimizationBase):
 
             if fit:
 
-                kwargs_lens_final, _, lens_model_full, _, _, source = self._brute.fit(data_to_fit,
-                                                                    self.n_particles, opt_routine,
-                                                                             constrain_params,
-                                                                             self.n_iterations, {}, verbose, True,
-                                                                             particle_swarm=particle_swarm,
-                                                                             realization=realization_global)
-
-                self.lens_system.clear_static_lensmodel()
-                self.lens_system.update_realization(realization_global)
-                self.lens_system.set_lensmodel_static(lens_model_full, kwargs_lens_final)
-                self.lens_system.update_kwargs_macro(kwargs_lens_final)
+                kwargs_lens_final, lens_model_full, source = self._brute.fit(
+                    data_to_fit, opt_routine, constrain_params=constrain_params, verbose=verbose,
+                    include_substructure=True, realization=realization_global, re_optimize=re_optimize,
+                    particle_swarm=particle_swarm)
+                self.update_lens_system(source, kwargs_lens_final, lens_model_full, realization_global)
 
             else:
 
                 self.lens_system.clear_static_lensmodel()
                 self.lens_system.update_realization(realization_global)
                 lens_model_full, kwargs_lens_final = self.lens_system.get_lensmodel()
-                self.lens_system.set_lensmodel_static(lens_model_full, kwargs_lens_final)
-                self.lens_system.update_kwargs_macro(kwargs_lens_final)
+                self.update_lens_system(source, kwargs_lens_final, lens_model_full, realization_global)
 
             log_mhigh = log_mlow
 
         self.pyhalo_dynamic.reset(self.lens_system.zlens, self.lens_system.zsource)
 
-        return self._return_results(source, kwargs_lens_final, lens_model_full,
-                                    {'realization_final': realization_global})
+        return self.return_results(source, kwargs_lens_final, lens_model_full, realization_global,
+                                   {'realization_final': realization_global})
 
     def _initialize(self, verbose):
 
