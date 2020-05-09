@@ -9,8 +9,10 @@ from lenstronomywrapper.Utilities.data_util import approx_theta_E
 from lenstronomywrapper.Utilities.parameter_util import kwargs_e1e2_to_polar, kwargs_gamma1gamma2_to_polar
 
 from pyHalo.pyhalo_dynamic import pyHaloDynamic
+from pyHalo.pyhalo import pyHalo
 
 from lenstronomywrapper.Optimization.quad_optimization.dynamic import DynamicOptimization
+from lenstronomywrapper.Optimization.quad_optimization.hierarchical import HierarchicalOptimization
 
 def run(job_index, output_path, path_to_folder):
 
@@ -62,7 +64,7 @@ def run(job_index, output_path, path_to_folder):
 
     ############################ EVERYTHING BELOW THIS IS SAMPLED IN A FOR LOOP ############################
 
-    pyhalo_dynamic = None
+    pyhalo = None
     kwargs_macro = []
     initialize = True
     kwargs_macro_ref = None
@@ -80,12 +82,6 @@ def run(job_index, output_path, path_to_folder):
         ######## Sample keyword arguments for the lensing volume ##########
         zlens, zsource, lens_source_sampled = load_lens_source(prior_list_cosmo, keyword_arguments)
         params_sampled.update(lens_source_sampled)
-
-        if 'zlens' in params_sampled.keys():
-            pyhalo_dynamic = pyHaloDynamic(zlens, zsource)
-        else:
-            if pyhalo_dynamic is None:
-                pyhalo_dynamic = pyHaloDynamic(zlens, zsource)
 
         ######## Sample keyword arguments for the macromodel ##########
         macromodel, macro_samples, constrain_params, opt_routine = \
@@ -115,13 +111,45 @@ def run(job_index, output_path, path_to_folder):
 
         kwargs_rendering['cone_opening_angle'] = kwargs_rendering['opening_angle_factor'] * \
                                                  theta_E_approx
+
         optimization_settings['initial_pso'] = initialize
 
-        dynamic_opt = DynamicOptimization(lens_system, pyhalo_dynamic, kwargs_rendering,
-                                          **optimization_settings)
-        kwargs_lens_fit, lensModel_fit, _ = \
-            dynamic_opt.optimize(data_to_fit, opt_routine=opt_routine,
-                 constrain_params=constrain_params, verbose=keyword_arguments['verbose'])
+        assert 'routine' in keyword_arguments['keywords_optimizer'].keys()
+        if keyword_arguments['keywords_optimizer']['routine'] == 'dynamic':
+
+            if 'zlens' in params_sampled.keys():
+                pyhalo = pyHaloDynamic(zlens, zsource)
+            else:
+                if pyhalo is None:
+                    pyhalo = pyHaloDynamic(zlens, zsource)
+
+            dynamic_opt = DynamicOptimization(lens_system, pyhalo,
+                                              kwargs_rendering, **optimization_settings)
+            kwargs_lens_fit, lensModel_fit, _ = \
+            dynamic_opt.optimize(
+                data_to_fit, opt_routine=opt_routine,
+                constrain_params=constrain_params, verbose=keyword_arguments['verbose']
+            )
+
+        elif keyword_arguments['keywords_optimizer']['routine'] == 'hierarchical':
+
+            if 'zlens' in params_sampled.keys():
+                pyhalo = pyHalo(zlens, zsource)
+            else:
+                if pyhalo is None:
+                    pyhalo = pyHalo(zlens, zsource)
+
+            realization_initial = pyhalo.render(keyword_arguments['realization_type'],
+                                        kwargs_rendering)[0]
+            lens_system = QuadLensSystem.addRealization(lens_system, realization_initial)
+            hierarchical_opt = HierarchicalOptimization(lens_system)
+            kwargs_lens_fit, lensModel_fit, _ = hierarchical_opt.optimize(
+                data_to_fit, opt_routine, constrain_params, keyword_arguments['verbose']
+            )
+
+        else:
+            raise Exception('optimization routine '+ keyword_arguments['keywords_optimizer']['routine']
+                            + 'not recognized.')
 
         flux_ratios_fit, _ = lens_system.quasar_magnification(data_to_fit.x, data_to_fit.y,
                                             lensModel_fit, kwargs_lens_fit)
@@ -163,7 +191,7 @@ def run(job_index, output_path, path_to_folder):
 chain_ID = 'test_submit'
 output_path = os.getenv('HOME') + '/data/sims/'+chain_ID + '/'
 paramdictionary_folder_path = os.getenv('HOME') + '/data/'
-run(2, output_path, paramdictionary_folder_path + chain_ID)
+run(1, output_path, paramdictionary_folder_path + chain_ID)
 
 
 

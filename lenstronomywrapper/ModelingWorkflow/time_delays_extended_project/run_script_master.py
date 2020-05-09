@@ -159,15 +159,17 @@ for n_lens in range(n_lens_start, n_lens_end):
 
     fit_smooth_kwargs = {'n_particles': 150, 'n_iterations': 350, 'n_run': 150,
                          'walkerRatio': 4, 'n_burn': 600}
-
-    log_mlow = 6.7
+    fit_smooth_kwargs = {'n_particles': 50, 'n_iterations': 50, 'n_run': 10, 'walkerRatio': 4,
+                         'n_burn': 10}
+    log_mlow = 8.
 
     name_append = '_mlow6.7'
 
     sample_gamma = True
 
     if sample_gamma:
-        name_append += '_samplegamma'
+        name_append += '_samplegammawide'
+        gamma_sigma *= 3
     else:
         gamma_sigma = 1e-9
 

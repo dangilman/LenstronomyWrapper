@@ -286,6 +286,7 @@ class AnalogModel(object):
                                                 prior=prior_sat_light)]
 
         macromodel = MacroLensModel(deflector_list)
+        print('using gamma value:', macromodel.kwargs[0]['gamma'])
 
         if use_realization:
 

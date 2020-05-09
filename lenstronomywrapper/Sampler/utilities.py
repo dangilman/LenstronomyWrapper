@@ -199,27 +199,36 @@ def load_powerlaw_ellipsoid_macromodel(zlens, prior_list_macromodel, kwargs_macr
 
 def load_optimization_settings(keywords):
 
-    keywords_opt = {}
+    if keywords['keywords_optimizer']['routine'] == 'dynamic':
 
-    for name in ['global_log_mlow', 'log_mass_cuts', 'aperture_sizes', 'refit', 'particle_swarm',
-                 're_optimize', 'realization_type']:
+        keywords_opt = {}
 
-        keywords_opt[name] = keywords['keywords_optimizer'][name]
+        for name in ['global_log_mlow', 'log_mass_cuts', 'aperture_sizes', 'refit', 'particle_swarm',
+                     're_optimize', 'realization_type']:
 
-    if 'n_particles' not in keywords['keywords_optimizer'].keys():
-        n_particles = 35
+            keywords_opt[name] = keywords['keywords_optimizer'][name]
+
+        if 'n_particles' not in keywords['keywords_optimizer'].keys():
+            n_particles = 35
+        else:
+            n_particles = keywords['keywords_optimizer']['n_particles']
+
+        if 'simplex_n_iter' not in keywords['keywords_optimizer'].keys():
+            simplex_n_iter = 300
+            keywords['simplex_n_iter'] = simplex_n_iter
+        else:
+            simplex_n_iter = keywords['keywords_optimizer']['simplex_n_iter']
+
+        keywords_opt['n_particles'] = n_particles
+        keywords_opt['n_particles'] = simplex_n_iter
+
+    elif keywords['keywords_optimizer']['routine'] == 'hierarchical':
+
+        keywords_opt = {}
+
     else:
-        n_particles = keywords['keywords_optimizer']['n_particles']
-
-
-    if 'simplex_n_iter' not in keywords['keywords_optimizer'].keys():
-        simplex_n_iter = 300
-        keywords['simplex_n_iter'] = simplex_n_iter
-    else:
-        simplex_n_iter = keywords['keywords_optimizer']['simplex_n_iter']
-
-    keywords_opt['n_particles'] = n_particles
-    keywords_opt['n_particles'] = simplex_n_iter
+        raise Exception('optimization routine '+
+                        keywords['optimization_routine']+ ' not recognized.')
 
     return keywords_opt
 
