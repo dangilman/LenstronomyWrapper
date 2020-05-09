@@ -114,40 +114,40 @@ for n_lens in range(n_lens_start, n_lens_end):
         gamma_mean, gamma_sigma = 1.98, 0.026
         exp_time, background_rms, do_sampling = lens1131_exposure(Nstart)
 
-    elif n_lens < 1201:
-        Nstart = n_lens - 600
+    elif n_lens < 1001:
+        Nstart = n_lens - 500
         lens_name = 'lens1115'
         half_window_size = 1.8
         lens_class = Lens1115()
         gamma_mean, gamma_sigma = 2.2, 0.07
         exp_time, background_rms, do_sampling = lens1115_exposure(Nstart)
 
-    elif n_lens < 1801:
-        Nstart = n_lens - 1200
+    elif n_lens < 1501:
+        Nstart = n_lens - 1000
         lens_name = 'lens0435'
         half_window_size = 2.
         lens_class = Lens0435()
         gamma_mean, gamma_sigma = 1.93, 0.024
         exp_time, background_rms, do_sampling = lens0435_exposure(Nstart)
 
-    elif n_lens < 2401:
-        Nstart = n_lens - 1800
+    elif n_lens < 2001:
+        Nstart = n_lens - 1500
         lens_name = 'lens1608'
         half_window_size = 1.9
         lens_class = Lens1608()
         gamma_mean, gamma_sigma = 2.08, 0.025
         exp_time, background_rms, do_sampling = lens1608_exposure(Nstart)
 
-    elif n_lens < 3001:
-        Nstart = n_lens - 2400
+    elif n_lens < 2501:
+        Nstart = n_lens - 2000
         lens_name = 'lens2033'
         half_window_size = 2.5
         lens_class = WFI2033()
         gamma_mean, gamma_sigma = 1.95, 0.032
         exp_time, background_rms, do_sampling = lens2033_exposure(Nstart)
 
-    elif n_lens < 3601:
-        Nstart = n_lens - 3000
+    elif n_lens < 3001:
+        Nstart = n_lens - 2500
         lens_name = 'lens0408'
         half_window_size = 3.5
         lens_class = Lens0408()
@@ -160,9 +160,9 @@ for n_lens in range(n_lens_start, n_lens_end):
     fit_smooth_kwargs = {'n_particles': 150, 'n_iterations': 350, 'n_run': 150,
                          'walkerRatio': 4, 'n_burn': 600}
 
-    log_mlow = 9.
+    log_mlow = 6.7
 
-    name_append = '_mlow6'
+    name_append = '_mlow6.7'
 
     sample_gamma = True
 

@@ -67,7 +67,7 @@ def run(Nstart, lens_class, gamma_prior, fname, log_mlow, window_size, exp_time,
         #fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 250, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 300}
         #fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 3, 'walkerRatio': 4, 'n_burn': 0}
 
-    elif Nstart < 351:
+    elif Nstart < 301:
 
         save_name_path_base = base_path + '/tdelay_output/raw/' + fname
         save_name_path = save_name_path_base + '/los_plus_subs' + name_append + '/'
@@ -89,9 +89,9 @@ def run(Nstart, lens_class, gamma_prior, fname, log_mlow, window_size, exp_time,
 
         shapelet_nmax = None
 
-    elif Nstart < 601:
+    elif Nstart < 501:
         print('SAMPLING LOS plus subs with shapelets...... ')
-        N0 = Nstart - 350
+        N0 = Nstart - 300
         #fit_smooth_kwargs = {'n_particles': 50, 'n_iterations': 50, 'n_run': 2, 'walkerRatio': 4, 'n_burn': 0}
         save_name_path_base = base_path + '/tdelay_output/raw/' + fname
         save_name_path = save_name_path_base + '/los_plus_subs' + name_append + '_shapelets/'
