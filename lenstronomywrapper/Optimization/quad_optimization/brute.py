@@ -97,4 +97,4 @@ class BruteSettingsDefault(object):
 
     @property
     def n_iterations(self):
-        return 350
+        return 400

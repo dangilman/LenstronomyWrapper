@@ -17,7 +17,7 @@ from lenstronomywrapper.LensSystem.LensSystemExtensions.chain_post_processing im
 from lenstronomywrapper.LensSystem.LensSystemExtensions.lens_maps import ResidualLensMaps
 from lenstronomywrapper.LensSystem.BackgroundSource.shapelet import Shapelet
 import numpy as np
-from pyHalo.pyhalo_dynamic import pyHaloDynamic
+from pyHalo.pyhalo import pyHalo
 from lenstronomywrapper.Optimization.quad_optimization.dynamic import DynamicOptimization
 import os
 import dill as pickle
@@ -25,9 +25,9 @@ import dill as pickle
 class AnalogModel(object):
 
     def __init__(self, lens_class_instance, kwargs_cosmology,
-                 kwargs_quasar=None, makeplots=False, pyhalo=None,
+                 kwargs_quasar=None, makeplots=False,
                  free_convergence=False, pickle_directory=None,
-                 class_idx=None, log_mlow=None):
+                 class_idx=None, do_sampling=True):
 
         if kwargs_quasar is None:
             kwargs_quasar = {'center_x': 0, 'center_y': 0, 'source_fwhm_pc': 25}
@@ -38,14 +38,15 @@ class AnalogModel(object):
         self.kwargs_cosmology = kwargs_cosmology
         self._pickle_directory = pickle_directory
         self._class_idx = class_idx
-        self._log_mlow = log_mlow
+        self.do_sampling = do_sampling
 
         #self.lens.x += np.random.normal(0, self.lens.sigma_x)
         #self.lens.y += np.random.normal(0, self.lens.sigma_y)
 
         self.zlens, self.zsource = lens_class_instance.zlens, lens_class_instance.zsrc
 
-        self.pyhalo = pyHaloDynamic(self.zlens, self.zsource, cosmology_kwargs=self.kwargs_cosmology)
+        self.pyhalo = pyHalo(self.zlens, self.zsource, cosmology_kwargs=self.kwargs_cosmology)
+
         self.kwargs_quasar = kwargs_quasar
 
     def background_quasar_class(self):
@@ -79,9 +80,9 @@ class AnalogModel(object):
 
         return t1 - t2
 
-    def run(self, save_name_path, N_start, N, realization, arrival_time_sigma,
+    def run(self, save_name_path, N_start, N, use_realization, arrival_time_sigma,
             image_positions_sigma, realization_kwargs, time_delay_likelihood, fix_D_dt, fit_smooth_kwargs,
-            window_size, exp_time, background_rms, shapelet_nmax):
+            window_size, exp_time, background_rms, shapelet_nmax, gamma_prior):
 
         observed_lens, modeled_lens, normalized_residuals, residual_convergence = [], [], [], []
         residual_mean_kappa = []
@@ -94,20 +95,20 @@ class AnalogModel(object):
 
         for n in range(0, N):
 
-            tbaseline, f, t, tdelay_model, macro_params, kw_fit, kw_setup= self.run_once(realization,
+            tbaseline, f, t, tdelay_model, macro_params, kw_fit, kw_setup= self.run_once(use_realization,
                                                                 arrival_time_sigma,
                                                                 image_positions_sigma,
                                                                 realization_kwargs,
                                                                 time_delay_likelihood,
                                                                 fix_D_dt, window_size,
                                                                 exp_time, background_rms,
-                                                                shapelet_nmax,
+                                                                shapelet_nmax, gamma_prior,
                                                                 **fit_smooth_kwargs)
 
-            #h0_inf = kw_fit['H0_inferred']
-
-            # info = [self.zlens, self.zsource, self.lens.x[0], self.lens.x[1], self.lens.x[2], self.lens.x[3],
-            #         self.lens.y[0], self.lens.y[1], self.lens.y[2], self.lens.y[3]]
+            if self.do_sampling:
+                pass
+            else:
+                return None
 
             observed_lens.append(kw_fit['observed_lens'])
             modeled_lens.append(kw_fit['modeled_lens'])
@@ -170,13 +171,19 @@ class AnalogModel(object):
 
         np.savetxt(filename, X=array_to_save, fmt='%.5f')
 
-    def run_once(self, realization, arrival_time_sigma, image_sigma, realization_kwargs,
+    def run_once(self, use_realization, arrival_time_sigma, image_sigma, realization_kwargs,
             time_delay_likelihood, fix_D_dt, window_size, exp_time, background_rms, shapelet_nmax,
-                 **fit_smooth_kwargs):
+                 gamma_prior, **fit_smooth_kwargs):
 
         lens_system, data_class, return_kwargs_setup, kwargs_data_setup = \
-            self.model_setup(realization, arrival_time_sigma, image_sigma, realization_kwargs, window_size,
-                             exp_time, background_rms, shapelet_nmax)
+            self.model_setup(use_realization, arrival_time_sigma, image_sigma, realization_kwargs, window_size,
+                             exp_time, background_rms, shapelet_nmax, gamma_prior)
+
+        if self.do_sampling:
+            pass
+        else:
+            return None, None, None, None, \
+               None, None, None
 
         return_kwargs_fit, kwargs_data_fit = self.fit_smooth(lens_system, data_class, arrival_time_sigma,
                                                              time_delay_likelihood, fix_D_dt, window_size, **fit_smooth_kwargs)
@@ -207,13 +214,16 @@ class AnalogModel(object):
 
         return magnifications, arrival_times, dtgeo, dtgrav
 
-    def model_setup(self, realization, arrival_time_sigma, image_sigma, realization_kwargs,
-                    window_size, exp_time, background_rms, shapelet_nmax):
+    def model_setup(self, use_realization, arrival_time_sigma, image_sigma, realization_kwargs,
+                    window_size, exp_time, background_rms, shapelet_nmax, gamma_prior):
 
         data_to_fit = LensedQuasar(self.lens.x, self.lens.y, self.lens.m)
         background_quasar = self.background_quasar_class()
 
         kwargs_macro = self.lens.kwargs_lens_init
+
+        gamma_macro_value = gamma_prior()
+        kwargs_macro[0]['gamma'] = gamma_macro_value
 
         deflector_list = [PowerLawShear(self.zlens, kwargs_macro)]
 
@@ -277,54 +287,37 @@ class AnalogModel(object):
 
         macromodel = MacroLensModel(deflector_list)
 
-        if realization is not None:
+        if use_realization:
 
             fname = self._pickle_directory + 'macromodel_'+str(self._class_idx)
 
-            if shapelet_nmax is None:
+            if os.path.exists(fname):
+                file = open(fname, 'rb')
+                lens_system_quad = pickle.load(file)
 
+            else:
                 print('fitting macromodel')
-
-                lens_system_quad = QuadLensSystem(macromodel, self.zsource, background_quasar,
-                                                 None, self.pyhalo._cosmology)
-
                 realization_type = 'composite_powerlaw'
-                minimum_mass_global = realization_kwargs['log_mlow']
+                real = self.pyhalo.render(realization_type, realization_kwargs)[0]
 
-                log_mass_cuts_list = []
-                aperture_sizes_list = []
-                refit_list = []
-                particle_swarm_list = []
-                re_optimize_list = []
-
-                input_args = {'lens_system': lens_system_quad, 'pyhalo_dynamic': self.pyhalo,
-                              'kwargs_rendering': realization_kwargs, 'global_log_mlow': minimum_mass_global,
-                              'log_mass_cuts': log_mass_cuts_list, 'aperture_sizes': aperture_sizes_list,
-                              'refit': refit_list, 'particle_swarm': particle_swarm_list,
-                              're_optimize': re_optimize_list, 'realization_type': realization_type,
-                              'initial_pso': False, 'simplex_n_iter': 400}
-
-                solve_dynamic = DynamicOptimization(**input_args)
-                _ = solve_dynamic.optimize(data_to_fit, verbose=True)
-
-                realization = lens_system_quad.realization
+                lens_system_quad = QuadLensSystem.shift_background_auto(data_to_fit, macromodel,
+                                                                        self.zsource, background_quasar, real,
+                                                                        self.pyhalo.cosmology)
+                lens_system_quad.initialize(data_to_fit, include_substructure=True,
+                                            kwargs_optimizer={'particle_swarm': False})
 
                 file = open(fname, 'wb')
                 pickle.dump(lens_system_quad, file)
                 file.close()
 
-            else:
-                file = open(fname, 'rb')
-                lens_system_quad = pickle.load(file)
-                realization = lens_system_quad.realization
+            realization = lens_system_quad.realization
 
         else:
             lens_system_quad = QuadLensSystem(macromodel, self.zsource, background_quasar, None,
-                                          pyhalo_cosmology=self.pyhalo._cosmology)
+                                          pyhalo_cosmology=self.pyhalo.cosmology)
             lens_system_quad.initialize(data_to_fit, verbose=True,
                                         kwargs_optimizer={'particle_swarm': False})
             realization = lens_system_quad.realization
-
 
         magnifications, arrival_times, dtgeo, dtgrav = self.compute_observables(lens_system_quad)
 
@@ -449,15 +442,10 @@ class AnalogModel(object):
         reconstructed_source, coord_transform = \
             modelPlot._select_band(0).source(numPix=200, deltaPix=0.025)
 
-        import matplotlib.pyplot as plt
-
         reconstructed_source_log = np.log10(reconstructed_source)
         vmin, vmax = max(np.min(reconstructed_source_log), -5), min(np.max(reconstructed_source_log), 10)
         reconstructed_source_log[np.where(reconstructed_source_log < vmin)] = vmin
         reconstructed_source_log[np.where(reconstructed_source_log > vmax)] = vmax
-        plt.imshow(reconstructed_source_log, origin='lower', vmin=vmin,
-                   vmax=vmax)
-        plt.show()
 
         residual_maps = ResidualLensMaps(lensModel_full, lensModel, kwargs_lens_full, kwargs_lens)
         kappa = residual_maps.convergence(window_size, 200)

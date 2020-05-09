@@ -23,7 +23,7 @@ class QuadLensSystem(LensBase):
             pyhalo_cosmology = Cosmology()
 
         if background_quasar_class is None:
-            kwargs_default = {'center_x': 0, 'center_y': 0, 'source_fwhm_pc': 30.}
+            kwargs_default = {'center_x': 0, 'center_y': 0, 'source_fwhm_pc': 10.}
             background_quasar_class = Quasar(kwargs_default)
 
         self.background_quasar = background_quasar_class
@@ -63,14 +63,15 @@ class QuadLensSystem(LensBase):
         lens_system.initialize(data, include_substructure=True)
         # will fit the lens system while including every single halo in the computation
 
-        More efficient optimization routines are detailed in Optimization.quad_optimization
+        Other optimization routines are detailed in Optimization.quad_optimization
 
         """
 
         lens_system_init = QuadLensSystem(macromodel, zsource, background_quasar, None,
                                           pyhalo_cosmology=cosmo)
 
-        lens_system_init.initialize(lens_data_class, kwargs_optimizer={'particle_swarm': particle_swarm_init})
+        lens_system_init.initialize(lens_data_class,
+                                    kwargs_optimizer={'particle_swarm': particle_swarm_init})
 
         source_x, source_y = lens_system_init.source_centroid_x, lens_system_init.source_centroid_y
         lens_center_x, lens_center_y = lens_system_init.macromodel.centroid

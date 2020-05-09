@@ -2,9 +2,9 @@ from lenstronomywrapper.ModelingWorkflow.time_delays_extended_project.scripts im
 import os
 import dill
 
-def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_rms, N=1,
+def run(Nstart, lens_class, gamma_prior, fname, log_mlow, window_size, exp_time, background_rms, N=1,
         subtract_exact_mass_sheets=False, name_append='', fix_Ddt=False,
-        fit_smooth_kwargs=None, window_scale=10):
+        fit_smooth_kwargs=None, window_scale=10, do_sampling=True):
 
     position_sigma = [0.005]*4
 
@@ -48,7 +48,7 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
         if not os.path.exists(save_name_path):
             create_directory(save_name_path)
         shapelet_nmax = None
-        realization = None
+        use_realization = False
         #fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 200, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 300}
         #fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 3, 'walkerRatio': 4, 'n_burn': 0}
 
@@ -63,11 +63,11 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
             create_directory(save_name_path)
 
         shapelet_nmax = 8
-        realization = None
+        use_realization = False
         #fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 250, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 300}
         #fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 3, 'walkerRatio': 4, 'n_burn': 0}
 
-    elif Nstart < 301:
+    elif Nstart < 351:
 
         save_name_path_base = base_path + '/tdelay_output/raw/' + fname
         save_name_path = save_name_path_base + '/los_plus_subs' + name_append + '/'
@@ -83,40 +83,33 @@ def run(Nstart, lens_class, fname, log_mlow, window_size, exp_time, background_r
         N0 = Nstart - 100
         lens_analog_model_class = AnalogModel(lens_class, kwargs_cosmo,
                                     pickle_directory=save_name_path_base + '/realizations'+name_append+'/',
-                                              class_idx=N0, log_mlow=log_mlow)
-        #### CREATE REALIZATION ####
-        lens_system_file_name = base_path + '/tdelay_output/raw/' + fname + \
-                                '/realizations'+name_append+'/macromodel_' + str(N0)
-        if os.path.exists(lens_system_file_name):
-            file = open(lens_system_file_name, 'rb')
-            system = dill.load(file)
-            realization = system.realization
-        else:
-            realization = True
+                                              class_idx=N0, do_sampling=do_sampling)
+
+        use_realization = True
 
         shapelet_nmax = None
 
-    elif Nstart < 501:
+    elif Nstart < 601:
         print('SAMPLING LOS plus subs with shapelets...... ')
-        N0 = Nstart - 300
+        N0 = Nstart - 350
         #fit_smooth_kwargs = {'n_particles': 50, 'n_iterations': 50, 'n_run': 2, 'walkerRatio': 4, 'n_burn': 0}
         save_name_path_base = base_path + '/tdelay_output/raw/' + fname
         save_name_path = save_name_path_base + '/los_plus_subs' + name_append + '_shapelets/'
         lens_analog_model_class = AnalogModel(lens_class, kwargs_cosmo,
                                   pickle_directory=save_name_path_base + '/realizations'+name_append+'/',
-                                              class_idx=N0, log_mlow=log_mlow)
+                                              class_idx=N0, do_sampling=do_sampling)
 
         if not os.path.exists(save_name_path):
             create_directory(save_name_path)
 
-        realization = True
+        use_realization = True
 
         shapelet_nmax = 8
 
     print('N0:', N0)
     print('filename: ', save_name_path)
     print('arrival time uncertainties: ', arrival_time_sigma)
-    run_real(lens_analog_model_class, save_name_path, N, N0, realization,
+    run_real(lens_analog_model_class, gamma_prior, save_name_path, N, N0, use_realization,
              arrival_time_sigma, position_sigma, realization_kwargs, fix_Ddt, window_size, exp_time, background_rms,
              time_delay_like=time_delay_likelihood, fit_smooth_kwargs=fit_smooth_kwargs, shapelet_nmax=shapelet_nmax)
 
