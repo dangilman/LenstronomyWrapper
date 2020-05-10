@@ -93,8 +93,13 @@ def run(Nstart, lens_class, gamma_prior, fname, log_mlow, window_size, exp_time,
         print('SAMPLING LOS plus subs with shapelets...... ')
         N0 = Nstart - 300
         #fit_smooth_kwargs = {'n_particles': 50, 'n_iterations': 50, 'n_run': 2, 'walkerRatio': 4, 'n_burn': 0}
+
         save_name_path_base = base_path + '/tdelay_output/raw/' + fname
         save_name_path = save_name_path_base + '/los_plus_subs' + name_append + '_shapelets/'
+
+        if not os.path.exists(save_name_path_base + '/realizations'+name_append+'/'):
+            create_directory(save_name_path_base + '/realizations'+name_append+'/')
+
         lens_analog_model_class = AnalogModel(lens_class, kwargs_cosmo,
                                   pickle_directory=save_name_path_base + '/realizations'+name_append+'/',
                                               class_idx=N0, do_sampling=do_sampling)
