@@ -141,7 +141,9 @@ class QuadLensSystem(LensBase):
         self.source_centroid_y = source_y
         self.background_quasar.update_position(source_x, source_y)
 
-    def quasar_magnification(self, x, y, lens_model=None, kwargs_lensmodel=None, normed=True):
+    def quasar_magnification(self, x, y, lens_model=None,
+                             kwargs_lensmodel=None, normed=True,
+                             retry_if_blended=0):
 
         """
         Computes the magnifications (or flux ratios if normed=True)
@@ -151,11 +153,15 @@ class QuadLensSystem(LensBase):
         :param lens_model: an instance of LensModel (see lenstronomy.lens_model)
         :param kwargs_lensmodel: key word arguments for the lens_model
         :param normed: if True returns flux ratios
+        :param retry_if_blended: a integer that specifies how many times to try
+        increasing the size of the ray tracing window if an image comes out blended together.
         """
         if lens_model is None or kwargs_lensmodel is None:
             lens_model, kwargs_lensmodel = self.get_lensmodel()
 
-        return self.background_quasar.magnification(x, y, lens_model, kwargs_lensmodel, normed)
+        return self.background_quasar.magnification(x, y, lens_model,
+                                                    kwargs_lensmodel,
+                                                    normed, retry_if_blended)
 
     def plot_images(self, x, y, lens_model=None, kwargs_lensmodel=None, source_fwhm_pc=None):
 

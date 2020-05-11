@@ -2,6 +2,23 @@ import subprocess
 import shutil
 import numpy as np
 
+def write_lensdata(filename, x_image, y_image, fluxes, tdelay,
+                   source_x=0, source_y=0):
+
+    assert len(x_image) == 4
+
+    x_image = np.round(x_image, 4)
+    y_image = np.round(y_image, 4)
+    fluxes = np.round(fluxes, 5)
+    tdelay = np.round(tdelay, 4)
+
+    with open(filename, 'w') as f:
+        line = '4 ' + str(source_x) + ' '+ str(source_y) + ' '
+        for (xi, yi, fi, ti) in zip(x_image, y_image, fluxes, tdelay):
+            line += str(xi) + ' ' + str(yi) + ' '+ \
+                        str(fi) + ' '+str(ti) + ' '
+        f.write(line)
+
 def create_directory(dirname=''):
 
     proc = subprocess.Popen(['mkdir', dirname])

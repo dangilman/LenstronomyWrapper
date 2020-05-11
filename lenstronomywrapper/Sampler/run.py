@@ -1,4 +1,3 @@
-import numpy as np
 import os
 
 from lenstronomywrapper.Sampler.utilities import *
@@ -13,8 +12,13 @@ from pyHalo.pyhalo import pyHalo
 
 from lenstronomywrapper.Optimization.quad_optimization.dynamic import DynamicOptimization
 from lenstronomywrapper.Optimization.quad_optimization.hierarchical import HierarchicalOptimization
+from lenstronomywrapper.Utilities.misc import write_lensdata
 
-def run(job_index, output_path, path_to_folder):
+def run(job_index, chain_ID, output_path, path_to_folder,
+        test_mode=False):
+
+    output_path += chain_ID + '/'
+    path_to_folder += chain_ID
 
     if not os.path.exists(output_path):
         print('creating directory '+ output_path)
@@ -36,10 +40,8 @@ def run(job_index, output_path, path_to_folder):
     fname_fluxes = readout_path + 'fluxes.txt'
     fname_params = readout_path + 'parameters.txt'
     fluxes_computed, parameters_sampled = None, None
-    write_header = True
 
     if os.path.exists(fname_fluxes):
-        write_header = False
         fluxes_computed = np.loadtxt(fname_fluxes)
         parameters_sampled = np.loadtxt(fname_params, skiprows=1)
         N_computed = int(fluxes_computed.shape[0])
@@ -60,6 +62,10 @@ def run(job_index, output_path, path_to_folder):
 
     data_to_fit_init = load_data_to_fit(keyword_arguments)
 
+    write_lensdata(readout_path + 'lensdata.txt', data_to_fit_init.x,
+                   data_to_fit_init.y, data_to_fit_init.m,
+                   [0.] * 4)
+
     theta_E_approx = approx_theta_E(data_to_fit_init.x, data_to_fit_init.y)
 
     ############################ EVERYTHING BELOW THIS IS SAMPLED IN A FOR LOOP ############################
@@ -69,7 +75,8 @@ def run(job_index, output_path, path_to_folder):
     initialize = True
     kwargs_macro_ref = None
 
-    for i in range(0, n_run):
+    counter = 0
+    while counter < n_run:
 
         params_sampled = {}
         parameters = []
@@ -95,6 +102,7 @@ def run(job_index, output_path, path_to_folder):
 
         ################## Set up the data to fit ####################
         data_to_fit = load_data_to_fit(keyword_arguments)
+
         # import matplotlib.pyplot as plt
         # plt.scatter(data_to_fit.x, data_to_fit.y)
         # plt.show()
@@ -115,6 +123,16 @@ def run(job_index, output_path, path_to_folder):
         optimization_settings['initial_pso'] = initialize
 
         assert 'routine' in keyword_arguments['keywords_optimizer'].keys()
+        if test_mode:
+            keyword_arguments['verbose'] = True
+
+        if keyword_arguments['verbose']:
+            for key in params_sampled.keys():
+                print(key + ': ' + str(params_sampled[key]))
+            print('zlens', zlens)
+            print('zsource', zsource)
+            print('Einstein radius', theta_E_approx)
+
         if keyword_arguments['keywords_optimizer']['routine'] == 'dynamic':
 
             if 'zlens' in params_sampled.keys():
@@ -151,9 +169,28 @@ def run(job_index, output_path, path_to_folder):
             raise Exception('optimization routine '+ keyword_arguments['keywords_optimizer']['routine']
                             + 'not recognized.')
 
-        flux_ratios_fit, _ = lens_system.quasar_magnification(data_to_fit.x, data_to_fit.y,
-                                            lensModel_fit, kwargs_lens_fit)
+        flux_ratios_fit, blended = lens_system.quasar_magnification(data_to_fit.x, data_to_fit.y,
+                                            lensModel_fit, kwargs_lens_fit, retry_if_blended=1)
+
+        if blended:
+            print('images are blended together')
+            continue
+
         flux_ratios_fit = np.round(flux_ratios_fit, 5)
+
+        if test_mode:
+            import matplotlib.pyplot as plt
+
+            ax = plt.gca()
+            ax.scatter(data_to_fit.x, data_to_fit.y)
+            ax.set_xlim(-1.5*theta_E_approx, 1.5*theta_E_approx)
+            ax.set_ylim(-1.5 * theta_E_approx, 1.5 * theta_E_approx)
+            ax.set_aspect('equal')
+            plt.show()
+
+            lens_system.plot_images(data_to_fit.x, data_to_fit.y)
+            plt.show()
+            a = input('continue')
 
         comp1 = kwargs_e1e2_to_polar(lens_system.macromodel.components[0].kwargs[0])
         comp2 = kwargs_gamma1gamma2_to_polar(lens_system.macromodel.components[0].kwargs[1])
@@ -166,7 +203,7 @@ def run(job_index, output_path, path_to_folder):
 
         if keyword_arguments['verbose']:
             print('flux_ratios_fit:', flux_ratios_fit)
-            print('n remaining: ', keyword_arguments['Nsamples'] - (i + 1))
+            print('n remaining: ', keyword_arguments['Nsamples'] - (counter + 1))
 
         header = ''
         for name in params_sampled.keys():
@@ -175,6 +212,7 @@ def run(job_index, output_path, path_to_folder):
         parameters = np.array(parameters)
 
         if fluxes_computed is None and parameters_sampled is None:
+
             fluxes_computed = flux_ratios_fit
             parameters_sampled = parameters
         else:
@@ -182,28 +220,9 @@ def run(job_index, output_path, path_to_folder):
             fluxes_computed = np.vstack((fluxes_computed, flux_ratios_fit))
             parameters_sampled = np.vstack((parameters_sampled, parameters))
 
-        if (i+1) % readout_steps == 0:
+        if (counter+1) % readout_steps == 0:
+            readout(readout_path, kwargs_macro, fluxes_computed, parameters_sampled, header)
 
-            readout(readout_path, kwargs_macro, fluxes_computed, parameters_sampled, header, write_header)
+        counter += 1
 
     return
-
-chain_ID = 'test_submit'
-output_path = os.getenv('HOME') + '/data/sims/'+chain_ID + '/'
-paramdictionary_folder_path = os.getenv('HOME') + '/data/'
-run(1, output_path, paramdictionary_folder_path + chain_ID)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,6 +1,17 @@
 import numpy as np
 from lenstronomywrapper.LensData.lensed_quasar import LensedQuasar
 
+def flux_at_edge(image):
+
+    maxbright = np.max(image)
+    edgebright = [image[0,:],image[-1,:],image[:,0],image[:,-1]]
+
+    for edge in edgebright:
+        if any(edge > maxbright * 0.2):
+            return True
+    else:
+        return False
+
 def load_data_from_file(fname):
 
     nimg, _, _, x1, y1, f1, t1, x2, y2, f2, t2, x3, y3, \

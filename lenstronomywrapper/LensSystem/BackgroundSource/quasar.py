@@ -9,12 +9,13 @@ from lenstronomywrapper.Utilities.lensing_util import flux_at_edge
 
 class Quasar(SourceBase):
 
-    def __init__(self, kwargs_quasars, grid_resolution=None, grid_rmax=None):
-
+    def __init__(self, kwargs_quasars,
+                 grid_resolution=None, grid_rmax=None):
 
         self._kwargs_init = kwargs_quasars
         self._grid_resolution = grid_resolution
         self._grid_rmax = grid_rmax
+        self._grid_rmax_scale = 1
         self._initialized = False
 
         super(Quasar, self).__init__(False, [], None, None, None)
@@ -94,23 +95,26 @@ class Quasar(SourceBase):
 
         return newkw
 
-    def _ray_shooting_setup(self, xpos, ypos):
+    def _ray_shooting_setup(self, xpos, ypos, grid_rmax_scale=1.):
 
         (image_separations, relative_angles) = image_separation_vectors_quad(xpos, ypos)
 
         grids = []
+        grid_rmax = grid_rmax_scale * self.grid_rmax
         for sep, theta in zip(image_separations, relative_angles):
-            grids.append(RayShootingGrid(min(self.grid_rmax, 0.5 * sep), self.grid_resolution, rot=theta))
+            grids.append(RayShootingGrid(min(grid_rmax, 0.5 * sep), self.grid_resolution, rot=theta))
 
         xgrids, ygrids = self._get_grids(xpos, ypos, grids)
 
         return xgrids, ygrids
 
-    def get_images(self, xpos, ypos, lensModel, kwargs_lens):
+    def get_images(self, xpos, ypos, lensModel, kwargs_lens,
+                   grid_rmax_scale=1.):
 
         self._check_initialized()
 
-        xgrids, ygrids = self._ray_shooting_setup(xpos, ypos)
+        xgrids, ygrids = self._ray_shooting_setup(xpos, ypos,
+                                            grid_rmax_scale)
 
         images, mags = [], []
 
@@ -126,7 +130,8 @@ class Quasar(SourceBase):
 
     def plot_images(self, xpos, ypos, lensModel, kwargs_lens, normed=True):
 
-        images = self.get_images(xpos, ypos, lensModel, kwargs_lens)
+        images = self.get_images(xpos, ypos, lensModel, kwargs_lens,
+                                 self._grid_rmax_scale)
 
         mags = []
         for img in images:
@@ -144,25 +149,48 @@ class Quasar(SourceBase):
                          xycoords='axes fraction')
             plt.show()
 
+    def _flux_from_images(self, images):
 
-    def magnification(self, xpos, ypos, lensModel, kwargs_lens, normed=True):
+        mags = []
+
+        for image in images:
+            if flux_at_edge(image):
+                return None, True
+            mags.append(np.sum(image) * self.grid_resolution ** 2)
+
+        return np.array(mags), False
+
+    def magnification(self, xpos, ypos, lensModel,
+                      kwargs_lens, normed=True,
+                      retry_if_blended=0):
 
         self._check_initialized()
 
-        images = self.get_images(xpos, ypos, lensModel, kwargs_lens)
+        assert retry_if_blended >= 0
+        assert retry_if_blended < 3
 
-        mags, edge_flux = [], []
-        blended = False
-        for img in images:
-            mags.append(np.sum(img) * self.grid_resolution ** 2)
-            if blended is False:
-                if flux_at_edge(img):
-                    blended = True
+        grid_rmax_scale = 1
 
-        flux = np.array(mags)
+        images = self.get_images(xpos, ypos, lensModel,
+                                 kwargs_lens, grid_rmax_scale)
+        flux, blended = self._flux_from_images(images)
 
-        if normed:
-            flux *= max(flux) ** -1
+        blended_counter = 0
+
+        while blended:
+
+            if blended_counter >= retry_if_blended:
+                break
+
+            blended_counter += 1
+            grid_rmax_scale *= 1.5
+            self._grid_rmax_scale = grid_rmax_scale
+            images = self.get_images(xpos, ypos, lensModel,
+                                     kwargs_lens, grid_rmax_scale)
+            flux, blended = self._flux_from_images(images)
+
+        if normed and blended is False:
+            flux *= np.max(flux) ** -1
 
         return flux, blended
 
@@ -201,8 +229,8 @@ class Quasar(SourceBase):
 
         else:
 
-            power = 1.25
-            grid_size_0 = 0.0002 / 5
+            power = 1.2
+            grid_size_0 = 0.0004 / 5
             size_0 = 0.1 / 5
 
             grid_size = grid_size_0 * (max_source_size_parsec / size_0) ** power
