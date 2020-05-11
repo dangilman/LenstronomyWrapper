@@ -149,31 +149,46 @@ class Quasar(SourceBase):
                          xycoords='axes fraction')
             plt.show()
 
-    def _flux_from_images(self, images):
+    def _flux_from_images(self, images, enforce_unblended):
 
         mags = []
 
+        blended = False
+
         for image in images:
+
             if flux_at_edge(image):
+                blended = True
+
+            if blended and enforce_unblended:
                 return None, True
+
             mags.append(np.sum(image) * self.grid_resolution ** 2)
 
-        return np.array(mags), False
+        return np.array(mags), blended
 
     def magnification(self, xpos, ypos, lensModel,
                       kwargs_lens, normed=True,
-                      retry_if_blended=0):
+                      retry_if_blended=0,
+                      enforce_unblended=False):
 
         self._check_initialized()
 
-        assert retry_if_blended >= 0
-        assert retry_if_blended < 3
+        if enforce_unblended:
+            assert retry_if_blended >= 0
+            assert retry_if_blended < 3
 
         grid_rmax_scale = 1
 
         images = self.get_images(xpos, ypos, lensModel,
                                  kwargs_lens, grid_rmax_scale)
-        flux, blended = self._flux_from_images(images)
+
+        flux, blended = self._flux_from_images(images, enforce_unblended)
+
+        if enforce_unblended is False:
+            if normed:
+                flux *= np.max(flux) ** -1
+            return flux, blended
 
         blended_counter = 0
 
@@ -187,7 +202,7 @@ class Quasar(SourceBase):
             self._grid_rmax_scale = grid_rmax_scale
             images = self.get_images(xpos, ypos, lensModel,
                                      kwargs_lens, grid_rmax_scale)
-            flux, blended = self._flux_from_images(images)
+            flux, blended = self._flux_from_images(images, enforce_unblended)
 
         if normed and blended is False:
             flux *= np.max(flux) ** -1

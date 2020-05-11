@@ -206,7 +206,8 @@ class AnalogModel(object):
 
     def compute_observables(self, lens_system):
 
-        magnifications, _ = lens_system.quasar_magnification(self.lens.x, self.lens.y, normed=False)
+        magnifications, _ = lens_system.quasar_magnification(
+            self.lens.x, self.lens.y, normed=False)
         # lens_system_quad.plot_images(data_to_fit.x, data_to_fit.y)
         lensModel, kwargs_lens = lens_system.get_lensmodel()
         dtgeo, dtgrav = lensModel.lens_model.geo_shapiro_delay(self.lens.x, self.lens.y, kwargs_lens)

@@ -169,8 +169,10 @@ def run(job_index, chain_ID, output_path, path_to_folder,
             raise Exception('optimization routine '+ keyword_arguments['keywords_optimizer']['routine']
                             + 'not recognized.')
 
-        flux_ratios_fit, blended = lens_system.quasar_magnification(data_to_fit.x, data_to_fit.y,
-                                            lensModel_fit, kwargs_lens_fit, retry_if_blended=1)
+        flux_ratios_fit, blended = lens_system.quasar_magnification(
+            data_to_fit.x, data_to_fit.y, lensModel_fit,
+            kwargs_lens_fit, retry_if_blended=1, enforce_unblended=True
+        )
 
         if blended:
             print('images are blended together')

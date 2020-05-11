@@ -57,7 +57,7 @@ class BruteOptimization(OptimizationBase):
                       'multiplane': True, 'z_main': self.lens_system.zlens, 'z_source': self.lens_system.zsource,
                       'tol_centroid': tol_centroid, 'astropy_instance': self.lens_system.astropy, 'tol_mag': None,
                       'verbose': verbose, 're_optimize': re_optimize, 'particle_swarm': particle_swarm,
-                      'pso_convergence_mean': 50000, 'constrain_params': constrain_params,
+                      'pso_convergence_mean': 80000, 'constrain_params': constrain_params,
                       'simplex_n_iterations': self.n_iterations, 'optimizer_kwargs': opt_kwargs}
 
         kwargs_lens_final, lens_model_full, source = self._fit(data_to_fit,
