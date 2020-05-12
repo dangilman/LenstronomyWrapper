@@ -185,7 +185,7 @@ class ChainPostProcess(object):
         self.background_quasar.update_position(srcx, srcy)
         mags, _ = self.background_quasar.magnification(
             x_image, y_image, self.lensModel, kwargs_lens,
-            normed=False, enforce_unblended=False
+            normed=False, enforce_unblended=False, adaptive=True
         )
 
         return mags[1:] / mags[0], srcx, srcy

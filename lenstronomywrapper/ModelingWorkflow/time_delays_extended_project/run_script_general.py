@@ -49,7 +49,7 @@ def run(Nstart, lens_class, gamma_prior, fname, log_mlow, window_size, exp_time,
             create_directory(save_name_path)
         shapelet_nmax = None
         use_realization = False
-        
+
     elif Nstart < 101:
 
         print('SAMPLING control...... ')
