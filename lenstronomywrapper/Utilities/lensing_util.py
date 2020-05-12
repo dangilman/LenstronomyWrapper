@@ -179,3 +179,45 @@ class RayShootingGrid(object):
         xgrid, ygrid = xgrid.ravel(), ygrid.ravel()
 
         return xgrid, ygrid
+
+class AdaptiveGrid(object):
+
+    def __init__(self, end_rmax, grid_resolution, theta, x_center, y_center):
+
+        full_grid = RayShootingGrid(end_rmax, grid_resolution, theta)
+
+        xgrid_0, ygrid_0 = full_grid.grid_at_xy_unshifted
+        self.r_base = np.sqrt(xgrid_0 ** 2 + ygrid_0 ** 2).ravel()
+        self.rmax = end_rmax
+        self.grid_res = grid_resolution
+
+        self.xgrid, self.ygrid = full_grid.grid_at_xy(x_center, y_center)
+
+        self._pixels_per_axis = int(len(self.xgrid) ** 0.5)
+        self.flux_values = np.zeros_like(self.xgrid)
+
+    def get_indicies(self, rmin, rmax):
+
+        condition = np.logical_and(self.r_base >= rmin, self.r_base < rmax)
+        inds = np.where(condition)
+
+        return inds
+
+    def get_coordinates(self, rmin, rmax):
+
+        indicies = self.get_indicies(rmin, rmax)
+
+        return self.xgrid[indicies], self.ygrid[indicies], indicies
+
+    def set_flux_in_pixels(self, pixel_indicies, flux_in_pixels):
+
+        self.flux_values[pixel_indicies] = flux_in_pixels
+
+    @property
+    def image(self):
+        return self.flux_values.reshape(self._pixels_per_axis, self._pixels_per_axis)
+
+
+
+
+

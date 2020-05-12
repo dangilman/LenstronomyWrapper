@@ -171,7 +171,8 @@ def run(job_index, chain_ID, output_path, path_to_folder,
 
         flux_ratios_fit, blended = lens_system.quasar_magnification(
             data_to_fit.x, data_to_fit.y, lensModel_fit,
-            kwargs_lens_fit, retry_if_blended=1, enforce_unblended=True
+            kwargs_lens_fit,
+            adaptive=True
         )
 
         if blended:
@@ -190,7 +191,7 @@ def run(job_index, chain_ID, output_path, path_to_folder,
             ax.set_aspect('equal')
             plt.show()
 
-            lens_system.plot_images(data_to_fit.x, data_to_fit.y)
+            lens_system.plot_images(data_to_fit.x, data_to_fit.y, adaptive=True)
             plt.show()
             a = input('continue')
 

@@ -19,7 +19,7 @@ paramdictionary_folder_path = os.getenv('HOME') + '/data/'
 print(job_index)
 # launch and forget
 run(job_index, chain_ID, out_path,
-    paramdictionary_folder_path)
+    paramdictionary_folder_path, True)
 
 
 
