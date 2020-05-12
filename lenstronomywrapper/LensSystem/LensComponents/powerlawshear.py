@@ -110,7 +110,7 @@ class PowerLawShear(ComponentBase):
 
     @property
     def lens_model_list(self):
-        return ['SPEMD', 'SHEAR']
+        return ['PEMD', 'SHEAR']
 
     @property
     def redshift_list(self):
