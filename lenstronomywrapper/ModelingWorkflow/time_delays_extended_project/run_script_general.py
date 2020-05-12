@@ -49,9 +49,7 @@ def run(Nstart, lens_class, gamma_prior, fname, log_mlow, window_size, exp_time,
             create_directory(save_name_path)
         shapelet_nmax = None
         use_realization = False
-        #fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 200, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 300}
-        #fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 3, 'walkerRatio': 4, 'n_burn': 0}
-
+        
     elif Nstart < 101:
 
         print('SAMPLING control...... ')
@@ -64,8 +62,6 @@ def run(Nstart, lens_class, gamma_prior, fname, log_mlow, window_size, exp_time,
 
         shapelet_nmax = 8
         use_realization = False
-        #fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 250, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 300}
-        #fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 3, 'walkerRatio': 4, 'n_burn': 0}
 
     elif Nstart < 301:
 
@@ -78,8 +74,6 @@ def run(Nstart, lens_class, gamma_prior, fname, log_mlow, window_size, exp_time,
             create_directory(save_name_path_base + '/realizations'+name_append+'/')
 
         print('SAMPLING LOS plus subs...... ')
-        #fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 250, 'n_run': 150, 'walkerRatio': 4, 'n_burn': 300}
-        #fit_smooth_kwargs = {'n_particles': 1, 'n_iterations': 1, 'n_run': 2, 'walkerRatio': 4, 'n_burn': 0}
         N0 = Nstart - 100
         lens_analog_model_class = AnalogModel(lens_class, kwargs_cosmo,
                                     pickle_directory=save_name_path_base + '/realizations'+name_append+'/',
@@ -92,7 +86,6 @@ def run(Nstart, lens_class, gamma_prior, fname, log_mlow, window_size, exp_time,
     elif Nstart < 501:
         print('SAMPLING LOS plus subs with shapelets...... ')
         N0 = Nstart - 300
-        #fit_smooth_kwargs = {'n_particles': 50, 'n_iterations': 50, 'n_run': 2, 'walkerRatio': 4, 'n_burn': 0}
 
         save_name_path_base = base_path + '/tdelay_output/raw/' + fname
         save_name_path = save_name_path_base + '/los_plus_subs' + name_append + '_shapelets/'
