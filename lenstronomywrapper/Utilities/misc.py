@@ -71,7 +71,7 @@ def write_params(params, fname, header, mode, write_header=False):
                     f.write(str(float(row[p]))+' ')
                 f.write('\n')
 
-def write_macro(output_path, kwargs_macro, mode):
+def write_macro(output_path, kwargs_macro, mode, write_header):
 
     param_names = ''
     for key in kwargs_macro[0].keys():
@@ -81,7 +81,7 @@ def write_macro(output_path, kwargs_macro, mode):
 
         for row in range(0, len(kwargs_macro)):
 
-            if row == 0 and mode == 'w':
+            if row == 0 and write_header:
                 f.write(param_names + '\n')
 
             for key in kwargs_macro[row].keys():

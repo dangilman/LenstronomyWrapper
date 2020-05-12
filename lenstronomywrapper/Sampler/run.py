@@ -38,17 +38,15 @@ def run(job_index, chain_ID, output_path, path_to_folder,
         create_directory(readout_path)
 
     fname_fluxes = readout_path + 'fluxes.txt'
-    fname_params = readout_path + 'parameters.txt'
-    fluxes_computed, parameters_sampled = None, None
 
+    write_header = True
     if os.path.exists(fname_fluxes):
         fluxes_computed = np.loadtxt(fname_fluxes)
-        parameters_sampled = np.loadtxt(fname_params, skiprows=1)
         N_computed = int(fluxes_computed.shape[0])
-
+        write_header = False
     n_run = Nsamples - N_computed
 
-    if n_run == 0:
+    if n_run <= 0:
         print('job index '+str(job_index) + ' finished.')
         return
     else:
@@ -74,6 +72,8 @@ def run(job_index, chain_ID, output_path, path_to_folder,
     kwargs_macro = []
     initialize = True
     kwargs_macro_ref = None
+    fluxes_computed = None
+    parameters_sampled = None
 
     counter = 0
     while counter < n_run:
@@ -218,13 +218,16 @@ def run(job_index, chain_ID, output_path, path_to_folder,
 
             fluxes_computed = flux_ratios_fit
             parameters_sampled = parameters
+
         else:
 
             fluxes_computed = np.vstack((fluxes_computed, flux_ratios_fit))
             parameters_sampled = np.vstack((parameters_sampled, parameters))
 
         if (counter+1) % readout_steps == 0:
-            readout(readout_path, kwargs_macro, fluxes_computed, parameters_sampled, header)
+            readout(readout_path, kwargs_macro, fluxes_computed, parameters_sampled,
+                    header, write_header)
+            fluxes_computed, params_sampled = None, None
 
         counter += 1
 
