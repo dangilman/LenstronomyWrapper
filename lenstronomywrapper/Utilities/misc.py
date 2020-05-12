@@ -30,14 +30,9 @@ def delete_dir(dirname=''):
 
 def write_fluxes(filename, fluxes, mode='a'):
 
-    if mode == 'append':
-        m = 'a'
-    else:
-        m = 'w'
-
     if fluxes.ndim == 1:
 
-        with open(filename, m) as f:
+        with open(filename, mode) as f:
 
             for val in fluxes:
                 f.write(str(val) + ' ')
@@ -46,7 +41,7 @@ def write_fluxes(filename, fluxes, mode='a'):
 
         N = int(np.shape(fluxes)[0])
 
-        with open(filename,m) as f:
+        with open(filename,mode) as f:
             for n in range(0,N):
                 for val in fluxes[n,:]:
                     f.write(str(val)+' ')

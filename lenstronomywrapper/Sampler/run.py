@@ -40,10 +40,12 @@ def run(job_index, chain_ID, output_path, path_to_folder,
     fname_fluxes = readout_path + 'fluxes.txt'
 
     write_header = True
+    write_mode = 'w'
     if os.path.exists(fname_fluxes):
         fluxes_computed = np.loadtxt(fname_fluxes)
         N_computed = int(fluxes_computed.shape[0])
         write_header = False
+        write_mode = 'a'
     n_run = Nsamples - N_computed
 
     if n_run <= 0:
@@ -226,8 +228,11 @@ def run(job_index, chain_ID, output_path, path_to_folder,
 
         if (counter+1) % readout_steps == 0:
             readout(readout_path, kwargs_macro, fluxes_computed, parameters_sampled,
-                    header, write_header)
-            fluxes_computed, params_sampled = None, None
+                    header, write_header, write_mode)
+            fluxes_computed, parameters_sampled = None, None
+            kwargs_macro = []
+            write_mode = 'a'
+            write_header = False
 
         counter += 1
 

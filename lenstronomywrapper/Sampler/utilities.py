@@ -12,17 +12,12 @@ from lenstronomywrapper.Sampler.prior_sample import PriorDistribution
 
 from copy import deepcopy
 
-def readout(readout_path, kwargs_macro, fluxes, parameters, header, write_header):
+def readout(readout_path, kwargs_macro, fluxes, parameters, header, write_header, write_mode):
 
-    if write_header:
-        mode = 'a'
-    else:
-        mode = 'w'
-
-    write_params(parameters, readout_path + 'parameters.txt', header, mode=mode,
+    write_params(parameters, readout_path + 'parameters.txt', header, mode=write_mode,
                  write_header=write_header)
-    write_fluxes(readout_path + 'fluxes.txt', fluxes=fluxes, mode=mode)
-    write_macro(readout_path + 'macro.txt', kwargs_macro, mode=mode)
+    write_fluxes(readout_path + 'fluxes.txt', fluxes=fluxes, mode=write_mode)
+    write_macro(readout_path + 'macro.txt', kwargs_macro, mode=write_mode, write_header=write_header)
 
 
 def load_keywords(path_to_folder, job_index):
