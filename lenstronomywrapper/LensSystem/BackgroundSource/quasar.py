@@ -135,7 +135,8 @@ class Quasar(SourceBase):
 
         return magnification_current
 
-    def magnification_adaptive(self, xpos, ypos, lensModel, kwargs_lens, normed, tol=0.005):
+    def magnification_adaptive(self, xpos, ypos, lensModel, kwargs_lens, normed, tol=0.005,
+                               verbose=False):
 
         def _converged(dm):
 
@@ -164,7 +165,9 @@ class Quasar(SourceBase):
             converged = False
             r_min = r_start
             r_max = r_min + step_size
-            #print('magnification: ', magnification_last)
+
+            if verbose:
+                print('magnification: ', magnification_last)
 
             while converged is False:
 
@@ -173,7 +176,8 @@ class Quasar(SourceBase):
                 delta = 1 - magnification_last / magnification_new
                 converged = _converged(delta)
 
-                #print('magnification: ', magnification_new)
+                if verbose:
+                    print('magnification: ', magnification_new)
 
                 if r_max > grid.rmax:
                     break
@@ -260,12 +264,14 @@ class Quasar(SourceBase):
 
     def magnification(self, xpos, ypos, lensModel,
                       kwargs_lens, normed=True, retry_if_blended=0,
-                      enforce_unblended=False, adaptive=False):
+                      enforce_unblended=False, adaptive=False, verbose=False):
 
         self._check_initialized()
 
         if adaptive:
-            return self.magnification_adaptive(xpos, ypos, lensModel, kwargs_lens, normed)
+
+            return self.magnification_adaptive(xpos, ypos, lensModel, kwargs_lens, normed,
+                                               verbose=verbose)
 
         if enforce_unblended:
 

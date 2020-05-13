@@ -4,7 +4,7 @@ import dill
 
 def run(Nstart, lens_class, gamma_prior, fname, log_mlow, window_size, exp_time, background_rms, N=1,
         subtract_exact_mass_sheets=False, name_append='', fix_Ddt=False,
-        fit_smooth_kwargs=None, window_scale=10, do_sampling=True):
+        fit_smooth_kwargs=None, window_scale=10, do_sampling=True, realization_kwargs=None):
 
     position_sigma = [0.005]*4
 
@@ -14,16 +14,17 @@ def run(Nstart, lens_class, gamma_prior, fname, log_mlow, window_size, exp_time,
     arrival_time_sigma = np.round(arrival_time_sigma, 5)
 
     mdef = 'TNFW'
-    realization_kwargs = {'mdef_main': mdef, 'mdef_los': mdef, 'mass_func_type': 'POWER_LAW',
+
+    realization_kwargs_base = {'mdef_main': mdef, 'mdef_los': mdef, 'mass_func_type': 'POWER_LAW',
                           'log_mlow': log_mlow, 'log_mhigh': 9., 'power_law_index': -1.9,
-                          'parent_m200': 10 ** 13, 'r_tidal': '0.5Rs',
+                          'r_tidal': '0.5Rs',
                           'cone_opening_angle': window_scale * window_size,
                           'log_mass_sheet_min': log_mlow,
-                          'sigma_sub': 0.02,
                           'log_mass_sheet_max': 9.,
                           'opening_angle_factor': window_scale * window_size,
                           'subtract_exact_mass_sheets': subtract_exact_mass_sheets,
                           'subtract_subhalo_mass_sheet': True}
+    realization_kwargs.update(realization_kwargs_base)
 
     kwargs_cosmo = {'cosmo_kwargs': {'H0': 73.3}}
 

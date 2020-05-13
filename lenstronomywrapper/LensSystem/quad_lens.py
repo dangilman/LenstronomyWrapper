@@ -145,7 +145,7 @@ class QuadLensSystem(LensBase):
                              kwargs_lensmodel=None, normed=True,
                              retry_if_blended=0,
                              enforce_unblended=False,
-                             adaptive=False):
+                             adaptive=False, verbose=False):
 
         """
         Computes the magnifications (or flux ratios if normed=True)
@@ -164,7 +164,7 @@ class QuadLensSystem(LensBase):
         return self.background_quasar.magnification(x, y, lens_model,
                                                     kwargs_lensmodel,
                                                     normed, retry_if_blended,
-                                                    enforce_unblended, adaptive)
+                                                    enforce_unblended, adaptive, verbose)
 
     def plot_images(self, x, y, lens_model=None, kwargs_lensmodel=None, source_fwhm_pc=None,
                     adaptive=False):

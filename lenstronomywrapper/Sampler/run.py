@@ -174,14 +174,8 @@ def run(job_index, chain_ID, output_path, path_to_folder,
         flux_ratios_fit, blended = lens_system.quasar_magnification(
             data_to_fit.x, data_to_fit.y, lensModel_fit,
             kwargs_lens_fit,
-            adaptive=True
+            adaptive=True, verbose=keyword_arguments['verbose']
         )
-
-        if blended:
-            print('images are blended together')
-            continue
-
-        flux_ratios_fit = np.round(flux_ratios_fit, 5)
 
         if test_mode:
             import matplotlib.pyplot as plt
@@ -196,6 +190,12 @@ def run(job_index, chain_ID, output_path, path_to_folder,
             lens_system.plot_images(data_to_fit.x, data_to_fit.y, adaptive=True)
             plt.show()
             a = input('continue')
+
+        if blended:
+            print('images are blended together')
+            continue
+
+        flux_ratios_fit = np.round(flux_ratios_fit, 5)
 
         comp1 = kwargs_e1e2_to_polar(lens_system.macromodel.components[0].kwargs[0])
         comp2 = kwargs_gamma1gamma2_to_polar(lens_system.macromodel.components[0].kwargs[1])
