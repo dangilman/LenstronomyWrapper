@@ -130,6 +130,7 @@ for n_lens in range(n_lens_start, n_lens_end):
         half_window_size = 2.
         lens_class = Lens0435()
         gamma_mean, gamma_sigma = 1.93, 0.024
+        gamma_sigma = 0.012
         log_host_mass = 13.2
         exp_time, background_rms, do_sampling = lens0435_exposure(Nstart)
 
@@ -165,24 +166,23 @@ for n_lens in range(n_lens_start, n_lens_end):
 
     fit_smooth_kwargs = {'n_particles': 150, 'n_iterations': 350, 'n_run': 150,
                          'walkerRatio': 4, 'n_burn': 600}
-    #fit_smooth_kwargs = {'n_particles': 2, 'n_iterations': 2, 'n_run': 4, 'walkerRatio': 4,
-    #                     'n_burn': 10}
-    log_mlow = 9.
+    #fit_smooth_kwargs = {'n_particles': 2, 'n_iterations': 2, 'n_run': 5,
+    #                     'walkerRatio': 4, 'n_burn': 1}
+    log_mlow = 6.7
 
-    name_append = '_mlow6.7_highnorm'
+    name_append = '_mlow6.7'
 
-    sample_gamma = False
+    sample_gamma = True
 
     if sample_gamma:
-        name_append += '_samplegamma'
-
+        name_append += '_samplegammagaussian_v2'
     else:
         gamma_sigma = 1e-9
 
     gamma_prior = GammaPrior(gamma_mean, gamma_sigma)
     # window_scale = 10
     window_scale = 10
-    realization_kwargs = {'sigma_sub': 0.03, 'parent_m200': 10**log_host_mass}
+    realization_kwargs = {'sigma_sub': 0.02, 'parent_m200': 10**13}
     run_lens(Nstart, lens_class, gamma_prior, lens_name, log_mlow, half_window_size, exp_time,
              background_rms=background_rms, subtract_exact_mass_sheets=False, name_append=name_append,
              fix_Ddt=True, fit_smooth_kwargs=fit_smooth_kwargs, window_scale=window_scale,

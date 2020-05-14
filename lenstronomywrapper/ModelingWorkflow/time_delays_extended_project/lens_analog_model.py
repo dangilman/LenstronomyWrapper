@@ -294,6 +294,7 @@ class AnalogModel(object):
             fname = self._pickle_directory + 'macromodel_'+str(self._class_idx)
 
             if os.path.exists(fname):
+                print(fname, 'opening_file')
                 file = open(fname, 'rb')
                 lens_system_quad = pickle.load(file)
 

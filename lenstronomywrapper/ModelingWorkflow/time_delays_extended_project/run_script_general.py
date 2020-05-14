@@ -1,6 +1,5 @@
 from lenstronomywrapper.ModelingWorkflow.time_delays_extended_project.scripts import *
 import os
-import dill
 
 def run(Nstart, lens_class, gamma_prior, fname, log_mlow, window_size, exp_time, background_rms, N=1,
         subtract_exact_mass_sheets=False, name_append='', fix_Ddt=False,
@@ -24,6 +23,7 @@ def run(Nstart, lens_class, gamma_prior, fname, log_mlow, window_size, exp_time,
                           'opening_angle_factor': window_scale * window_size,
                           'subtract_exact_mass_sheets': subtract_exact_mass_sheets,
                           'subtract_subhalo_mass_sheet': True}
+
     realization_kwargs.update(realization_kwargs_base)
 
     kwargs_cosmo = {'cosmo_kwargs': {'H0': 73.3}}

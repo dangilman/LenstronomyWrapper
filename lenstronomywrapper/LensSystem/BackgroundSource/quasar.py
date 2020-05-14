@@ -136,7 +136,7 @@ class Quasar(SourceBase):
         return magnification_current
 
     def magnification_adaptive(self, xpos, ypos, lensModel, kwargs_lens, normed, tol=0.005,
-                               verbose=False):
+                               verbose=False, enforce_unblended=False):
 
         def _converged(dm):
 
@@ -186,7 +186,7 @@ class Quasar(SourceBase):
                 r_min += step_size
                 r_max += step_size
 
-            if flux_at_edge(grid.image):
+            if flux_at_edge(grid.image) and enforce_unblended:
                 return None, True
 
             mags.append(magnification_new)
@@ -271,7 +271,7 @@ class Quasar(SourceBase):
         if adaptive:
 
             return self.magnification_adaptive(xpos, ypos, lensModel, kwargs_lens, normed,
-                                               verbose=verbose)
+                                               verbose=verbose, enforce_unblended=enforce_unblended)
 
         if enforce_unblended:
 
