@@ -45,10 +45,13 @@ def run(Nstart, lens_class, gamma_prior, fname, log_mlow, window_size, exp_time,
         print('SAMPLING control...... ')
         save_name_path_base = base_path + '/tdelay_output/raw/' + fname
         N0 = Nstart
+        if not os.path.exists(save_name_path_base + '/chains_control' + name_append + '/'):
+            create_directory(save_name_path_base + '/chains_control' + name_append + '/')
+
         lens_analog_model_class = AnalogModel(lens_class, kwargs_cosmo,
-                                 pickle_directory=save_name_path_base + '/realizations'+name_append+'/',
+                                 chain_directory=save_name_path_base + '/chains_control'+name_append+'/',
                                               class_idx=N0)
-        
+
         save_name_path = base_path + '/tdelay_output/raw/' + fname + '/control' + name_append + '/'
         if not os.path.exists(save_name_path):
             create_directory(save_name_path)
@@ -59,9 +62,13 @@ def run(Nstart, lens_class, gamma_prior, fname, log_mlow, window_size, exp_time,
 
         print('SAMPLING control...... ')
         save_name_path_base = base_path + '/tdelay_output/raw/' + fname
+        if not os.path.exists(save_name_path_base + '/chains_control_shapelets' + name_append + '/'):
+            create_directory(save_name_path_base + '/chains_control_shapelets' + name_append + '/')
+
         N0 = Nstart - 50
         lens_analog_model_class = AnalogModel(lens_class, kwargs_cosmo,
                                 pickle_directory=save_name_path_base + '/realizations'+name_append+'/',
+                                chain_directory=save_name_path_base + '/chains_control_shapelets'+name_append+'/',
                                               class_idx=N0)
         save_name_path_base = base_path + '/tdelay_output/raw/' + fname
         save_name_path = save_name_path_base + '/control_shapelets' + name_append + '/'
@@ -80,11 +87,15 @@ def run(Nstart, lens_class, gamma_prior, fname, log_mlow, window_size, exp_time,
             create_directory(save_name_path)
         if not os.path.exists(save_name_path_base + '/realizations'+name_append+'/'):
             create_directory(save_name_path_base + '/realizations'+name_append+'/')
+        if not os.path.exists(save_name_path_base + '/chains' + name_append + '/'):
+            create_directory(save_name_path_base + '/chains' + name_append + '/')
+
 
         print('SAMPLING LOS plus subs...... ')
         N0 = Nstart - 100
         lens_analog_model_class = AnalogModel(lens_class, kwargs_cosmo,
                                     pickle_directory=save_name_path_base + '/realizations'+name_append+'/',
+                                              chain_directory=save_name_path_base + '/chains' + name_append + '/',
                                               class_idx=N0, do_sampling=do_sampling)
 
         use_realization = True
@@ -100,9 +111,12 @@ def run(Nstart, lens_class, gamma_prior, fname, log_mlow, window_size, exp_time,
 
         if not os.path.exists(save_name_path_base + '/realizations'+name_append+'/'):
             create_directory(save_name_path_base + '/realizations'+name_append+'/')
+        if not os.path.exists(save_name_path_base + '/chains_shapelets' + name_append + '/'):
+            create_directory(save_name_path_base + '/chains_shapelets' + name_append + '/')
 
         lens_analog_model_class = AnalogModel(lens_class, kwargs_cosmo,
                                   pickle_directory=save_name_path_base + '/realizations'+name_append+'/',
+                                  chain_directory=save_name_path_base + '/chains_shapelets' + name_append + '/',
                                               class_idx=N0, do_sampling=do_sampling)
 
         if not os.path.exists(save_name_path):

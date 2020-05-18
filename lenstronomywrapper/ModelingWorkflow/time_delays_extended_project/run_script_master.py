@@ -164,14 +164,12 @@ for n_lens in range(n_lens_start, n_lens_end):
     else:
         raise Exception('out of range.')
 
-    # fit_smooth_kwargs = {'n_particles': 150, 'n_iterations': 350, 'n_run': 250,
-    #                      'walkerRatio': 4, 'n_burn': 1100}
-    fit_smooth_kwargs = {'n_particles': 10, 'n_iterations': 10, 'n_run': 5,
+    fit_smooth_kwargs = {'n_particles': 2, 'n_iterations': 2, 'n_run': 5,
                          'walkerRatio': 4, 'n_burn': 0}
-    log_mlow = 8
+    log_mlow = 8.8
 
-    name_append = '_mlow6'
-    # TO DO: restart the run with mlow = 6 after convergence test 2 finishes
+    name_append = ''
+
     sample_gamma = False
 
     if sample_gamma:
@@ -190,4 +188,4 @@ for n_lens in range(n_lens_start, n_lens_end):
 
     tellapsed = np.round((time.time() - t_start) / 60 / 60, 2)
     print('finished in ' + str(tellapsed) + ' hours.')
-    exit(1)
+

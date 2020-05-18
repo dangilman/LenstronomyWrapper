@@ -28,6 +28,7 @@ class AnalogModel(object):
     def __init__(self, lens_class_instance, kwargs_cosmology,
                  kwargs_quasar=None, makeplots=False,
                  free_convergence=False, pickle_directory=None,
+                 chain_directory=None,
                  class_idx=None, do_sampling=True):
 
         if kwargs_quasar is None:
@@ -39,6 +40,7 @@ class AnalogModel(object):
         self.kwargs_cosmology = kwargs_cosmology
         self._pickle_directory = pickle_directory
         self._class_idx = class_idx
+        self._chain_directory = chain_directory
         self.do_sampling = do_sampling
 
         #self.lens.x += np.random.normal(0, self.lens.sigma_x)
@@ -433,7 +435,8 @@ class AnalogModel(object):
                                multi_band_list, kwargs_special, param_class, lensModel, kwargs_lens,
                                lensModel_full, kwargs_lens_full, window_size, kwargs_data_setup
                                )
-        fname = self._pickle_directory + 'MCMCchain_' + str(self._class_idx)
+
+        fname = self._chain_directory + 'MCMCchain_' + str(self._class_idx)
         file = open(fname, 'wb')
         pickle.dump(mcmc_chain, file)
         file.close()
