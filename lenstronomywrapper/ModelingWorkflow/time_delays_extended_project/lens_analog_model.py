@@ -10,6 +10,7 @@ from lenstronomywrapper.LensSystem.LensComponents.satellite import SISsatellite
 from lenstronomywrapper.LensSystem.light_model import LightModel
 from lenstronomy.Plots.model_plot import ModelPlot
 import random
+from lenstronomywrapper.ModelingWorkflow.time_delays_extended_project.MCMCchain import MCMCchain
 from lenstronomywrapper.Utilities.data_util import approx_theta_E
 from lenstronomywrapper.LensSystem.BackgroundSource.quasar import Quasar
 from lenstronomywrapper.Utilities.data_util import write_data_to_file
@@ -95,70 +96,63 @@ class AnalogModel(object):
 
         for n in range(0, N):
 
-            tbaseline, f, t, tdelay_model, macro_params, kw_fit, kw_setup= self.run_once(use_realization,
-                                                                arrival_time_sigma,
-                                                                image_positions_sigma,
+            self.run_once(save_name_path, use_realization,arrival_time_sigma, image_positions_sigma,
                                                                 realization_kwargs,
                                                                 time_delay_likelihood,
                                                                 fix_D_dt, window_size,
                                                                 exp_time, background_rms,
                                                                 shapelet_nmax, gamma_prior,
                                                                 **fit_smooth_kwargs)
+        return None
+            # observed_lens.append(kw_fit['observed_lens'])
+            # modeled_lens.append(kw_fit['modeled_lens'])
+            # normalized_residuals.append(kw_fit['normalized_residuals'])
+            # residual_convergence.append(kw_fit['residual_convergence'])
+            # residual_mean_kappa.append(kw_fit['mean_kappa'])
+            # time_delay_residuals.append(kw_fit['time_delay_residuals'])
+            # reconstructed_source.append(kw_fit['reconstructed_source'])
+            #
+            # if n == 0:
+            #     baseline = tbaseline
+            #     flux_anomalies = f
+            #     time_anomalies = t
+            #     chi2_imaging = kw_fit['chi2_imaging'].ravel()
+            #     time_delays_model = tdelay_model
+            #     #ddt_inferred = kw_fit['D_dt_samples'].ravel()
+            #     macromodel_parameters = macro_params
+            #     tsigma = arrival_time_sigma
+            #
+            # else:
+            #     baseline = np.vstack((baseline, tbaseline))
+            #     flux_anomalies = np.vstack((flux_anomalies, f))
+            #     time_anomalies = np.vstack((time_anomalies, t))
+            #     time_delays_model = np.vstack((time_delays_model, tdelay_model))
+            #     chi2_imaging = np.append(chi2_imaging, kw_fit['chi2_imaging'].ravel())
+            #     #ddt_inferred = np.append(ddt_inferred, kw_fit['D_dt_samples'].ravel())
+            #     #h0_inferred = np.append(h0_inferred, h0_inf.ravel()).flatten()
+            #     macromodel_parameters = np.vstack((macromodel_parameters, macro_params))
+            #     tsigma = np.vstack((tsigma, arrival_time_sigma))
 
-            if self.do_sampling:
-                pass
-            else:
-                return None
-
-            observed_lens.append(kw_fit['observed_lens'])
-            modeled_lens.append(kw_fit['modeled_lens'])
-            normalized_residuals.append(kw_fit['normalized_residuals'])
-            residual_convergence.append(kw_fit['residual_convergence'])
-            residual_mean_kappa.append(kw_fit['mean_kappa'])
-            time_delay_residuals.append(kw_fit['time_delay_residuals'])
-            reconstructed_source.append(kw_fit['reconstructed_source'])
-
-            if n == 0:
-                baseline = tbaseline
-                flux_anomalies = f
-                time_anomalies = t
-                chi2_imaging = kw_fit['chi2_imaging'].ravel()
-                time_delays_model = tdelay_model
-                #ddt_inferred = kw_fit['D_dt_samples'].ravel()
-                macromodel_parameters = macro_params
-                tsigma = arrival_time_sigma
-
-            else:
-                baseline = np.vstack((baseline, tbaseline))
-                flux_anomalies = np.vstack((flux_anomalies, f))
-                time_anomalies = np.vstack((time_anomalies, t))
-                time_delays_model = np.vstack((time_delays_model, tdelay_model))
-                chi2_imaging = np.append(chi2_imaging, kw_fit['chi2_imaging'].ravel())
-                #ddt_inferred = np.append(ddt_inferred, kw_fit['D_dt_samples'].ravel())
-                #h0_inferred = np.append(h0_inferred, h0_inf.ravel()).flatten()
-                macromodel_parameters = np.vstack((macromodel_parameters, macro_params))
-                tsigma = np.vstack((tsigma, arrival_time_sigma))
-
-        fnames = ['tbaseline_', 'flux_anomaly_', 'time_anomaly_', 'time_delays_', 'macroparams_',
-                  'time_delay_sigma_', 'kappares_', 'chi2_imaging_']
-
-        arrays = [baseline, flux_anomalies, time_anomalies, time_delays_model,
-                  macromodel_parameters, tsigma, np.array(residual_mean_kappa), chi2_imaging]
-
-        for fname, arr in zip(fnames, arrays):
-            write_data_to_file(save_name_path + fname + str(N_start) + '.txt', arr)
-
-        for i in range(0, len(observed_lens)):
-
-            np.savetxt(save_name_path + 'observed_' + str(N_start+i)+'.txt', X=observed_lens[i])
-            np.savetxt(save_name_path + 'modeled_' + str(N_start+i)+'.txt', X=modeled_lens[i])
-            np.savetxt(save_name_path + 'residuals_' + str(N_start + i) + '.txt', X=normalized_residuals[i])
-            np.savetxt(save_name_path + 'kappa_' + str(N_start + i) + '.txt', X=residual_convergence[i])
-            np.savetxt(save_name_path + 'tdelayres_' + str(N_start + i) + '.txt', X=time_delay_residuals[i])
-            np.savetxt(save_name_path + 'source_' + str(N_start + i) + '.txt', X=reconstructed_source[i])
-
-
-        return [flux_anomalies, baseline, time_anomalies]
+        # fnames = ['tbaseline_', 'flux_anomaly_', 'time_anomaly_', 'time_delays_', 'macroparams_',
+        #           'time_delay_sigma_', 'kappares_', 'chi2_imaging_']
+        #
+        # arrays = [baseline, flux_anomalies, time_anomalies, time_delays_model,
+        #           macromodel_parameters, tsigma, np.array(residual_mean_kappa), chi2_imaging]
+        #
+        # for fname, arr in zip(fnames, arrays):
+        #     write_data_to_file(save_name_path + fname + str(N_start) + '.txt', arr)
+        #
+        # for i in range(0, len(observed_lens)):
+        #
+        #     np.savetxt(save_name_path + 'observed_' + str(N_start+i)+'.txt', X=observed_lens[i])
+        #     np.savetxt(save_name_path + 'modeled_' + str(N_start+i)+'.txt', X=modeled_lens[i])
+        #     np.savetxt(save_name_path + 'residuals_' + str(N_start + i) + '.txt', X=normalized_residuals[i])
+        #     np.savetxt(save_name_path + 'kappa_' + str(N_start + i) + '.txt', X=residual_convergence[i])
+        #     np.savetxt(save_name_path + 'tdelayres_' + str(N_start + i) + '.txt', X=time_delay_residuals[i])
+        #     np.savetxt(save_name_path + 'source_' + str(N_start + i) + '.txt', X=reconstructed_source[i])
+        #
+        #
+        # return [flux_anomalies, baseline, time_anomalies]
 
     def save_append(self, filename, array_to_save):
 
@@ -171,7 +165,7 @@ class AnalogModel(object):
 
         np.savetxt(filename, X=array_to_save, fmt='%.5f')
 
-    def run_once(self, use_realization, arrival_time_sigma, image_sigma, realization_kwargs,
+    def run_once(self, save_name_path, use_realization, arrival_time_sigma, image_sigma, realization_kwargs,
             time_delay_likelihood, fix_D_dt, window_size, exp_time, background_rms, shapelet_nmax,
                  gamma_prior, **fit_smooth_kwargs):
 
@@ -185,24 +179,27 @@ class AnalogModel(object):
             return None, None, None, None, \
                None, None, None
 
-        return_kwargs_fit, kwargs_data_fit = self.fit_smooth(lens_system, data_class, arrival_time_sigma,
-                                                             time_delay_likelihood, fix_D_dt, window_size, **fit_smooth_kwargs)
-
-        macromodel_params = np.round(return_kwargs_fit['kwargs_lens_macro_fit'], 5)
-        srcx, srcy = np.round(kwargs_data_fit['source_x'], 4), np.round(kwargs_data_fit['source_y'], 4)
-
-        macromodel_params = np.hstack((macromodel_params, np.array([srcx, srcy]).reshape(len(srcx), 2)))
-
-        key = 'flux_ratios'
-        flux_anomaly = np.round(self.flux_anomaly(kwargs_data_fit[key], kwargs_data_setup[key]), 4)
-
-        key = 'time_delays'
-        time_anomaly = np.round(self.time_anomaly(kwargs_data_fit[key], kwargs_data_setup[key]), 4)
-        time_delays_model = kwargs_data_fit[key]
-        time_delay_baseline = kwargs_data_setup[key]
-
-        return time_delay_baseline, flux_anomaly, time_anomaly, time_delays_model, \
-               macromodel_params, return_kwargs_fit, return_kwargs_setup
+        self.fit_smooth(save_name_path, lens_system, data_class, arrival_time_sigma,
+                              time_delay_likelihood, fix_D_dt, window_size, kwargs_data_setup, **fit_smooth_kwargs)
+        #
+        # return_kwargs_fit, kwargs_data_fit = self.fit_smooth(lens_system, data_class, arrival_time_sigma,
+        #                                                      time_delay_likelihood, fix_D_dt, window_size, **fit_smooth_kwargs)
+        #
+        # macromodel_params = np.round(return_kwargs_fit['kwargs_lens_macro_fit'], 5)
+        # srcx, srcy = np.round(kwargs_data_fit['source_x'], 4), np.round(kwargs_data_fit['source_y'], 4)
+        #
+        # macromodel_params = np.hstack((macromodel_params, np.array([srcx, srcy]).reshape(len(srcx), 2)))
+        #
+        # key = 'flux_ratios'
+        # flux_anomaly = np.round(self.flux_anomaly(kwargs_data_fit[key], kwargs_data_setup[key]), 4)
+        #
+        # key = 'time_delays'
+        # time_anomaly = np.round(self.time_anomaly(kwargs_data_fit[key], kwargs_data_setup[key]), 4)
+        # time_delays_model = kwargs_data_fit[key]
+        # time_delay_baseline = kwargs_data_setup[key]
+        #
+        # return time_delay_baseline, flux_anomaly, time_anomaly, time_delays_model, \
+        #        macromodel_params, return_kwargs_fit, return_kwargs_setup
 
     def compute_observables(self, lens_system):
 
@@ -412,8 +409,8 @@ class AnalogModel(object):
 
         return lens_system, data_class, return_kwargs, return_kwargs_data
 
-    def fit_smooth(self, arc_quad_lens, data, arrival_time_sigma, time_delay_likelihood, fix_D_dt, window_size,
-                   n_particles=100, n_iterations=200, n_run=100, n_burn=600, walkerRatio=4):
+    def fit_smooth(self, save_name_path, arc_quad_lens, data, arrival_time_sigma, time_delay_likelihood, fix_D_dt, window_size,
+                   kwargs_data_setup, n_particles=100, n_iterations=200, n_run=100, n_burn=600, walkerRatio=4):
 
         lensModel_full, kwargs_lens_full = arc_quad_lens.get_lensmodel()
         lens_system_simple = arc_quad_lens.get_smooth_lens_system()
@@ -431,75 +428,85 @@ class AnalogModel(object):
 
         lensModel, kwargs_lens = lens_system_simple.get_lensmodel()
 
-        modelPlot = ModelPlot(multi_band_list, kwargs_model, kwargs_result, arrow_size=0.02, cmap_string="gist_heat")
+        mcmc_chain = MCMCchain(save_name_path, lens_system_simple, self.lens, chain_list[mcmc_chain_idx][1],
+                               kwargs_result, kwargs_model,
+                               multi_band_list, kwargs_special, param_class, lensModel, kwargs_lens,
+                               lensModel_full, kwargs_lens_full, window_size, kwargs_data_setup
+                               )
+        fname = self._pickle_directory + 'MCMCchain_' + str(self._class_idx)
+        file = open(fname, 'wb')
+        pickle.dump(mcmc_chain, file)
+        file.close()
 
-        logL = modelPlot._imageModel.likelihood_data_given_model(
-            source_marg=False, linear_prior=None, **kwargs_result)
-        ndata_points = modelPlot._imageModel.num_data_evaluate
-        chi2_imaging = logL * 2/ndata_points
-
-        observed_lens = modelPlot._select_band(0)._data
-        modeled_lens = modelPlot._select_band(0)._model
-        normalized_residuals = modelPlot._select_band(0)._norm_residuals
-
-        reconstructed_source, coord_transform = \
-            modelPlot._select_band(0).source(numPix=200, deltaPix=0.025)
-
-        reconstructed_source_log = np.log10(reconstructed_source)
-        vmin, vmax = max(np.min(reconstructed_source_log), -5), min(np.max(reconstructed_source_log), 10)
-        reconstructed_source_log[np.where(reconstructed_source_log < vmin)] = vmin
-        reconstructed_source_log[np.where(reconstructed_source_log > vmax)] = vmax
-
-        residual_maps = ResidualLensMaps(lensModel_full, lensModel, kwargs_lens_full, kwargs_lens)
-        kappa = residual_maps.convergence(window_size, 200)
+        # modelPlot = ModelPlot(multi_band_list, kwargs_model, kwargs_result, arrow_size=0.02, cmap_string="gist_heat")
         #
-        # tdelay_map_full, tdelay_map_simple = residual_maps.time_delay_surface_12(window_size, 200,
+        # logL = modelPlot._imageModel.likelihood_data_given_model(
+        #     source_marg=False, linear_prior=None, **kwargs_result)
+        # ndata_points = modelPlot._imageModel.num_data_evaluate
+        # chi2_imaging = logL * 2/ndata_points
+        #
+        # observed_lens = modelPlot._select_band(0)._data
+        # modeled_lens = modelPlot._select_band(0)._model
+        # normalized_residuals = modelPlot._select_band(0)._norm_residuals
+        #
+        # reconstructed_source, coord_transform = \
+        #     modelPlot._select_band(0).source(numPix=200, deltaPix=0.025)
+        #
+        # reconstructed_source_log = np.log10(reconstructed_source)
+        # vmin, vmax = max(np.min(reconstructed_source_log), -5), min(np.max(reconstructed_source_log), 10)
+        # reconstructed_source_log[np.where(reconstructed_source_log < vmin)] = vmin
+        # reconstructed_source_log[np.where(reconstructed_source_log > vmax)] = vmax
+        #
+        # residual_maps = ResidualLensMaps(lensModel_full, lensModel, kwargs_lens_full, kwargs_lens)
+        # kappa = residual_maps.convergence(window_size, 200)
+        # #
+        # # tdelay_map_full, tdelay_map_simple = residual_maps.time_delay_surface_12(window_size, 200,
+        # #                                    self.lens.x[0], self.lens.y[0])
+        #
+        # tdelay_res_geo, tdelay_res_grav = residual_maps.time_delay_surface_geoshapiro(window_size, 200,
         #                                    self.lens.x[0], self.lens.y[0])
-
-        tdelay_res_geo, tdelay_res_grav = residual_maps.time_delay_surface_geoshapiro(window_size, 200,
-                                           self.lens.x[0], self.lens.y[0])
-        tdelay_res_map = tdelay_res_geo + tdelay_res_grav
-
-        D_dt_true = lens_system_simple.lens_cosmo.ddt
-
-        n_keep = 100
-        _chain_samples = chain_list[mcmc_chain_idx][1]
-        nsamples = int(_chain_samples[:,0].shape[0])
-
-        keep_inds = random.sample(list(np.arange(1, nsamples)), n_keep)
-
-        chain_samples = _chain_samples[keep_inds,:]
-
-        chain_process = ChainPostProcess(lensModel, chain_samples, param_class,
-                                         background_quasar=lens_system_simple.background_quasar)
-
-        flux_ratios, source_x, source_y = chain_process.flux_ratios(self.lens.x, self.lens.y)
-
-        macro_params = chain_process.macro_params()
-
-        arrival_times = chain_process.arrival_times(self.lens.x, self.lens.y)
-
-        relative_arrival_times = np.empty((n_keep, 3))
-        for row in range(0, n_keep):
-            relative_arrival_times[row,:] = self.lens.relative_time_delays(arrival_times[row,:])
-
-        return_kwargs_data = {'flux_ratios': flux_ratios,
-                                'time_delays': relative_arrival_times,
-                                  'source_x': source_x,
-                                  'source_y': source_y}
-
-        return_kwargs = {'D_dt_true': D_dt_true,
-                         'chi2_imaging': chi2_imaging,
-                         'kwargs_lens_macro_fit': macro_params, 'mean_kappa': np.mean(kappa),
-                         'residual_convergence': kappa, 'time_delay_residuals': tdelay_res_map,
-                         'reconstructed_source': reconstructed_source,
-                         'observed_lens': observed_lens, 'modeled_lens': modeled_lens,
-                         'normalized_residuals': normalized_residuals,
-                         'source_x': lens_system_simple.source_centroid_x,
-                         'source_y': lens_system_simple.source_centroid_y, 'zlens': self.zlens,
-                         'zsource': self.zsource}
-
-        return return_kwargs, return_kwargs_data
+        # tdelay_res_map = tdelay_res_geo + tdelay_res_grav
+        #
+        # D_dt_true = lens_system_simple.lens_cosmo.ddt
+        #
+        # n_keep = 100
+        # _chain_samples = chain_list[mcmc_chain_idx][1]
+        # nsamples = int(_chain_samples[:,0].shape[0])
+        #
+        # keep_inds = random.sample(list(np.arange(1, nsamples)), n_keep)
+        #
+        # chain_samples = _chain_samples[keep_inds,:]
+        #
+        # chain_process = ChainPostProcess(lensModel, chain_samples, param_class,
+        #                                  background_quasar=lens_system_simple.background_quasar)
+        #
+        # flux_ratios, source_x, source_y = chain_process.flux_ratios(self.lens.x, self.lens.y)
+        #
+        # macro_params = chain_process.macro_params()
+        #
+        # arrival_times = chain_process.arrival_times(self.lens.x, self.lens.y)
+        #
+        # relative_arrival_times = np.empty((n_keep, 3))
+        # for row in range(0, n_keep):
+        #     relative_arrival_times[row,:] = self.lens.relative_time_delays(arrival_times[row,:])
+        #
+        # return_kwargs_data = {'flux_ratios': flux_ratios,
+        #                         'time_delays': relative_arrival_times,
+        #                           'source_x': source_x,
+        #                           'source_y': source_y}
+        #
+        # return_kwargs = {'D_dt_true': D_dt_true,
+        #                  'chi2_imaging': chi2_imaging,
+        #                  'kwargs_lens_macro_fit': macro_params, 'mean_kappa': np.mean(kappa),
+        #                  'residual_convergence': kappa, 'time_delay_residuals': tdelay_res_map,
+        #                  'reconstructed_source': reconstructed_source,
+        #                  'observed_lens': observed_lens, 'modeled_lens': modeled_lens,
+        #                  'normalized_residuals': normalized_residuals,
+        #                  'source_x': lens_system_simple.source_centroid_x,
+        #                  'source_y': lens_system_simple.source_centroid_y, 'zlens': self.zlens,
+        #                  'zsource': self.zsource}
+        #
+        # return return_kwargs, return_kwargs_data
 
 
 

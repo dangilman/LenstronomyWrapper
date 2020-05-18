@@ -15,7 +15,7 @@ import sys
 #n_lens = 1.
 
 #time.sleep(180)
-
+t_start = time.time()
 def index_read(idx):
     if idx < 51:
         return False
@@ -164,15 +164,15 @@ for n_lens in range(n_lens_start, n_lens_end):
     else:
         raise Exception('out of range.')
 
-    fit_smooth_kwargs = {'n_particles': 150, 'n_iterations': 350, 'n_run': 150,
-                         'walkerRatio': 4, 'n_burn': 600}
-    #fit_smooth_kwargs = {'n_particles': 2, 'n_iterations': 2, 'n_run': 5,
-    #                     'walkerRatio': 4, 'n_burn': 1}
-    log_mlow = 6.7
+    # fit_smooth_kwargs = {'n_particles': 150, 'n_iterations': 350, 'n_run': 250,
+    #                      'walkerRatio': 4, 'n_burn': 1100}
+    fit_smooth_kwargs = {'n_particles': 10, 'n_iterations': 10, 'n_run': 5,
+                         'walkerRatio': 4, 'n_burn': 0}
+    log_mlow = 8
 
-    name_append = '_mlow6.7'
-
-    sample_gamma = True
+    name_append = '_mlow6'
+    # TO DO: restart the run with mlow = 6 after convergence test 2 finishes
+    sample_gamma = False
 
     if sample_gamma:
         name_append += '_samplegammagaussian_v2'
@@ -181,9 +181,13 @@ for n_lens in range(n_lens_start, n_lens_end):
 
     gamma_prior = GammaPrior(gamma_mean, gamma_sigma)
     # window_scale = 10
-    window_scale = 10
-    realization_kwargs = {'sigma_sub': 0.02, 'parent_m200': 10**13}
+    window_scale = 12
+    realization_kwargs = {'sigma_sub': 0.025, 'parent_m200': 10**13.3}
     run_lens(Nstart, lens_class, gamma_prior, lens_name, log_mlow, half_window_size, exp_time,
              background_rms=background_rms, subtract_exact_mass_sheets=False, name_append=name_append,
              fix_Ddt=True, fit_smooth_kwargs=fit_smooth_kwargs, window_scale=window_scale,
              do_sampling=do_sampling, realization_kwargs=realization_kwargs)
+
+    tellapsed = np.round((time.time() - t_start) / 60 / 60, 2)
+    print('finished in ' + str(tellapsed) + ' hours.')
+    exit(1)

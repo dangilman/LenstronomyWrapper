@@ -4,13 +4,14 @@ from lenstronomywrapper.LensSystem.LensSystemExtensions.chain_post_processing im
 from lenstronomywrapper.LensSystem.LensSystemExtensions.lens_maps import ResidualLensMaps
 import random
 
+
 class MCMCchain(object):
 
-    def __init__(self, lens_system_fit, lens, mcmc_samples, kwargs_result, kwargs_model,
+    def __init__(self, save_name_path, lens_system_fit, lens, mcmc_samples, kwargs_result, kwargs_model,
                  multi_band_list, kwargs_special, param_class, lensModel, kwargs_lens,
-                 lensModel_full, kwargs_lens_full, window_size):
+                 lensModel_full, kwargs_lens_full, window_size, kwargs_data_setup):
 
-        self.mcmc_sammples = mcmc_samples
+        self.mcmc_samples = mcmc_samples
         self.kwargs_result = kwargs_result
         self.kwargs_model = kwargs_model
         self.multi_band_list = multi_band_list
@@ -18,6 +19,9 @@ class MCMCchain(object):
         self.param_class = param_class
         self.lensModel = lensModel
         self.kwargs_lens = kwargs_lens
+        self.kwargs_data_setup = kwargs_data_setup
+
+        self.save_name_path = save_name_path
 
         self.lens = lens
 
@@ -30,8 +34,9 @@ class MCMCchain(object):
 
         self.modelPlot = ModelPlot(multi_band_list, kwargs_model, kwargs_result, arrow_size=0.02, cmap_string="gist_heat")
 
-    def get_output(self):
+    def get_output(self, n_burn_frac, n_keep):
 
+        assert n_burn_frac < 1
         logL = self.modelPlot._imageModel.likelihood_data_given_model(
             source_marg=False, linear_prior=None, **self.kwargs_result)
         ndata_points = self.modelPlot._imageModel.num_data_evaluate
@@ -57,13 +62,17 @@ class MCMCchain(object):
                                                                                       self.lens.x[0], self.lens.y[0])
         tdelay_res_map = tdelay_res_geo + tdelay_res_grav
 
-        n_keep = 100
+        nsamples_total = int(len(self.mcmc_samples[:,0]))
 
-        nsamples = int(self.mcmc_sammples[:, 0].shape[0])
+        n_start = round(nsamples_total * (1 - n_burn_frac))
 
-        keep_inds = random.sample(list(np.arange(1, nsamples)), n_keep)
+        if n_start < 0:
+            raise Exception('n burn too large, length of array is '+str(nsamples_total))
 
-        chain_samples = self.mcmc_sammples[keep_inds, :]
+        chain_samples = self.mcmc_samples[n_start:nsamples_total, :]
+        keep_inds = random.sample(list(np.arange(1, chain_samples.shape[0])), n_keep)
+
+        chain_samples = self.mcmc_samples[keep_inds, :]
 
         chain_process = ChainPostProcess(self.lensModel, chain_samples, self.param_class,
                                          background_quasar=self.lens_system_fit.background_quasar)
@@ -83,8 +92,7 @@ class MCMCchain(object):
                               'source_x': source_x,
                               'source_y': source_y}
 
-        return_kwargs = {
-                         'chi2_imaging': chi2_imaging,
+        return_kwargs = {'chi2_imaging': chi2_imaging,
                          'kwargs_lens_macro_fit': macro_params, 'mean_kappa': np.mean(kappa),
                          'residual_convergence': kappa, 'time_delay_residuals': tdelay_res_map,
                          'reconstructed_source': reconstructed_source,
@@ -94,4 +102,4 @@ class MCMCchain(object):
                          'source_y': self.lens_system_fit.source_centroid_y, 'zlens': self.lens_system_fit.zlens,
                          'zsource': self.lens_system_fit.zsource}
 
-        return return_kwargs, return_kwargs_data
+        return return_kwargs, return_kwargs_data, self.kwargs_data_setup
