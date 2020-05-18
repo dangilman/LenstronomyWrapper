@@ -43,8 +43,12 @@ def run(Nstart, lens_class, gamma_prior, fname, log_mlow, window_size, exp_time,
 
     if Nstart < 51:
         print('SAMPLING control...... ')
+        save_name_path_base = base_path + '/tdelay_output/raw/' + fname
         N0 = Nstart
-        lens_analog_model_class = AnalogModel(lens_class, kwargs_cosmo)
+        lens_analog_model_class = AnalogModel(lens_class, kwargs_cosmo,
+                                 pickle_directory=save_name_path_base + '/realizations'+name_append+'/',
+                                              class_idx=N0)
+        
         save_name_path = base_path + '/tdelay_output/raw/' + fname + '/control' + name_append + '/'
         if not os.path.exists(save_name_path):
             create_directory(save_name_path)
@@ -54,8 +58,11 @@ def run(Nstart, lens_class, gamma_prior, fname, log_mlow, window_size, exp_time,
     elif Nstart < 101:
 
         print('SAMPLING control...... ')
+        save_name_path_base = base_path + '/tdelay_output/raw/' + fname
         N0 = Nstart - 50
-        lens_analog_model_class = AnalogModel(lens_class, kwargs_cosmo)
+        lens_analog_model_class = AnalogModel(lens_class, kwargs_cosmo,
+                                pickle_directory=save_name_path_base + '/realizations'+name_append+'/',
+                                              class_idx=N0)
         save_name_path_base = base_path + '/tdelay_output/raw/' + fname
         save_name_path = save_name_path_base + '/control_shapelets' + name_append + '/'
         if not os.path.exists(save_name_path):
