@@ -80,13 +80,13 @@ def extract_mcmc_chains(pickle_dir, idx_min, idx_max, n_burn_frac, n_keep=200):
             macromodel_parameters = np.vstack((macromodel_parameters, macro_params))
 
     fnames = ['tbaseline_', 'flux_anomaly_', 'time_anomaly_', 'time_delays_', 'macroparams_',
-              'time_delay_sigma_', 'kappares_', 'chi2_imaging_']
+              'kappares_', 'chi2_imaging_']
 
     arrays = [baseline, flux_anomalies, time_anomalies, time_delays_model,
               macromodel_parameters, np.array(residual_mean_kappa), chi2_imaging]
 
     for fname, arr in zip(fnames, arrays):
-        write_data_to_file(save_name_path + fname + str(n) + '.txt', arr)
+        write_data_to_file(save_name_path + fname + str(n) + '.txt', arr, 'w')
 
     for i in range(0, len(observed_lens)):
         print(save_name_path)

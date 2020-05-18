@@ -23,10 +23,10 @@ def load_data_from_file(fname):
 
     return LensedQuasar(x_image, y_image, fluxes)
 
-def write_data_to_file(filename, data):
+def write_data_to_file(filename, data, mode='a'):
 
     vec = ''
-    with open(filename, 'a') as f:
+    with open(filename, mode) as f:
         if np.ndim(data) == 0:
             vec += str(data) + '\n'
 
