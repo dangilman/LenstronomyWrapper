@@ -1,131 +1,149 @@
 import numpy as np
 from lenstronomywrapper.Utilities.data_util import image_separation_vectors_quad
 from copy import deepcopy
+from scipy.optimize import minimize
 import matplotlib.pyplot as plt
-from lenstronomywrapper.Utilities.lensing_util import RayShootingGrid
-from lenstronomy.LightModel.light_model import LightModel
 from lenstronomywrapper.LensSystem.BackgroundSource.source_base import SourceBase
+from lenstronomywrapper.LensSystem.BackgroundSource.quasar import Quasar
+from lenstronomywrapper.Utilities.lensing_util import flux_at_edge
 
 class Torus(SourceBase):
 
     def __init__(self, kwargs_torus, grid_resolution=None, grid_rmax=None):
 
-        self._kwargs_init = kwargs_torus
-        self._grid_resolution = grid_resolution
-        self._grid_rmax = grid_rmax
-        self._initialized = False
+        inner_radius = kwargs_torus['r_inner_pc']
+        outer_radius = kwargs_torus['r_outer_pc']
 
-        super(Torus, self).__init__(False, [], None, None)
+        self._outer_radius, self._inner_radius = outer_radius, inner_radius
+
+        assert inner_radius < outer_radius
+
+        xcenter, ycenter = kwargs_torus['center_x'], kwargs_torus['center_y']
+
+        kwargs_gaussian_1 = {'center_x': xcenter, 'center_y': ycenter, 'source_fwhm_pc': inner_radius}
+        kwargs_gaussian_2 = {'center_x': xcenter, 'center_y': ycenter, 'source_fwhm_pc': outer_radius}
+
+        self._outer_gaussian = Quasar(kwargs_gaussian_2, grid_resolution, grid_rmax)
+        self._inner_gaussian = Quasar(kwargs_gaussian_1, grid_resolution, grid_rmax)
+
+        self._outer_amp_scale = kwargs_torus['amp_scale']
+
+        self._kwargs_torus = {'center_x': xcenter, 'center_y': ycenter,
+                              'r_inner_pc': kwargs_torus['r_inner_pc'],
+                              'r_outer_pc': kwargs_torus['r_outer_pc']}
+
+        super(Torus, self).__init__(False, [], None, None, None)
 
     @property
-    def light_model_list(self):
-        return ['TORUS']
+    def normalization(self):
+
+        if not hasattr(self, '_norm'):
+
+            rmax = 3 * self._outer_radius
+            outer_sigma = self._outer_radius / 2.355
+            inner_sigma = self._inner_radius / 2.355
+            x = y = np.linspace(-rmax, rmax, 500)
+            xx, yy = np.meshgrid(x, y)
+            rr = np.sqrt(xx ** 2 + yy ** 2)
+            inner = np.exp(-0.5 * rr ** 2 / inner_sigma ** 2)
+            outer = np.exp(-0.5 * rr ** 2 / outer_sigma ** 2)
+
+            sb_torus = self._outer_amp_scale * outer - inner
+            inds0 = np.where(sb_torus < 0)
+            sb_torus[inds0] = 0
+
+            flux_torus = np.sum(sb_torus)
+            flux_gaussian = np.sum(outer)
+
+            self._norm = flux_gaussian/flux_torus
+
+        return self._norm
+
+    @property
+    def torus_sb(self):
+
+        rmax = 3 * self._outer_radius
+
+        outer_sigma = self._outer_radius / 2.355
+        inner_sigma = self._inner_radius / 2.355
+
+        x = y = np.linspace(-rmax, rmax, 500)
+        xx, yy = np.meshgrid(x, y)
+        rr = np.sqrt(xx ** 2 + yy ** 2)
+        inner = np.exp(-0.5 * rr ** 2 / inner_sigma ** 2)
+        outer = np.exp(-0.5 * rr ** 2 / outer_sigma ** 2)
+
+        sb = self._outer_amp_scale * outer - inner
+
+        return self.normalization * sb, rr
+
+    @property
+    def half_light_radius(self):
+
+        sb, rr = self.torus_sb
+        #sb_base = deepcopy(sb)
+        total_flux = np.sum(sb)
+        flux = 0
+        rstep = (self._outer_radius - self._inner_radius)/500
+        r = rstep
+
+        while flux < 0.5*total_flux:
+
+            inds = np.where(rr < r)
+
+            flux += np.sum(sb[inds])
+            sb[inds] = 0
+
+            r += rstep
+
+        return r - rstep
+
+    @property
+    def grid_resolution(self):
+        return self._outer_gaussian.grid_resolution
 
     @property
     def kwargs_light(self):
-        return self._kwargs_quasar
-
-
-    def _check_initialized(self, with_error=True):
-
-        if self._initialized:
-            return True
-        else:
-            if with_error:
-                raise Exception('Must initialize quasar class before using it.')
-            return False
-
-    def surface_brightness(self, xgrid, ygrid, lensmodel, lensmodel_kwargs):
-
-        self._check_initialized()
-
-        try:
-            beta_x, beta_y = lensmodel.ray_shooting(xgrid, ygrid, lensmodel_kwargs)
-            surf_bright = self._sourcelight.surface_brightness(beta_x, beta_y, [self._kwargs_quasar])
-
-        except:
-            shape0 = xgrid.shape
-            beta_x, beta_y = lensmodel.ray_shooting(xgrid.ravel(), ygrid.ravel(), lensmodel_kwargs)
-            surf_bright = self._sourcelight.surface_brightness(beta_x, beta_y, [self._kwargs_quasar])
-            surf_bright = surf_bright.reshape(shape0, shape0)
-
-        return surf_bright
+        return self._kwargs_torus
 
     def setup(self, pc_per_arcsec_zsource):
 
-        if self._check_initialized(with_error=False):
-            return
+        self._inner_gaussian.setup(pc_per_arcsec_zsource)
+        self._outer_gaussian.setup(pc_per_arcsec_zsource)
 
-        self._initialized = True
-
-        source_size_pc = self._kwargs_init['source_outerradius_pc']
-
-        if self._grid_rmax is None:
-            grid_rmax = self._auto_grid_size(source_size_pc)
-            self.grid_rmax = grid_rmax
-        else:
-            self.grid_rmax = self._grid_rmax
-
-        if self._grid_resolution is None:
-            grid_resolution = self._auto_grid_resolution(source_size_pc)
-            self.grid_resolution = grid_resolution
-        else:
-            self.grid_resolution = self._grid_resolution
-
-        self._kwargs_quasar = self._kwargs_transform(self._kwargs_init, pc_per_arcsec_zsource)
-
-        self._sourcelight = LightModel(light_model_list=['TORUS'])
+        self._inner_gaussian.grid_resolution = self._outer_gaussian.grid_resolution
+        self._inner_gaussian.grid_rmax = self._outer_gaussian.grid_rmax
 
     def update_position(self, x, y):
 
-        self._kwargs_quasar['center_x'] = x
-        self._kwargs_quasar['center_y'] = y
+        self._outer_gaussian._kwargs_quasar['center_x'] = x
+        self._outer_gaussian._kwargs_quasar['center_y'] = y
 
-    def _kwargs_transform(self, kwargs, pc_per_arcsec_zsrc):
+        self._inner_gaussian._kwargs_quasar['center_x'] = x
+        self._inner_gaussian._kwargs_quasar['center_y'] = y
 
-        newkw = deepcopy(kwargs)
-        radius_outer = newkw['source_outerradius_pc'] / pc_per_arcsec_zsrc
-        radius_inner = newkw['source_innerradius_pc'] / pc_per_arcsec_zsrc
+    def _flux_from_images(self, images, enforce_unblended):
 
-        del newkw['source_outerradius_pc']
-        del newkw['source_innerradius_pc']
+        mags = []
 
-        newkw['inner_radius'] = radius_inner
-        newkw['outer_radius'] = radius_outer
+        blended = False
 
-        if 'amp' not in newkw.keys():
-            newkw['amp'] = 1
+        for image in images:
 
-        return newkw
+            if flux_at_edge(image):
+                blended = True
 
-    def _ray_shooting_setup(self, xpos, ypos):
+            if blended and enforce_unblended:
+                return None, True
 
-        (image_separations, relative_angles) = image_separation_vectors_quad(xpos, ypos)
+            mags.append(np.sum(image) * self.grid_resolution ** 2)
 
-        grids = []
-        for sep, theta in zip(image_separations, relative_angles):
-            grids.append(RayShootingGrid(min(self.grid_rmax, 0.5 * sep), self.grid_resolution, rot=theta))
-
-        xgrids, ygrids = self._get_grids(xpos, ypos, grids)
-
-        return xgrids, ygrids
+        return np.array(mags), blended
 
     def plot_images(self, xpos, ypos, lensModel, kwargs_lens, normed=True):
 
-        self._check_initialized()
-
-        xgrids, ygrids = self._ray_shooting_setup(xpos, ypos)
-
-        images, mags = [], []
-
-        for i in range(0, len(xpos)):
-            surface_brightness_image = self.surface_brightness(xgrids[i].ravel(), ygrids[i].ravel(),
-                                                               lensModel, kwargs_lens)
-
-            images.append(surface_brightness_image)
-            mags.append(np.sum(surface_brightness_image) * self.grid_resolution ** 2)
-
-        mags = np.array(mags)
+        images = self.get_images(xpos, ypos, lensModel, kwargs_lens)
+        mags, _ = self._flux_from_images(images, False)
 
         if normed:
             mags *= max(mags) ** -1
@@ -137,58 +155,41 @@ class Torus(SourceBase):
                          xycoords='axes fraction')
             plt.show()
 
-    def magnification(self, xpos, ypos, lensModel, kwargs_lens, normed=True):
+    def surface_brightness(self, xgrid, ygrid, lensmodel, lensmodel_kwargs):
 
-        self._check_initialized()
+        surfbright_1 = self._inner_gaussian.surface_brightness(xgrid, ygrid,
+                                                               lensmodel, lensmodel_kwargs)
+        surfbright_2 = self._outer_gaussian.surface_brightness(xgrid, ygrid,
+                                                               lensmodel, lensmodel_kwargs)
 
-        flux = np.zeros_like(xpos)
-        xgrids, ygrids = self._ray_shooting_setup(xpos, ypos)
+        surfbright = self._outer_amp_scale * surfbright_2 - surfbright_1
 
-        for i in range(0,len(xpos)):
-            surface_brightness_image = self.surface_brightness(xgrids[i].ravel(), ygrids[i].ravel(),
-                                                               lensModel, kwargs_lens)
-            flux[i] = np.sum(surface_brightness_image * self.grid_resolution ** 2)
+        inds0 = np.where(surfbright < 0)
 
-        flux = np.array(flux)
+        surfbright[inds0] = 0
 
-        if normed:
-            flux *= max(flux) ** -1
-        return flux
+        return self.normalization * surfbright
 
-    def _get_grids(self, xpos, ypos, grids):
+    def get_images(self, xpos, ypos, lensModel, kwargs_lens,
+                   grid_rmax_scale=1.):
 
-        xgrid, ygrid = [], []
+        images_1 = self._inner_gaussian.get_images(xpos, ypos, lensModel, kwargs_lens)
+        images_2 = self._outer_gaussian.get_images(xpos, ypos, lensModel, kwargs_lens)
 
-        for i, (xi, yi) in enumerate(zip(xpos, ypos)):
+        images = []
+        for (img1, img2) in zip(images_1, images_2):
+            diff = self._outer_amp_scale * img2 - img1
+            inds0 = np.where(diff < 0)
+            diff[inds0] = 0
+            images.append(self.normalization * diff)
 
-            xg, yg = grids[i].grid_at_xy(xi, yi)
+        return images
 
-            xgrid.append(xg)
-            ygrid.append(yg)
+    def magnification(self, xpos, ypos, lensModel, kwargs_lens, normed=True, enforce_unblended=False,
+                      **kwargs):
 
-        return xgrid, ygrid
+        images = self.get_images(xpos, ypos, lensModel, kwargs_lens)
 
-    def _auto_grid_resolution(self, min_source_size_parsec):
+        magnifications, blended = self._flux_from_images(images, enforce_unblended)
 
-        grid_res_0 = 0.000004
-        size_0 = 0.1
-        power = 1
-        grid_res = grid_res_0 * (min_source_size_parsec / size_0) ** power
-
-        return grid_res
-
-    def _auto_grid_size(self, max_source_size_parsec):
-
-        #if max_source_size_parsec > 4:
-        grid_size_0 = 0.000175
-        size_0 = 0.1
-        power = 1.15
-        grid_size = grid_size_0 * (max_source_size_parsec / size_0) ** power
-        # else:
-        #     grid_size_0 = 0.000175
-        #     size_0 = 0.1
-        #     power = 1.3
-        #     grid_size = grid_size_0 * (max_source_size_parsec / size_0) ** power
-
-        return grid_size
-
+        return magnifications, blended

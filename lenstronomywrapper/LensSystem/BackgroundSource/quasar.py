@@ -28,7 +28,6 @@ class Quasar(SourceBase):
     def kwargs_light(self):
         return self._kwargs_quasar
 
-
     def _check_initialized(self, with_error=True):
 
         if self._initialized:
