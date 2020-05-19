@@ -53,8 +53,8 @@ def run(Nstart, lens_class, gamma_prior, fname, log_mlow, window_size, exp_time,
                                               class_idx=N0)
 
         save_name_path = base_path + '/tdelay_output/raw/' + fname + '/control' + name_append + '/'
-        if not os.path.exists(save_name_path):
-            create_directory(save_name_path)
+        #if not os.path.exists(save_name_path):
+        #    create_directory(save_name_path)
         shapelet_nmax = None
         use_realization = False
 
@@ -72,8 +72,8 @@ def run(Nstart, lens_class, gamma_prior, fname, log_mlow, window_size, exp_time,
                                               class_idx=N0)
         save_name_path_base = base_path + '/tdelay_output/raw/' + fname
         save_name_path = save_name_path_base + '/control_shapelets' + name_append + '/'
-        if not os.path.exists(save_name_path):
-            create_directory(save_name_path)
+        #if not os.path.exists(save_name_path):
+        #    create_directory(save_name_path)
 
         shapelet_nmax = 8
         use_realization = False
@@ -83,8 +83,8 @@ def run(Nstart, lens_class, gamma_prior, fname, log_mlow, window_size, exp_time,
         save_name_path_base = base_path + '/tdelay_output/raw/' + fname
         save_name_path = save_name_path_base + '/los_plus_subs' + name_append + '/'
 
-        if not os.path.exists(save_name_path):
-            create_directory(save_name_path)
+        #if not os.path.exists(save_name_path):
+        #    create_directory(save_name_path)
         if not os.path.exists(save_name_path_base + '/realizations'+name_append+'/'):
             create_directory(save_name_path_base + '/realizations'+name_append+'/')
         if not os.path.exists(save_name_path_base + '/chains' + name_append + '/'):
@@ -119,8 +119,8 @@ def run(Nstart, lens_class, gamma_prior, fname, log_mlow, window_size, exp_time,
                                   chain_directory=save_name_path_base + '/chains_shapelets' + name_append + '/',
                                               class_idx=N0, do_sampling=do_sampling)
 
-        if not os.path.exists(save_name_path):
-            create_directory(save_name_path)
+        #if not os.path.exists(save_name_path):
+        #    create_directory(save_name_path)
 
         use_realization = True
 
