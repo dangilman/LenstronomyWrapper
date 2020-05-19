@@ -38,12 +38,14 @@ def extract_mcmc_chain_single(pickle_dir, idx, n_burn_frac, n_keep=100):
 
 def extract_mcmc_chains(pickle_dir, idx_min, idx_max, n_burn_frac, n_keep=200, save_name_path_append=''):
 
-    for n in range(idx_min, idx_max):
+    n = idx_min
+    for _ in range(idx_min, idx_max):
 
         tbaseline, f, t, tdelay_model, macro_params, kw_fit, kw_setup, save_name_path = extract_mcmc_chain_single(
             pickle_dir, n, n_burn_frac, n_keep
         )
-
+        if tbaseline is None:
+            continue
         observed_lens = kw_fit['observed_lens']
         modeled_lens = kw_fit['modeled_lens']
         normalized_residuals = kw_fit['normalized_residuals']
@@ -69,6 +71,7 @@ def extract_mcmc_chains(pickle_dir, idx_min, idx_max, n_burn_frac, n_keep=200, s
         np.savetxt(save_name_path + 'kappa_' + str(n) + '.txt', X=residual_convergence)
         np.savetxt(save_name_path + 'tdelayres_' + str(n) + '.txt', X=time_delay_residuals)
         np.savetxt(save_name_path + 'source_' + str(n) + '.txt', X=reconstructed_source)
+        n+= 1
 
     return None
 
@@ -83,6 +86,6 @@ idx = 1
 lensID = 'lens0435'
 
 extension = 'mlow8.7test_fixDdt'
-fname = base_path + '/tdelay_output/raw/' + lensID + '/realizations_' + extension
+fname = base_path + '/tdelay_output/raw/' + lensID + '/chains_' + extension
 
 extract_mcmc_chains(fname, 1, 4, 0.5)

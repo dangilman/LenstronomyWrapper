@@ -105,7 +105,7 @@ except:
 
 for n_lens in range(n_lens_start, n_lens_end):
 
-    if n_lens < 601:
+    if n_lens < 501:
         Nstart = n_lens
         lens_name = 'lens1131'
         half_window_size = 3.
