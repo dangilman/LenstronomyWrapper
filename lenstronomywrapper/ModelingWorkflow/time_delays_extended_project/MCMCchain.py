@@ -47,7 +47,7 @@ class MCMCchain(object):
         normalized_residuals = self.modelPlot._select_band(0)._norm_residuals
 
         reconstructed_source, coord_transform = \
-            self.modelPlot._select_band(0).source(numPix=200, deltaPix=0.025)
+            self.modelPlot._select_band(0).source(numPix=250, deltaPix=0.025)
 
         reconstructed_source_log = np.log10(reconstructed_source)
 
@@ -56,9 +56,9 @@ class MCMCchain(object):
         reconstructed_source_log[np.where(reconstructed_source_log > vmax)] = vmax
 
         residual_maps = ResidualLensMaps(self.lensModel_full, self.lensModel, self.kwargs_lens_full, self.kwargs_lens)
-        kappa = residual_maps.convergence(self.window_size, 200)
+        kappa = residual_maps.convergence(self.window_size, 250)
 
-        tdelay_res_geo, tdelay_res_grav = residual_maps.time_delay_surface_geoshapiro(self.window_size, 200,
+        tdelay_res_geo, tdelay_res_grav = residual_maps.time_delay_surface_geoshapiro(self.window_size, 250,
                                                                                       self.lens.x[0], self.lens.y[0])
         tdelay_res_map = tdelay_res_geo + tdelay_res_grav
 
