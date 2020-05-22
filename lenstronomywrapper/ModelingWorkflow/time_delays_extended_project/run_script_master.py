@@ -164,11 +164,11 @@ for n_lens in range(n_lens_start, n_lens_end):
     else:
         raise Exception('out of range.')
 
-    fit_smooth_kwargs = {'n_particles': 2, 'n_iterations': 2, 'n_run': 5,
-                         'walkerRatio': 4, 'n_burn': 0}
-    log_mlow = 8.8
+    fit_smooth_kwargs = {'n_particles': 100, 'n_iterations': 300, 'n_run': 650,
+                         'walkerRatio': 4, 'n_burn': 200}
+    log_mlow = 6
 
-    name_append = ''
+    name_append = '_mlow6_losonly'
 
     sample_gamma = False
 
@@ -180,7 +180,7 @@ for n_lens in range(n_lens_start, n_lens_end):
     gamma_prior = GammaPrior(gamma_mean, gamma_sigma)
     # window_scale = 10
     window_scale = 12
-    realization_kwargs = {'sigma_sub': 0.025, 'parent_m200': 10**13.3}
+    realization_kwargs = {'sigma_sub': 0., 'parent_m200': 10**13.3}
     run_lens(Nstart, lens_class, gamma_prior, lens_name, log_mlow, half_window_size, exp_time,
              background_rms=background_rms, subtract_exact_mass_sheets=False, name_append=name_append,
              fix_Ddt=True, fit_smooth_kwargs=fit_smooth_kwargs, window_scale=window_scale,
