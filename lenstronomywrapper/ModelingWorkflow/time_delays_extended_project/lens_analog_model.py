@@ -91,8 +91,8 @@ class AnalogModel(object):
         residual_mean_kappa = []
         time_delay_residuals = []
         reconstructed_source = []
-
-        if os.path.exists(save_name_path + 'residuals_' + str(N_start) + '.txt'):
+        fname = self._chain_directory + 'MCMCchain_' + str(self._class_idx)
+        if os.path.exists(fname):
             print('output file exists, quitting.')
             return None
 
