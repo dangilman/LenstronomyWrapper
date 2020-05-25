@@ -386,10 +386,10 @@ class AnalogModel(object):
             if self.lens.identifier == 'lens0408':
                 kwargs_shapelets_2 = [{'amp': 100, 'beta': 0.01,
                                      'n_max': 3, 'center_x': 0., 'center_y': 0.}]
-                kwargs_shapelets_3 = [{'amp': 100, 'beta': 0.01,
-                                       'n_max': 3, 'center_x': 0., 'center_y': 0.}]
+                #kwargs_shapelets_3 = [{'amp': 100, 'beta': 0.01,
+                #                       'n_max': 3, 'center_x': 0., 'center_y': 0.}]
                 source_model_list += [Shapelet(kwargs_shapelets_2, concentric_with_source=1)]
-                source_model_list += [Shapelet(kwargs_shapelets_3, concentric_with_source=2)]
+                #source_model_list += [Shapelet(kwargs_shapelets_3, concentric_with_source=2)]
 
             source_model = LightModel(source_model_list)
 
