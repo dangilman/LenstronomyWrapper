@@ -89,10 +89,10 @@ def lens0408_exposure(index):
     vary_shapelets = index_read(index)
     if vary_shapelets:
         # DONE
-        return 3000, 0.15, True
+        return 3000, 0.2, True
     else:
         # DONE
-        return 3000, 0.35, do_sampling_with_no_shapelets
+        return 3000, 0.4, do_sampling_with_no_shapelets
 
 n_lens_start = int(sys.argv[1])
 
@@ -180,11 +180,12 @@ for n_lens in range(n_lens_start, n_lens_end):
     gamma_prior = GammaPrior(gamma_mean, gamma_sigma)
     # window_scale = 10
     window_scale = 12
+    kwargs_mfunc = {'geometry_type': 'CYLINDER'}
     realization_kwargs = {'sigma_sub': 0., 'parent_m200': 10**13.3}
     run_lens(Nstart, lens_class, gamma_prior, lens_name, log_mlow, half_window_size, exp_time,
              background_rms=background_rms, subtract_exact_mass_sheets=False, name_append=name_append,
              fix_Ddt=True, fit_smooth_kwargs=fit_smooth_kwargs, window_scale=window_scale,
-             do_sampling=do_sampling, realization_kwargs=realization_kwargs)
+             do_sampling=do_sampling, realization_kwargs=realization_kwargs, kwargs_mfunc=kwargs_mfunc)
 
     tellapsed = np.round((time.time() - t_start) / 60 / 60, 2)
     print('finished in ' + str(tellapsed) + ' hours.')

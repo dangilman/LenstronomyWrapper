@@ -3,7 +3,8 @@ import os
 
 def run(Nstart, lens_class, gamma_prior, fname, log_mlow, window_size, exp_time, background_rms, N=1,
         subtract_exact_mass_sheets=False, name_append='', fix_Ddt=False,
-        fit_smooth_kwargs=None, window_scale=10, do_sampling=True, realization_kwargs=None):
+        fit_smooth_kwargs=None, window_scale=10, do_sampling=True, realization_kwargs=None,
+        kwargs_mfunc={}):
 
     position_sigma = [0.005]*4
 
@@ -96,7 +97,7 @@ def run(Nstart, lens_class, gamma_prior, fname, log_mlow, window_size, exp_time,
         lens_analog_model_class = AnalogModel(lens_class, kwargs_cosmo,
                                     pickle_directory=save_name_path_base + '/realizations'+name_append+'/',
                                               chain_directory=save_name_path_base + '/chains' + name_append + '/',
-                                              class_idx=N0, do_sampling=do_sampling)
+                                              class_idx=N0, do_sampling=do_sampling, kwargs_mfunc=kwargs_mfunc)
 
         use_realization = True
 
@@ -117,7 +118,7 @@ def run(Nstart, lens_class, gamma_prior, fname, log_mlow, window_size, exp_time,
         lens_analog_model_class = AnalogModel(lens_class, kwargs_cosmo,
                                   pickle_directory=save_name_path_base + '/realizations'+name_append+'/',
                                   chain_directory=save_name_path_base + '/chains_shapelets' + name_append + '/',
-                                              class_idx=N0, do_sampling=do_sampling)
+                                              class_idx=N0, do_sampling=do_sampling, kwargs_mfunc=kwargs_mfunc)
 
         #if not os.path.exists(save_name_path):
         #    create_directory(save_name_path)

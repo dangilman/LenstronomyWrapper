@@ -28,7 +28,7 @@ class AnalogModel(object):
     def __init__(self, lens_class_instance, kwargs_cosmology,
                  kwargs_quasar=None, makeplots=False,
                  free_convergence=False, pickle_directory=None,
-                 chain_directory=None,
+                 chain_directory=None, kwargs_mfunc={},
                  class_idx=None, do_sampling=True):
 
         if kwargs_quasar is None:
@@ -48,7 +48,9 @@ class AnalogModel(object):
 
         self.zlens, self.zsource = lens_class_instance.zlens, lens_class_instance.zsrc
 
-        self.pyhalo = pyHalo(self.zlens, self.zsource, cosmology_kwargs=self.kwargs_cosmology)
+        self.pyhalo = pyHalo(self.zlens, self.zsource,
+                             cosmology_kwargs=self.kwargs_cosmology,
+                             kwargs_halo_mass_function=kwargs_mfunc)
 
         self.kwargs_quasar = kwargs_quasar
 

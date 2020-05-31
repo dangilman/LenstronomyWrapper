@@ -40,9 +40,9 @@ def confidence_intervals_from_samples(sample, num_sigma):
         lower_sigma2 = sorted_sample[num - num_threshold2 - 1]
         return median, [median-lower_sigma2, upper_sigma2-median]
 
-def pdf_from_samples(samples, nbins):
+def pdf_from_samples(samples, nbins, weights=None):
 
-    hist, bins = np.histogram(samples, bins=nbins)
+    hist, bins = np.histogram(samples, bins=nbins, weights=weights)
     bin_midpoints = bins[:-1] + np.diff(bins) / 2
 
     max_hist = float(np.max(hist))
