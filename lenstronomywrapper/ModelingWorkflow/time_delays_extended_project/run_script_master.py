@@ -3,6 +3,7 @@ from MagniPy.Workflow.grism_lenses.he0435 import Lens0435
 from MagniPy.Workflow.grism_lenses.lens2033 import WFI2033
 from MagniPy.Workflow.grism_lenses.rxj1131 import Lens1131
 from MagniPy.Workflow.radio_lenses.lens1115 import Lens1115
+from MagniPy.Workflow.grism_lenses.random_fold import MockFold
 from MagniPy.Workflow.grism_lenses.lens2038 import Lens2038
 from MagniPy.Workflow.grism_lenses.lens1608 import Lens1608
 from MagniPy.Workflow.grism_lenses.DESJ0408 import Lens0408
@@ -94,6 +95,15 @@ def lens0408_exposure(index):
         # DONE
         return 3000, 0.4, do_sampling_with_no_shapelets
 
+def foldlens_exposure(index):
+    vary_shapelets = index_read(index)
+    if vary_shapelets:
+        # run again
+        return 20000, 0.34, True
+    else:
+        # DONE
+        return 20000, 0.5, do_sampling_with_no_shapelets
+
 n_lens_start = int(sys.argv[1])
 
 try:
@@ -161,6 +171,15 @@ for n_lens in range(n_lens_start, n_lens_end):
         log_host_mass = 13.7
         exp_time, background_rms, do_sampling = lens0408_exposure(Nstart)
 
+    elif n_lens < 3501:
+        Nstart = n_lens - 3000
+        lens_name = 'foldlens'
+        half_window_size = 2.
+        lens_class = MockFold()
+        gamma_mean, gamma_sigma = 2.08, 0.025
+        log_host_mass = 13.3
+        exp_time, background_rms, do_sampling = foldlens_exposure(Nstart)
+
     else:
         raise Exception('out of range.')
 
@@ -168,7 +187,7 @@ for n_lens in range(n_lens_start, n_lens_end):
                          'walkerRatio': 4, 'n_burn': 200}
     log_mlow = 6
 
-    name_append = '_mlow6_losonly'
+    name_append = '_mlow6'
 
     sample_gamma = False
 

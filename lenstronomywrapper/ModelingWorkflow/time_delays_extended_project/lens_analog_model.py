@@ -303,6 +303,7 @@ class AnalogModel(object):
                 print('fitting macromodel')
                 realization_type = 'composite_powerlaw'
                 real = self.pyhalo.render(realization_type, realization_kwargs)[0]
+
                 print('number of halos: ', len(real.halos))
                 lens_system_quad = QuadLensSystem.shift_background_auto(data_to_fit, macromodel,
                                                                         self.zsource, background_quasar, real,
