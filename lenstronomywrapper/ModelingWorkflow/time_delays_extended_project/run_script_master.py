@@ -208,6 +208,7 @@ for n_lens in range(n_lens_start, n_lens_end):
     window_scale = 12
     realization_kwargs = {'sigma_sub': 0.025, 'LOS_normalization': 1., 'parent_m200': 10 ** 13.3,
                           'subhalo_convergence_correction_profile': 'NFW'}
+
     run_lens(Nstart, lens_class, gamma_prior, lens_name, log_mlow, half_window_size, exp_time,
              background_rms=background_rms, subtract_exact_mass_sheets=False, name_append=name_append,
              fix_Ddt=True, fit_smooth_kwargs=fit_smooth_kwargs, window_scale=window_scale,

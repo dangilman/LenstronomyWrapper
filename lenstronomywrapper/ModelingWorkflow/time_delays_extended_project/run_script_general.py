@@ -25,8 +25,10 @@ def run(Nstart, lens_class, gamma_prior, fname, log_mlow, window_size, exp_time,
                           'subtract_exact_mass_sheets': subtract_exact_mass_sheets,
                           'subtract_subhalo_mass_sheet': True}
 
-    realization_kwargs.update(realization_kwargs_base)
-
+    for key in realization_kwargs_base:
+        if key not in realization_kwargs.keys():
+            realization_kwargs[key] = realization_kwargs_base[key]
+    
     kwargs_cosmo = {'cosmo_kwargs': {'H0': 73.3}}
 
     try:
