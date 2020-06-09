@@ -79,7 +79,7 @@ def run(Nstart, lens_class, gamma_prior, fname, log_mlow, window_size, exp_time,
         shapelet_nmax = 8
         use_realization = False
 
-    elif Nstart < 301:
+    elif Nstart < 401:
 
         save_name_path_base = base_path + '/tdelay_output/raw/' + fname
         save_name_path = save_name_path_base + '/los_plus_subs' + name_append + '/'
@@ -103,9 +103,9 @@ def run(Nstart, lens_class, gamma_prior, fname, log_mlow, window_size, exp_time,
 
         shapelet_nmax = None
 
-    elif Nstart < 501:
+    elif Nstart < 701:
         print('SAMPLING LOS plus subs with shapelets...... ')
-        N0 = Nstart - 300
+        N0 = Nstart - 400
 
         save_name_path_base = base_path + '/tdelay_output/raw/' + fname
         save_name_path = save_name_path_base + '/los_plus_subs' + name_append + '_shapelets/'
