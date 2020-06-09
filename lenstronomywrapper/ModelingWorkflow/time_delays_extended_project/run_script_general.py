@@ -28,7 +28,7 @@ def run(Nstart, lens_class, gamma_prior, fname, log_mlow, window_size, exp_time,
     for key in realization_kwargs_base:
         if key not in realization_kwargs.keys():
             realization_kwargs[key] = realization_kwargs_base[key]
-    
+
     kwargs_cosmo = {'cosmo_kwargs': {'H0': 73.3}}
 
     try:
