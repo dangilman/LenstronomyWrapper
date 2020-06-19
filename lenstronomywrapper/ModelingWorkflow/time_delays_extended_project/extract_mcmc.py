@@ -48,7 +48,8 @@ def extract_observables(mcmc_chain_dir, output_dir, n, n_burn_frac, n_keep=200):
 
     if not os.path.exists(output_dir):
         create_directory(output_dir)
-
+    print(chi2_imaging)
+    print(output_dir + 'chi2_imaging_' + str(n) + '.txt')
     write_data_to_file(output_dir + 'chi2_imaging_' + str(n) + '.txt', chi2_imaging, 'w')
     for fname, arr in zip(fnames, arrays):
         write_data_to_file(output_dir + fname + str(n) + '.txt', arr, 'w')
