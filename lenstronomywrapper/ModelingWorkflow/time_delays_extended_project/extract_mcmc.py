@@ -38,12 +38,18 @@ def extract_observables(mcmc_chain_dir, output_dir, n, n_burn_frac, n_keep=200):
 
     fnames = ['tbaseline_', 'flux_anomaly_', 'time_anomaly_', 'time_delays_', 'macroparams_']
 
+    logL = mcmc.modelPlot._imageModel.likelihood_data_given_model(
+        source_marg=False, linear_prior=None, **mcmc.kwargs_result)
+    ndata_points = mcmc.modelPlot._imageModel.num_data_evaluate
+    chi2_imaging = logL * 2 / ndata_points
+
     arrays = [time_delay_baseline, flux_anomaly, time_anomaly, time_delays_model,
               kwargs_data_fit['kwargs_lens_macro_fit']]
 
     if not os.path.exists(output_dir):
         create_directory(output_dir)
 
+    write_data_to_file(output_dir + 'chi2_imaging_' + str(n) + '.txt', chi2_imaging, 'w')
     for fname, arr in zip(fnames, arrays):
         write_data_to_file(output_dir + fname + str(n) + '.txt', arr, 'w')
 
@@ -63,10 +69,10 @@ def extract_maps(mcmc_chain_dir, output_dir, n):
 
     kwargs_maps = mcmc_new.maps()
 
-    logL = mcmc.modelPlot._imageModel.likelihood_data_given_model(
-        source_marg=False, linear_prior=None, **mcmc.kwargs_result)
-    ndata_points = mcmc.modelPlot._imageModel.num_data_evaluate
-    chi2_imaging = logL * 2 / ndata_points
+    # logL = mcmc.modelPlot._imageModel.likelihood_data_given_model(
+    #     source_marg=False, linear_prior=None, **mcmc.kwargs_result)
+    # ndata_points = mcmc.modelPlot._imageModel.num_data_evaluate
+    # chi2_imaging = logL * 2 / ndata_points
 
     observed_lens = kwargs_maps['observed_lens']
     modeled_lens = kwargs_maps['modeled_lens']
@@ -87,7 +93,7 @@ def extract_maps(mcmc_chain_dir, output_dir, n):
     np.savetxt(output_dir + 'source_' + str(n) + '.txt', X=reconstructed_source)
 
     write_data_to_file(output_dir + 'kappares_' + str(n) + '.txt', residual_mean_kappa, 'w')
-    write_data_to_file(output_dir + 'chi2_imaging_' + str(n) + '.txt', chi2_imaging, 'w')
+    #write_data_to_file(output_dir + 'chi2_imaging_' + str(n) + '.txt', chi2_imaging, 'w')
 
 try:
     base_path = os.getenv('HOME') + '/../../../../u/flashscratch/g/gilmanda'
