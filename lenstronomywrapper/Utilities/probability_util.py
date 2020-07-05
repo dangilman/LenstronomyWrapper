@@ -18,32 +18,34 @@ def interp_2d_likelihood(x, y, nbins, param_range_1, param_range_2):
 
     return interp
 
-def transform_pdf_from_samples_2d(samples, samples_reference, nbins,
-                                  param_range_1, param_range_2):
+def transform_pdf_from_samples_2d(density_samples, density_samples_ref,
+                                  pname1, pname2, pranges, nbins):
 
-    interp = interp_2d_likelihood(samples[0], samples[1], nbins, param_range_1, param_range_2)
-    interp_ref = interp_2d_likelihood(samples_reference[0], samples_reference[1], nbins,
-                                      param_range_1, param_range_2)
+
+    d_control = density_samples_ref.projection_2D(pname1, pname2)
+    d = density_samples.projection_2D(pname1, pname2)
+    d_control *= np.max(d_control) ** -1
+    d *= np.max(d) ** -1
+    re_weight = d_control / d
+    nan_inds = np.isnan(re_weight)
+    re_weight[nan_inds] = 0
+    xran, yran = pranges[0], pranges[1]
+    points = (np.linspace(*xran, nbins), np.linspace(*yran, nbins))
+    from scipy.interpolate import RegularGridInterpolator
+    interp = RegularGridInterpolator(points, re_weight.T)
 
     def _func(xpoints, ypoints):
-        shape0 = xpoints.shape
-        coords = np.array([xpoints.ravel(), ypoints.ravel()])
-        L = len(xpoints.ravel())
-        rescale = []
-        for i in range(0, L):
+
+        out = []
+        for i, (xi, yi) in enumerate(zip(xpoints, ypoints)):
+
             try:
-                likeref = interp_ref(coords[i][0], coords[i][1])
-                like = interp(coords[i][0], coords[i][1])
-                rescale.append(likeref/like)
+                value = interp((xi, yi))
+                out.append(value)
             except:
-                rescale.append(0)
 
-        rescale = np.array(rescale).reshape(shape0)
-
-        inds_nan = np.isnan(rescale)
-
-        rescale[inds_nan] = 0
-        return rescale
+                out.append(0)
+        return np.squeeze(out)
 
     return _func
 
@@ -119,7 +121,7 @@ def pdf_from_samples(samples, nbins, weights=None):
     hist = np.array(hist)/max_hist ** -1
 
     pdf_interp = interp1d(bin_midpoints, hist, bounds_error=False,
-                          fill_value=0.)
+                          fill_value=0., kind='nearest')
 
     return pdf_interp
 
@@ -139,33 +141,43 @@ def sample_distribution(samples, nbins, weights, nsamples):
 
     return random_from_cdf
 
-# cov1 = [[0.2, 0.1], [0.1, 0.2]]
-# cov2 = [[0.5, 0.2], [0.2, 0.5]]
+# cov1 = [[0.05, -0.035], [-0.035, 0.05]]
+# cov2 = [[0.1, -0.0], [-0.0, 0.1]]
 #
-# samplesref = np.random.multivariate_normal([0, 0.], cov1, 1000)
-# samples = np.random.multivariate_normal([0, 0], cov2, 1000)
+# samplesref = np.random.multivariate_normal([0, 0.], cov1, 50000)
+# samples = np.random.multivariate_normal([0, 0], cov2, 50000)
 #
 # import matplotlib.pyplot as plt
 #
-# like_ref, pran1, pran2 = interp_2d_likelihood(samplesref[:,0], samplesref[:,1], 10)
-# like, _, _ = interp_2d_likelihood(samples[:,0], samples[:,1], 10,
-#                                   param_range_1=pran1, param_range_2=pran2)
+# pran1, pran2 = [-1, 1], [-1, 1]
+# func = transform_pdf_from_samples_2d([samples[:,0], samples[:,1]],
+#                                      [samplesref[:,0], samplesref[:,1]],
+#                                      100, pran1, pran2)
 #
-# xran, yran = np.linspace(pran1[0], pran1[1], 50), np.linspace(pran2[0], pran2[1], 50)
+# href, _, _ = np.histogram2d(samplesref[:,0], samplesref[:,1], bins=20, density=True,
+#                             range=(pran1, pran2))
+# h, xran, yran = np.histogram2d(samples[:,0], samples[:,1],
+#                          bins=20, density=True, range=(pran1, pran2))
+# h *= np.max(h) ** -1
+# href *= np.max(href) ** -1
+#
+# step1, step2 = (xran[1] - xran[0])/2, (yran[1] - yran[0])/2
+# xran, yran = xran[0:-1] + step1, yran[0:-1] + step2
 # xx, yy = np.meshgrid(xran, yran)
+# xx, yy = xx.ravel(), yy.ravel()
 #
-# likelihood_ref = like_ref((xx, yy))
-# likelihood = like((xx, yy))
-# likelihood_ref *= np.max(likelihood_ref) ** -1
-# likelihood *= np.max(likelihood) ** -1
+# weights = func(samples[:,0], samples[:,1])
 #
-# ratio = likelihood_ref/likelihood
+# h_weighted, _, _ = np.histogram2d(samples[:,0], samples[:,1],
+#                          bins=20, density=True, weights=weights,
+#                                   range=(pran1, pran2))
+# h_weighted *= np.max(h_weighted) ** -1
 #
-# plt.imshow(likelihood_ref,vmin=0, vmax=1)
+# plt.imshow(href,vmin=0, vmax=1)
 # plt.show()
-# plt.imshow(likelihood, vmin=0, vmax=1)
+# plt.imshow(h, vmin=0, vmax=1)
 # plt.show()
-# plt.imshow(ratio, vmin=0, vmax=1)
+# plt.imshow(h_weighted * h / np.max(h_weighted * h), vmin=0, vmax=1)
 # plt.show()
-# plt.imshow(ratio * likelihood, vmin=0, vmax=1)
+# plt.imshow(h_weighted, vmin=0, vmax=1)
 # plt.show()

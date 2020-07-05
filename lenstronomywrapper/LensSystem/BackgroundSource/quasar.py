@@ -356,7 +356,7 @@ class Quasar(SourceBase):
 
         # smaller sources seem to require a different model that larger sources
         grid_size_0 = 0.0002
-        size_0 = 0.1
+        size_0 = 0.12
         power = 1.15
 
         if max_source_size_parsec > 5:
