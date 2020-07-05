@@ -91,11 +91,11 @@ class HierarchicalSettingsDefault(object):
 
     @property
     def n_iterations_background(self):
-        return 3
+        return 2
 
     @property
     def n_iterations_foreground(self):
-        return 3
+        return 2
 
     @property
     def foreground_settings(self):
