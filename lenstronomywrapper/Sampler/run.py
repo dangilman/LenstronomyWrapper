@@ -15,7 +15,7 @@ from lenstronomywrapper.Optimization.quad_optimization.hierarchical import Hiera
 from lenstronomywrapper.Utilities.misc import write_lensdata
 
 def run(job_index, chain_ID, output_path, path_to_folder,
-        test_mode=False):
+        test_mode=False, adaptive_mag=False):
 
     output_path += chain_ID + '/'
     path_to_folder += chain_ID
@@ -174,7 +174,7 @@ def run(job_index, chain_ID, output_path, path_to_folder,
         flux_ratios_fit, blended = lens_system.quasar_magnification(
             data_to_fit.x, data_to_fit.y, lensModel_fit,
             kwargs_lens_fit, enforce_unblended=True,
-            adaptive=True, verbose=keyword_arguments['verbose']
+            adaptive=adaptive_mag, verbose=keyword_arguments['verbose']
         )
 
         if test_mode:
@@ -187,7 +187,7 @@ def run(job_index, chain_ID, output_path, path_to_folder,
             ax.set_aspect('equal')
             plt.show()
 
-            lens_system.plot_images(data_to_fit.x, data_to_fit.y, adaptive=True)
+            lens_system.plot_images(data_to_fit.x, data_to_fit.y, adaptive=adaptive_mag)
             plt.show()
             a = input('continue')
 

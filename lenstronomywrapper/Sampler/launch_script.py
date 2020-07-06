@@ -1,11 +1,12 @@
 from lenstronomywrapper.Sampler.run import run
 import sys
 import os
+from time import time
 
 job_index = int(sys.argv[1])
 
 # the name of the folder containing paramdictionary files
-chain_ID = 'benson_run_1'
+chain_ID = 'gilman_run_test_1'
 
 # where to generate output files
 #out_path = '/scratch/abenson/'
@@ -17,9 +18,9 @@ out_path = os.getenv('HOME') + '/data/sims/'
 paramdictionary_folder_path = os.getenv('HOME') + '/data/'
 
 print(job_index)
+t0 = time()
 # launch and forget
 run(job_index, chain_ID, out_path,
-    paramdictionary_folder_path, True)
-
-
-
+    paramdictionary_folder_path, test_mode=False, adaptive_mag=False)
+tend = time()
+print('time ellapsed: ', tend - t0)

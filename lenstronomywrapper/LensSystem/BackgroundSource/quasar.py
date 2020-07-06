@@ -355,8 +355,8 @@ class Quasar(SourceBase):
     def _auto_grid_size(self, max_source_size_parsec):
 
         # smaller sources seem to require a different model that larger sources
-        grid_size_0 = 0.0002
-        size_0 = 0.12
+        grid_size_0 = 0.0003
+        size_0 = 0.1
         power = 1.15
 
         if max_source_size_parsec > 5:
@@ -366,11 +366,10 @@ class Quasar(SourceBase):
         else:
 
             power = 1.2
-            grid_size_0 = 0.0004 / 5
+            grid_size_0 = 0.0006 / 5
             size_0 = 0.1 / 5
 
             grid_size = grid_size_0 * (max_source_size_parsec / size_0) ** power
-
 
         return grid_size
 
