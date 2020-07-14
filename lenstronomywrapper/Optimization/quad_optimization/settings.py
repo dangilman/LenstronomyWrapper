@@ -121,7 +121,7 @@ class HierarchicalSettingsDefault(object):
         # add this only within the window
         aperture_masses = [self.log_mass_cut_global, 7., 0]
         # add this everywhere
-        globalmin_masses = [8, self.log_mass_cut_global, self.log_mass_cut_global]
+        globalmin_masses = [self.log_mass_cut_global, self.log_mass_cut_global, self.log_mass_cut_global]
         # window size
         window_sizes = [100, 0.25, 0.08]
         # controls starting points for re-optimizations
