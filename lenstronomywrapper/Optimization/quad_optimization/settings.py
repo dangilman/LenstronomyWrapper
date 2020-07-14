@@ -119,11 +119,11 @@ class HierarchicalSettingsDefault(object):
     @property
     def background_settings(self):
         # add this only within the window
-        aperture_masses = [8.5, self.log_mass_cut_global, 0]
+        aperture_masses = [self.log_mass_cut_global, 7., 0]
         # add this everywhere
-        globalmin_masses = [8.5, self.log_mass_cut_global, self.log_mass_cut_global]
+        globalmin_masses = [8, self.log_mass_cut_global, self.log_mass_cut_global]
         # window size
-        window_sizes = [100, 100, 0.1]
+        window_sizes = [100, 0.25, 0.08]
         # controls starting points for re-optimizations
         scale = [1, 0.5, 0.25]
         # determines whether to use PSO for re-optimizations
