@@ -150,7 +150,11 @@ class DynamicOptimization(OptimizationBase):
                  particle_swarm=True)
         self.update_lens_system(source, kwargs_lens_final, lens_model_full, realization_global)
 
-        lens_plane_redshifts, _ = self.pyhalo_dynamic.lens_plane_redshifts(self.kwargs_rendering)
+        if isinstance(self.kwargs_rendering, list):
+            lens_plane_redshifts, _ = self.pyhalo_dynamic.lens_plane_redshifts(self.kwargs_rendering[0])
+        else:
+            lens_plane_redshifts, _ = self.pyhalo_dynamic.lens_plane_redshifts(self.kwargs_rendering)
+
         # Iterate through lower masses and smaller progressively smaller rendering apertures
         for (log_mlow, aperture_size, fit, particle_swarm, re_optimize) in zip(self.log_mass_cuts, self.aperture_sizes,
                                                                    self.refit, self.ps, self.re_optimize):
@@ -165,7 +169,12 @@ class DynamicOptimization(OptimizationBase):
 
             lens_centroid_x, lens_centroid_y = self.lens_system.macromodel.centroid
 
-            self.kwargs_rendering['log_mlow'], self.kwargs_rendering['log_mhigh'] = log_mlow, log_mhigh
+            if isinstance(self.kwargs_rendering, list):
+                for i in range(0, len(self.kwargs_rendering)):
+                    self.kwargs_rendering[i]['log_mlow'], self.kwargs_rendering[i]['log_mhigh'] = log_mlow, log_mhigh
+            else:
+                self.kwargs_rendering['log_mlow'], self.kwargs_rendering['log_mhigh'] = log_mlow, log_mhigh
+
             realization_global = self.pyhalo_dynamic.render_dynamic(self.realization_type, self.kwargs_rendering,
                        realization_global, lens_centroid_x, lens_centroid_y, x_interp_list, y_interp_list, aperture_size,
                        verbose, global_render=False)
@@ -219,7 +228,10 @@ class DynamicOptimization(OptimizationBase):
         x_interp_list, y_interp_list = self._get_interp([lens_centroid_x], [lens_centroid_y],
                                                         macro_redshifts, terminate_at_source=True)
 
-        kwargs_init = deepcopy(self.kwargs_rendering)
+        if isinstance(self.kwargs_rendering, list):
+            kwargs_init = deepcopy(self.kwargs_rendering[0])
+        else:
+            kwargs_init = deepcopy(self.kwargs_rendering)
 
         if 'log_mlow' in kwargs_init.keys():
             kwargs_init['log_mlow_subs'] = kwargs_init['log_mlow']
