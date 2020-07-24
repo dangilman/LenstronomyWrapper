@@ -15,7 +15,7 @@ from lenstronomywrapper.Optimization.quad_optimization.hierarchical import Hiera
 from lenstronomywrapper.Utilities.misc import write_lensdata
 
 def run(job_index, chain_ID, output_path, path_to_folder,
-        test_mode=False, adaptive_mag=False):
+        test_mode=False):
 
     output_path += chain_ID + '/'
     path_to_folder += chain_ID
@@ -76,6 +76,8 @@ def run(job_index, chain_ID, output_path, path_to_folder,
     kwargs_macro_ref = None
     fluxes_computed = None
     parameters_sampled = None
+
+    adaptive_mag = keyword_arguments['adaptive_mag']
 
     counter = 0
     while counter < n_run:

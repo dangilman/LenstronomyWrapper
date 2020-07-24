@@ -79,7 +79,7 @@ class HierarchicalSettingsDefault(object):
 
     @property
     def log_mass_cut_global(self):
-        return 7.4
+        return 7.7
 
     @property
     def n_particles(self):
@@ -123,11 +123,11 @@ class HierarchicalSettingsDefault(object):
         # add this everywhere
         globalmin_masses = [self.log_mass_cut_global, self.log_mass_cut_global, self.log_mass_cut_global]
         # window size
-        window_sizes = [100, 0.25, 0.08]
+        window_sizes = [100, 0.3, 0.08]
         # controls starting points for re-optimizations
         scale = [1, 0.5, 0.25]
         # determines whether to use PSO for re-optimizations
-        particle_swarm_reopt = [True, False, False]
+        particle_swarm_reopt = [False, False, False]
         # wheter to actually re-fit the lens model
         optimize_iteration = [True, True, True]
         # whether to re-optimize (aka start from a model very close to input model)

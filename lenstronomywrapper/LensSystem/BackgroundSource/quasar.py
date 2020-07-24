@@ -155,7 +155,7 @@ class Quasar(SourceBase):
         for i, grid in enumerate(grids):
 
             #print('computing image '+str(i))
-            r_start = 0.1 * grid.rmax
+            r_start = 0.05 * grid.rmax
             step_size = step_factor * grid.rmax
 
             #print('magnification: ', 0)
@@ -345,7 +345,7 @@ class Quasar(SourceBase):
 
     def _auto_grid_resolution(self, min_source_size_parsec):
 
-        grid_res_0 = 0.000004
+        grid_res_0 = 0.0000035
         size_0 = 0.1
         power = 1
         grid_res = grid_res_0 * (min_source_size_parsec / size_0) ** power
