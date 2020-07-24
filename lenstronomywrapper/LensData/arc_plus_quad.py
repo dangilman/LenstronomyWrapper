@@ -12,7 +12,7 @@ class ArcPlusQuad(object):
 
     def __init__(self, x_image, y_image, magnifications, lensSystem, relative_arrival_times=None, time_delay_sigma=None, image_sigma=None,
                  normed_magnifications=True,
-                 data_kwargs={}, noiseless=True, no_bkg=True):
+                 data_kwargs={}, noiseless=True, no_bkg=True, imaging_data=None):
 
         assert len(x_image) == 4
         assert len(x_image) == len(y_image)
@@ -49,7 +49,11 @@ class ArcPlusQuad(object):
         self._image_sim = _LensData(self.point_source, lensSystem,
                                   data_class, self.psf_class, data_settings, noiseless, no_bkg)
 
-        kwargs_data['image_data'] = self._image_sim._get_image()
+        if imaging_data is None:
+            kwargs_data['image_data'] = self._image_sim._get_image()
+        else:
+            kwargs_data['image_data'] = imaging_data
+
         data_class.update_data(kwargs_data['image_data'])
 
         self.kwargs_data = kwargs_data
