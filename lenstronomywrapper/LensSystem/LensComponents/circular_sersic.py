@@ -1,17 +1,15 @@
 from lenstronomywrapper.LensSystem.LensComponents.macromodel_base import ComponentBase
 
-class SISsatellite(ComponentBase):
+class CircularSersic(ComponentBase):
 
-    def __init__(self, redshift, kwargs_init=None, theta_E=None, center_x=None, center_y=None,
-                 prior=[], fixed=False, convention_index=False, reoptimize=False):
+    def __init__(self, redshift, kwargs_init, prior=[],
+                 fixed=False, convention_index=False, reoptimize=False):
 
-        if kwargs_init is None:
-            kwargs_init = [{'theta_E': theta_E, 'center_x': center_x, 'center_y': center_y}]
         self._redshift = redshift
         self._prior = prior
         self.reoptimize = reoptimize
 
-        super(SISsatellite, self).__init__(self.lens_model_list, [redshift], kwargs_init,
+        super(CircularSersic, self).__init__(self.lens_model_list, [redshift], kwargs_init,
                                            convention_index, fixed, reoptimize)
 
     @property
@@ -43,23 +41,27 @@ class SISsatellite(ComponentBase):
     def param_sigma(self):
 
         if self.reoptimize:
-            return [{'theta_E': 0.05, 'center_x': 0.05, 'center_y': 0.05}]
+            return [{'k_eff': 0.05, 'R_sersic': 0.25, 'n_sersic': 0.5,'center_x': 0.1, 'center_y': 0.1}]
         else:
-            return [{'theta_E': 0.3, 'center_x': 0.3, 'center_y': 0.3}]
+            return [{'k_eff': 0.5, 'R_sersic': 1., 'n_sersic': 1.5, 'center_x': 0.5, 'center_y': 0.5}]
 
     @property
     def param_lower(self):
-        lower = [{'theta_E': 0.001, 'center_x': -10, 'center_y': -10}]
+        lower = [{'k_eff': 0., 'R_sersic': 0., 'n_sersic': 0.5,
+                           'center_x': -100.,
+                           'center_y': -100.}]
         return lower
 
     @property
     def param_upper(self):
-        upper = [{'theta_E': 3., 'center_x': 10, 'center_y': 10}]
+        upper = [{'k_eff': 100., 'R_sersic': 100., 'n_sersic': 8.,
+                           'center_x': 100.,
+                           'center_y': 100.}]
         return upper
 
     @property
     def lens_model_list(self):
-        return ['SIS']
+        return ['SERSIC']
 
     @property
     def redshift_list(self):

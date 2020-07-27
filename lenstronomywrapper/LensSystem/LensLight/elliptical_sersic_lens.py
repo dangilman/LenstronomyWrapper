@@ -72,7 +72,7 @@ class EllipticalSersicLens(LightBase):
 
         lower_x, lower_y = -10, -10
         lower = [{'amp': 0.0000001, 'R_sersic': 0.0001, 'n_sersic': 0.1, 'center_x': lower_x, 'center_y': lower_y,
-                  'e1': -0.95, 'e2': -0.95}]
+                  'e1': -0.5, 'e2': -0.5}]
         return lower
 
     @property
@@ -80,5 +80,5 @@ class EllipticalSersicLens(LightBase):
 
         upper_x, upper_y = 10, 10
         upper = [{'amp': 500000, 'R_sersic': 5, 'n_sersic': 9, 'center_x': upper_x, 'center_y': upper_y,
-                  'e1': 0.95, 'e2': 0.95}]
+                  'e1': 0.5, 'e2': 0.5}]
         return upper

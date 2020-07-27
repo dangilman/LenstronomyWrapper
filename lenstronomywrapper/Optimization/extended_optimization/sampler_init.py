@@ -158,7 +158,19 @@ class SamplerInit(object):
 
     @property
     def linked_parameters_lensmodel_lensmodel(self):
-        pass
+
+        joint_lens_with_lens = []
+        for k, component in enumerate(self.system.macromodel.components):
+
+            if component.concentric_with_lens_model is False or component.concentric_with_lens_model is None:
+                continue
+            else:
+
+                idx = component.concentric_with_lens_model
+
+                joint_lens_with_lens.append([idx, k, ['center_x', 'center_y']])
+
+        return joint_lens_with_lens
 
     @property
     def linked_parameters_source_source(self):
@@ -236,6 +248,8 @@ class SamplerInit(object):
 
         joint_source_with_point_source, joint_source_with_source = self.linked_parameters_source_source
 
+        joint_lens_with_lens = self.linked_parameters_lensmodel_lensmodel
+
         if len(self.lens_data_class.x) == 4:
             solver_type = 'PROFILE_SHEAR'
             nimg = 4
@@ -256,6 +270,8 @@ class SamplerInit(object):
             kwargs['joint_source_with_point_source'] = joint_source_with_point_source
         if len(joint_source_with_source) > 0:
             kwargs['joint_source_with_source'] = joint_source_with_source
+        if len(joint_lens_with_lens) > 0:
+            kwargs['joint_lens_with_lens'] = joint_lens_with_lens
 
         return kwargs
 

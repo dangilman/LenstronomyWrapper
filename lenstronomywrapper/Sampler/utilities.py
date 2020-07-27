@@ -1,7 +1,7 @@
 import numpy as np
 from lenstronomywrapper.LensSystem.macrolensmodel import MacroLensModel
 from lenstronomywrapper.LensSystem.LensComponents.powerlawshear import PowerLawShear
-from lenstronomywrapper.LensSystem.LensComponents.satellite import SISsatellite
+from lenstronomywrapper.LensSystem.LensComponents.SIS import SIS
 
 from lenstronomywrapper.LensData.lensed_quasar import LensedQuasar
 from lenstronomywrapper.LensSystem.BackgroundSource.quasar import Quasar

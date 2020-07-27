@@ -6,7 +6,7 @@ from lenstronomywrapper.LensData.lensed_quasar import LensedQuasar
 from lenstronomywrapper.LensSystem.macrolensmodel import MacroLensModel
 from lenstronomywrapper.LensSystem.LensComponents.powerlawshear import PowerLawShear
 from lenstronomywrapper.LensSystem.quad_lens import QuadLensSystem
-from lenstronomywrapper.LensSystem.LensComponents.satellite import SISsatellite
+from lenstronomywrapper.LensSystem.LensComponents.SIS import SIS
 from lenstronomywrapper.LensSystem.light_model import LightModel
 from lenstronomy.Plots.model_plot import ModelPlot
 import random
@@ -270,8 +270,8 @@ class AnalogModel(object):
 
                 kwargs_init = [self.lens.satellite_kwargs[n]]
 
-                satellite_galaxy = SISsatellite(satellite_redshift, kwargs_init=kwargs_init,
-                                            prior=prior_galaxy)
+                satellite_galaxy = SIS(satellite_redshift, kwargs_init=kwargs_init,
+                                       prior=prior_galaxy)
 
                 deflector_list += [satellite_galaxy]
 
