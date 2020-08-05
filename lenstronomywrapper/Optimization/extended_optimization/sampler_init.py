@@ -52,6 +52,7 @@ class SamplerInit(object):
         kwargs_source_sigma = self.sourcelight_instance.param_sigma
         kwargs_lens_light_sigma = self.lenslight_instance.param_sigma
         kwargs_ps_sigma = self.pointsource_instance.param_sigma
+        print(kwargs_ps_sigma)
 
         # hard bound lower limit in parameter space #
         kwargs_lower_lens = self.system.macromodel.param_lower
