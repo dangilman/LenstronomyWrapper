@@ -164,7 +164,16 @@ def run(job_index, chain_ID, output_path, path_to_folder,
             realization_initial = pyhalo.render(keyword_arguments['realization_type'],
                                         kwargs_rendering)[0]
             lens_system = QuadLensSystem.addRealization(lens_system, realization_initial)
-            hierarchical_opt = HierarchicalOptimization(lens_system)
+
+            if 'settings_class' in keyword_arguments['keywords_optimizer'].keys():
+                settings_class = keyword_arguments['keywords_optimizer']['settings_class']
+            else:
+                print('WARNING, USUING A DEFAULT SETTING FOR THE LENS MODELING COMPUTATIONS. '
+                      'CHECK WITH DANIEL IF THIS IS OK BEFORE CONTINUING!!!')
+                settings_class = 'default'
+
+            hierarchical_opt = HierarchicalOptimization(lens_system,
+                                settings_class=settings_class)
             kwargs_lens_fit, lensModel_fit, _ = hierarchical_opt.optimize(
                 data_to_fit, opt_routine, constrain_params, keyword_arguments['verbose']
             )

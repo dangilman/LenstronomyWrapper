@@ -11,8 +11,9 @@ class HierarchicalOptimization(BruteOptimization):
             settings_class = HierarchicalSettingsDefault()
         elif settings_class == 'delta_function':
             settings_class = HierarchicalSettingsDeltaFunction(**settings_kwargs)
+        elif settings_class == 'default_CDM':
+            settings_class = HierarchicalSettingsCDM()
         else:
-
             settings_class = settings_class()
 
         if n_particles is None:
