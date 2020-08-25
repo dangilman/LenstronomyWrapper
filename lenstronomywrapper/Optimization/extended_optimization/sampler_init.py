@@ -240,7 +240,8 @@ class SamplerInit(object):
                   'source_position_sigma': source_position_sigma,
                   'prior_lens': self.lens_priors,
                   'prior_lens_light': self.light_priors,
-                  'time_delay_likelihood': self._time_delay_likelihood}
+                  'time_delay_likelihood': self._time_delay_likelihood,
+                  'image_likelihood_mask_list': self.lens_data_class.likelihood_mask}
 
         return kwargs
 

@@ -58,6 +58,7 @@ class ArcPlusQuad(object):
 
         self.kwargs_data = kwargs_data
         self.data_class = data_class
+        self.likelihood_mask = None
 
     def get_lensed_image(self):
 
