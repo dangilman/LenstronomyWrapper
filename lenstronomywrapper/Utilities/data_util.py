@@ -14,7 +14,7 @@ def flux_at_edge(image):
 
 def load_data_from_lens_class(lens_class):
 
-    return [LensedQuasar(lens_class.x, lens_class.y, lens_class.m)]
+    return LensedQuasar(lens_class.x, lens_class.y, lens_class.m)
 
 def load_data_from_file(fname):
 
