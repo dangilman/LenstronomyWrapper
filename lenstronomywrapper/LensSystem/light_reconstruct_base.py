@@ -7,6 +7,14 @@ class LightReconstructBase(object):
         return len(self.light_model_list)
 
     @property
+    def concentric_with_lens_light(self):
+        return self._concentric_with_lens_light
+
+    @property
+    def concentric_with_lens_model(self):
+        return self._concentric_with_lens_model
+
+    @property
     def lensLight(self):
         raise NotImplementedError('Source reconstruction not yet implemented for this source class.')
 

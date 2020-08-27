@@ -17,7 +17,7 @@ class ArcQuadLensSystem(LensBase):
             # the default cosmology in pyHalo, currently WMAP9
             pyhalo_cosmology = Cosmology()
 
-        pc_per_arcsec_zsource = 1000 * pyhalo_cosmology.astropy.arcsec_per_kpc_proper(z_source).value ** -1
+        pc_per_arcsec_zsource = 1000 / pyhalo_cosmology.astropy.arcsec_per_kpc_proper(z_source).value
         self.background_quasar.setup(pc_per_arcsec_zsource)
 
         super(ArcQuadLensSystem, self).__init__(macromodel, z_source, substructure_realization, pyhalo_cosmology)
@@ -37,6 +37,10 @@ class ArcQuadLensSystem(LensBase):
         arclens_smooth_component._set_concentric()
 
         return arclens_smooth_component
+
+    def get_lens_model_components(self):
+
+        return self.macromodel, self.source_light_model, self.lens_light_model
 
     @classmethod
     def fromQuad(cls, quad_lens_system, lens_light_model, source_light_model, inherit_substructure_realization=True):
@@ -90,12 +94,11 @@ class ArcQuadLensSystem(LensBase):
                         component._kwargs[i]['center_x'] = comp._source_x
                         component._kwargs[i]['center_y'] = comp._source_y
 
-    def fit(self, data_to_fit, pso_kwargs=None, mcmc_kwargs=None, simplex_kwargs=None,
-            **kwargs):
+    def fit(self, data_to_fit, fit_sequence, **kwargs):
 
         optimizer = SourceReconstruction(self, data_to_fit, **kwargs)
         chain_list, kwargs_result, kwargs_model, multi_band_list, kwargs_special, param_class = optimizer.\
-            optimize(pso_kwargs, mcmc_kwargs, simplex_kwargs)
+            optimize(fit_sequence)
 
         return chain_list, kwargs_result, kwargs_model, multi_band_list, kwargs_special, param_class
 

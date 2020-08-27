@@ -18,15 +18,15 @@ class SourceReconstruction(object):
 
         self._lensmodel_init, _ = self.lens_system.get_lensmodel()
 
-    def optimize(self, pso_kwargs=None, mcmc_kwargs=None, simplex_kwargs=None):
+    def optimize(self, fit_sequence):
 
         chain_list, kwargs_result, kwargs_model, multi_band_list, param_class = \
-                self._fit(pso_kwargs=pso_kwargs, mcmc_kwargs=mcmc_kwargs, simplex_kwargs=simplex_kwargs)
+                self._fit(fit_sequence)
 
         kwargs_special = kwargs_result['kwargs_special']
         return chain_list, kwargs_result, kwargs_model, multi_band_list, kwargs_special, param_class
 
-    def _fit(self, pso_kwargs=None, mcmc_kwargs=None, simplex_kwargs=None, reoptimize=False):
+    def _fit(self, fit_sequence, reoptimize=False):
 
         kwargs_data_joint, kwargs_model, kwargs_constraints, kwargs_likelihood, kwargs_params, multi_band_list = \
             self._init.sampler_inputs(reoptimize)
@@ -34,15 +34,7 @@ class SourceReconstruction(object):
         fitting_seq = FittingSequence(kwargs_data_joint, kwargs_model, kwargs_constraints, kwargs_likelihood,
                                       kwargs_params)
 
-        fitting_kwargs_list = []
-        if pso_kwargs is not None:
-            fitting_kwargs_list.append(['PSO', pso_kwargs])
-        if simplex_kwargs is not None:
-            fitting_kwargs_list.append(['SIMPLEX', simplex_kwargs])
-        if mcmc_kwargs is not None:
-            fitting_kwargs_list.append(['MCMC', mcmc_kwargs])
-
-        chain_list = fitting_seq.fit_sequence(fitting_kwargs_list)
+        chain_list = fitting_seq.fit_sequence(fit_sequence)
         kwargs_result = fitting_seq.best_fit()
         print('fit kwargs:')
         print(kwargs_result['kwargs_lens'])
@@ -73,4 +65,8 @@ class SourceReconstruction(object):
         self.lens_system.update_source_centroid(source_x, source_y)
         self._data_class.point_source.update_kwargs_ps(kwargs_ps)
         self.lens_system.set_lensmodel_static(self._lensmodel_init, kwargs_lens)
+
+        self.lens_system.update_lens_light(kwargs_lens_light)
+
+        self.lens_system.update_source_light(kwargs_source_light)
 

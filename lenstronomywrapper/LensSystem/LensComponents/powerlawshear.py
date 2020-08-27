@@ -5,7 +5,8 @@ from lenstronomy.Util.param_util import shear_cartesian2polar, shear_polar2carte
 class PowerLawShear(ComponentBase):
 
     def __init__(self, redshift, kwargs_init=None, convention_index=False,
-                 reoptimize=False, prior=[]):
+                 reoptimize=False, prior=[], concentric_with_lens_model=None,
+                 concentric_with_lens_light=None):
 
         """
         This class defines an ellipsoidal power law mass profile plus external shear
@@ -26,9 +27,21 @@ class PowerLawShear(ComponentBase):
         """
         self.reoptimize = reoptimize
         self._prior = prior
+        self._concentric_with_lens_model = concentric_with_lens_model
+        self._concentric_with_lens_light = concentric_with_lens_light
 
         super(PowerLawShear, self).__init__(self.lens_model_list, [redshift]*self.n_models,
                                             kwargs_init, convention_index, False, reoptimize)
+
+    @property
+    def concentric_with_lens_light(self):
+
+        return self._concentric_with_lens_light
+
+    @property
+    def concentric_with_lens_model(self):
+
+        return self._concentric_with_lens_model
 
     @property
     def priors(self):

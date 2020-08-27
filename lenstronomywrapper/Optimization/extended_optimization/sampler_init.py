@@ -52,7 +52,6 @@ class SamplerInit(object):
         kwargs_source_sigma = self.sourcelight_instance.param_sigma
         kwargs_lens_light_sigma = self.lenslight_instance.param_sigma
         kwargs_ps_sigma = self.pointsource_instance.param_sigma
-        print(kwargs_ps_sigma)
 
         # hard bound lower limit in parameter space #
         kwargs_lower_lens = self.system.macromodel.param_lower
@@ -155,7 +154,20 @@ class SamplerInit(object):
 
     @property
     def linked_parameters_lensmodel_lightmodel(self):
-        pass
+
+        joint_lens_with_light = []
+
+        for k, component in enumerate(self.system.macromodel.components):
+
+            if component.concentric_with_lens_light is False or component.concentric_with_lens_light is None:
+                continue
+            else:
+
+                idx = component.concentric_with_lens_light
+
+                joint_lens_with_light.append([idx, k, ['center_x', 'center_y']])
+
+        return joint_lens_with_light
 
     @property
     def linked_parameters_lensmodel_lensmodel(self):
@@ -241,7 +253,7 @@ class SamplerInit(object):
                   'prior_lens': self.lens_priors,
                   'prior_lens_light': self.light_priors,
                   'time_delay_likelihood': self._time_delay_likelihood,
-                  'image_likelihood_mask_list': self.lens_data_class.likelihood_mask}
+                  'image_likelihood_mask_list': [self.lens_data_class.likelihood_mask]}
 
         return kwargs
 
@@ -251,6 +263,8 @@ class SamplerInit(object):
         joint_source_with_point_source, joint_source_with_source = self.linked_parameters_source_source
 
         joint_lens_with_lens = self.linked_parameters_lensmodel_lensmodel
+
+        joint_lens_with_light = self.linked_parameters_lensmodel_lightmodel
 
         if len(self.lens_data_class.x) == 4:
             solver_type = 'PROFILE_SHEAR'
@@ -274,6 +288,8 @@ class SamplerInit(object):
             kwargs['joint_source_with_source'] = joint_source_with_source
         if len(joint_lens_with_lens) > 0:
             kwargs['joint_lens_with_lens'] = joint_lens_with_lens
+        if len(joint_lens_with_light) > 0:
+            kwargs['joint_lens_with_light'] = joint_lens_with_light
 
         return kwargs
 

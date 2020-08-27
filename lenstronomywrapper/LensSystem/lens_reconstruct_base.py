@@ -4,6 +4,14 @@ class ReconstructBase(object):
         pass
 
     @property
+    def concentric_with_lens_light(self):
+        raise Exception('linked lens light with lens model not implemented for this class')
+
+    @property
+    def concentric_with_lens_model(self):
+        raise Exception('linked lens model with lens model not implemented for this class')
+
+    @property
     def n_models(self):
         return len(self.light_model_list)
 

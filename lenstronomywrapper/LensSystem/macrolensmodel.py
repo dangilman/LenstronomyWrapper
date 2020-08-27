@@ -20,6 +20,14 @@ class MacroLensModel(object):
         self.components = components
         self.n_lens_models = self._count_models(components)
 
+    def add_component(self, new_component):
+
+        if not isinstance(new_component, list):
+            new_component = [new_component]
+
+        self.components += new_component
+        self.n_lens_models = self._count_models(self.components)
+
     def set_reoptimize(self, reoptimize=bool):
 
         for component in self.components:

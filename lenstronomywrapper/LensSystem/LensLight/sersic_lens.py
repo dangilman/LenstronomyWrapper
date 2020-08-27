@@ -3,12 +3,26 @@ import numpy as np
 
 class SersicLens(LightBase):
 
-    def __init__(self, kwargs_sersic, reoptimize=False, prior=[], concentric_with_model=None):
+    def __init__(self, kwargs_sersic, reoptimize=False, prior=[],
+                 concentric_with_model=None, concentric_with_lens_light=None):
 
         self.reoptimize = reoptimize
         self._kwargs = kwargs_sersic
 
+        self._concentric_with_lens_light = concentric_with_lens_light
+        self._concentric_with_lens_model = concentric_with_model
+
         super(SersicLens, self).__init__(concentric_with_model, prior)
+
+    @property
+    def concentric_with_lens_light(self):
+
+        return self._concentric_with_lens_light
+
+    @property
+    def concentric_with_lens_model(self):
+
+        return self._concentric_with_lens_model
 
     @property
     def priors(self):
