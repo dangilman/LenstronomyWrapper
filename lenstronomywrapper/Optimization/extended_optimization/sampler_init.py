@@ -1,3 +1,5 @@
+from lenstronomywrapper.Optimization.extended_optimization.custom_priors import ExecuteList
+
 class SamplerInit(object):
 
     def __init__(self, lens_system_class, lens_data_class,
@@ -157,15 +159,18 @@ class SamplerInit(object):
 
         joint_lens_with_light = []
 
+        k_lens = 0
+
         for k, component in enumerate(self.system.macromodel.components):
 
             if component.concentric_with_lens_light is False or component.concentric_with_lens_light is None:
-                continue
+                pass
+
             else:
+                i_light = component.concentric_with_lens_light
+                joint_lens_with_light.append([i_light, k_lens, ['center_x', 'center_y']])
 
-                idx = component.concentric_with_lens_light
-
-                joint_lens_with_light.append([idx, k, ['center_x', 'center_y']])
+            k_lens += component.n_models
 
         return joint_lens_with_light
 
@@ -173,15 +178,19 @@ class SamplerInit(object):
     def linked_parameters_lensmodel_lensmodel(self):
 
         joint_lens_with_lens = []
+
+        k_lens = 0
+
         for k, component in enumerate(self.system.macromodel.components):
 
             if component.concentric_with_lens_model is False or component.concentric_with_lens_model is None:
-                continue
+                pass
+
             else:
-
                 idx = component.concentric_with_lens_model
+                joint_lens_with_lens.append([idx, k_lens, ['center_x', 'center_y']])
 
-                joint_lens_with_lens.append([idx, k, ['center_x', 'center_y']])
+            k_lens += component.n_models
 
         return joint_lens_with_lens
 
@@ -189,6 +198,7 @@ class SamplerInit(object):
     def linked_parameters_source_source(self):
 
         joint_source_with_source, joint_source_with_point_source = [], []
+
         for k, source_model in enumerate(self.system.source_light_model.components):
 
             if source_model.concentric_with_source is False or source_model.concentric_with_source is None:
@@ -203,6 +213,121 @@ class SamplerInit(object):
                     joint_source_with_source.append([idx, k, ['center_x', 'center_y']])
 
         return joint_source_with_point_source, joint_source_with_source
+
+    @property
+    def linked_parameters_lens_light_lens_light(self):
+
+        joint_lens_light_with_lens_light = []
+
+        k_light = 0
+
+        for k, component in enumerate(self.system.lens_light_model.components):
+
+            if component.concentric_with_lens_light is False or component.concentric_with_lens_light is None:
+                pass
+
+            else:
+                i_light = component.concentric_with_lens_light
+                joint_lens_light_with_lens_light.append([k_light, i_light, ['center_x', 'center_y']])
+
+            k_light += component.n_models
+
+        return joint_lens_light_with_lens_light
+
+    @property
+    def custom_LogLike(self):
+
+        custom_functions = []
+
+        custom_functions += self._custom_LogLikeMass
+        custom_functions += self._custom_LogLikeLight
+
+        if len(custom_functions) > 0:
+            custom_loglike = ExecuteList(custom_functions)
+        else:
+            custom_loglike = None
+
+        return custom_loglike
+
+    @property
+    def _custom_LogLikeLight(self):
+
+        custom_functions = []
+
+        k_light = 0
+
+        for k, component in enumerate(self.system.lens_light_model.components):
+
+            if component.custom_prior is False or component.custom_prior is None:
+                pass
+
+            else:
+
+                if component.custom_prior.linked_with_lens_light_model:
+                    raise Exception('Custom priors linked with other light models not '
+                                    'implemented for light model classes')
+
+                elif component.custom_prior.linked_with_lens_model:
+
+                    raise Exception('Custom priors linked with lens mass models not '
+                                    'implemented for light model classes, try adding the custom prior to the '
+                                    'lens mass model class instead.')
+
+                else:
+                    component.custom_prior.set_eval(eval_kwargs_lens_light=k_light)
+
+                custom_functions.append(component.custom_prior)
+
+            k_light += component.n_models
+
+        return custom_functions
+
+    @property
+    def _custom_LogLikeMass(self):
+
+        custom_functions = []
+
+        k_lens = 0
+
+        for k, component in enumerate(self.system.macromodel.components):
+
+            if component.custom_prior is False or component.custom_prior is None:
+                pass
+
+            else:
+
+                if component.custom_prior.linked_with_lens_light_model:
+                    light_component_index = component.custom_prior.lens_light_component_index
+                    i_light = self.kwargs_index_from_component_index(self.system.lens_light_model,
+                                                                     light_component_index)
+                    component.custom_prior.set_eval(eval_kwargs_lens=k_lens,
+                                                    eval_kwargs_lens_light=i_light)
+
+                elif component.custom_prior.linked_with_lens_model:
+
+                    lens_component_index = component.custom_prior.lens_component_index
+                    i_lens = self.kwargs_index_from_component_index(self.system.macromodel,
+                                                                    lens_component_index)
+                    component.custom_prior.set_eval(eval_kwargs_lens=i_lens)
+
+                else:
+                    component.custom_prior.set_eval(eval_kwargs_lens=k_lens)
+
+                custom_functions.append(component.custom_prior)
+
+            k_lens += component.n_models
+
+        return custom_functions
+
+    @staticmethod
+    def kwargs_index_from_component_index(model_class, model_idx):
+
+        i = 0
+        for idx, component in enumerate(model_class.components):
+            if idx == model_idx:
+                break
+            i += component.n_models
+        return i
 
     @property
     def kwargs_model(self):
@@ -243,9 +368,17 @@ class SamplerInit(object):
         source_position_tolerance = 0.001
         source_position_sigma = 0.001
 
+        if image_position_uncertainty == 0:
+            image_position_likelihood = False
+        else:
+            image_position_likelihood = True
+
+        custom_loglike = self.custom_LogLike
+
         kwargs = {'check_bounds': check_bounds,
                   'force_no_add_image': force_no_add_image,
                   'source_marg': source_marg,
+                  'image_position_likelihood': image_position_likelihood,
                   'image_position_uncertainty': image_position_uncertainty,
                   'check_matched_source_position': check_matched_source_position,
                   'source_position_tolerance': source_position_tolerance,
@@ -253,7 +386,8 @@ class SamplerInit(object):
                   'prior_lens': self.lens_priors,
                   'prior_lens_light': self.light_priors,
                   'time_delay_likelihood': self._time_delay_likelihood,
-                  'image_likelihood_mask_list': [self.lens_data_class.likelihood_mask]}
+                  'image_likelihood_mask_list': [self.lens_data_class.likelihood_mask],
+                  'custom_logL_addition': custom_loglike}
 
         return kwargs
 
@@ -265,6 +399,8 @@ class SamplerInit(object):
         joint_lens_with_lens = self.linked_parameters_lensmodel_lensmodel
 
         joint_lens_with_light = self.linked_parameters_lensmodel_lightmodel
+
+        joint_lens_light_with_lens_light = self.linked_parameters_lens_light_lens_light
 
         if len(self.lens_data_class.x) == 4:
             solver_type = 'PROFILE_SHEAR'
@@ -290,6 +426,8 @@ class SamplerInit(object):
             kwargs['joint_lens_with_lens'] = joint_lens_with_lens
         if len(joint_lens_with_light) > 0:
             kwargs['joint_lens_with_light'] = joint_lens_with_light
+        if len(joint_lens_light_with_lens_light):
+            kwargs['joint_lens_light_with_lens_light'] = joint_lens_light_with_lens_light
 
         return kwargs
 

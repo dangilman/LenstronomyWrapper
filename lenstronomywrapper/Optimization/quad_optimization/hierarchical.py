@@ -17,6 +17,8 @@ class HierarchicalOptimization(BruteOptimization):
             settings_class = HierarchicalSettingsCDM2()
         elif settings_class == 'default_CDM_3':
             settings_class = HierarchicalSettingsCDM3()
+        elif settings_class == 'default_CDM_4':
+            settings_class = HierarchicalSettingsCDM4()
 
         else:
 

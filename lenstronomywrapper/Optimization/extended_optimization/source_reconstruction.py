@@ -20,6 +20,8 @@ class SourceReconstruction(object):
 
     def optimize(self, fit_sequence):
 
+        self.lens_system.clear_static_lensmodel()
+
         chain_list, kwargs_result, kwargs_model, multi_band_list, param_class = \
                 self._fit(fit_sequence)
 
@@ -31,14 +33,13 @@ class SourceReconstruction(object):
         kwargs_data_joint, kwargs_model, kwargs_constraints, kwargs_likelihood, kwargs_params, multi_band_list = \
             self._init.sampler_inputs(reoptimize)
 
+        print(multi_band_list[0][1].keys())
         fitting_seq = FittingSequence(kwargs_data_joint, kwargs_model, kwargs_constraints, kwargs_likelihood,
                                       kwargs_params)
 
         chain_list = fitting_seq.fit_sequence(fit_sequence)
         kwargs_result = fitting_seq.best_fit()
-        print('fit kwargs:')
-        print(kwargs_result['kwargs_lens'])
-
+        print('kwargs_result:', kwargs_result)
         kwargs_lens = kwargs_result['kwargs_lens']
         kwargs_source_light = kwargs_result['kwargs_source']
         kwargs_lens_light = kwargs_result['kwargs_lens_light']
@@ -50,11 +51,12 @@ class SourceReconstruction(object):
             if 'dec_0' in kw.keys():
                 del kwargs_lens[i]['dec_0']
 
-        self._update_lens_system(kwargs_lens, kwargs_source_light, kwargs_lens_light, kwargs_ps)
+        self._update_lens_system(kwargs_lens, kwargs_source_light, kwargs_lens_light, kwargs_ps, multi_band_list)
 
         return chain_list, kwargs_result, kwargs_model, multi_band_list, fitting_seq.param_class
 
-    def _update_lens_system(self, kwargs_lens, kwargs_source_light, kwargs_lens_light, kwargs_ps):
+    def _update_lens_system(self, kwargs_lens, kwargs_source_light, kwargs_lens_light, kwargs_ps,
+                            multi_band_list):
 
         self.lens_system.update_kwargs_macro(kwargs_lens)
 
@@ -70,3 +72,10 @@ class SourceReconstruction(object):
 
         self.lens_system.update_source_light(kwargs_source_light)
 
+        stored_PSF = getattr(self._data_class, "update_psf", None)
+
+        if callable(stored_PSF):
+
+            new_psf, new_psf_error_map = multi_band_list[0][1]['kernel_point_source'], multi_band_list[0][1][
+                'psf_error_map']
+            self._data_class.update_psf(new_psf, new_psf_error_map)

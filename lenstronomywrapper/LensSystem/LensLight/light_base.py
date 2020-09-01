@@ -2,11 +2,12 @@ from lenstronomywrapper.LensSystem.light_reconstruct_base import LightReconstruc
 
 class LightBase(LightReconstructBase):
 
-    def __init__(self, concentric_with_model, priors):
+    def __init__(self, concentric_with_model, priors, custom_prior):
 
         self._prior = priors
         self.concentric_with_model = concentric_with_model
         self.is_source_light = False
+        self.custom_prior = custom_prior
         super(LightBase, self).__init__()
 
     def surface_brightness(self, xgrid, ygrid, lensmodel, lensmodel_kwargs):

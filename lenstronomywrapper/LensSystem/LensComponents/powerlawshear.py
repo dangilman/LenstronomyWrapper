@@ -1,12 +1,12 @@
 from lenstronomywrapper.LensSystem.LensComponents.macromodel_base import ComponentBase
 import numpy as np
-from lenstronomy.Util.param_util import shear_cartesian2polar, shear_polar2cartesian, ellipticity2phi_q, phi_q2_ellipticity
 
 class PowerLawShear(ComponentBase):
 
     def __init__(self, redshift, kwargs_init=None, convention_index=False,
                  reoptimize=False, prior=[], concentric_with_lens_model=None,
-                 concentric_with_lens_light=None):
+                 concentric_with_lens_light=None, kwargs_fixed=None,
+                 custom_prior=None):
 
         """
         This class defines an ellipsoidal power law mass profile plus external shear
@@ -29,9 +29,11 @@ class PowerLawShear(ComponentBase):
         self._prior = prior
         self._concentric_with_lens_model = concentric_with_lens_model
         self._concentric_with_lens_light = concentric_with_lens_light
+        self.kwargs_fixed = kwargs_fixed
 
         super(PowerLawShear, self).__init__(self.lens_model_list, [redshift]*self.n_models,
-                                            kwargs_init, convention_index, False, reoptimize)
+                                            kwargs_init, convention_index, False, reoptimize,
+                                            custom_prior)
 
     @property
     def concentric_with_lens_light(self):
@@ -65,10 +67,14 @@ class PowerLawShear(ComponentBase):
 
     @property
     def fixed_models(self):
+
         if self.fixed:
             return self.kwargs
         else:
-            return [{}, {'ra_0': 0, 'dec_0': 0}]
+            if self.kwargs_fixed is None:
+                return [{}, {'ra_0': 0, 'dec_0': 0}]
+            else:
+                return [self.kwargs_fixed, {'ra_0': 0, 'dec_0': 0}]
 
     @property
     def param_init(self):
@@ -80,8 +86,8 @@ class PowerLawShear(ComponentBase):
 
         if self.reoptimize:
 
-            theta_E_scale, gamma_scale, centroid_scale, e12_scale = 0.05, 0.05, 0.1, 0.05
-            shear_scale = 0.05
+            theta_E_scale, gamma_scale, centroid_scale, e12_scale = 0.05, 0.1, 0.1, 0.1
+            shear_scale = 0.2
             old_kwargs = self._kwargs[0]
             old_kwargs_shear = self._kwargs[1]
             new_kwargs = {}
@@ -110,20 +116,20 @@ class PowerLawShear(ComponentBase):
     @property
     def param_lower(self):
 
-        lower = [{'theta_E': 0.05, 'center_x': -2., 'center_y': -2., 'e1': -0.8, 'e2': -0.8, 'gamma': 1.5},
-                 {'gamma1': -0.6, 'gamma2': -0.6}]
+        lower = [{'theta_E': 0.05, 'center_x': -2., 'center_y': -2., 'e1': -0.5, 'e2': -0.5, 'gamma': 1.5},
+                 {'gamma1': -0.3, 'gamma2': -0.3}]
         return lower
 
     @property
     def param_upper(self):
 
-        upper = [{'theta_E': 4., 'center_x': 2., 'center_y': 2., 'e1': 0.8, 'e2': 0.8, 'gamma': 2.5},
-                 {'gamma1': 0.6, 'gamma2': 0.6}]
+        upper = [{'theta_E': 4., 'center_x': 2., 'center_y': 2., 'e1': 0.5, 'e2': 0.5, 'gamma': 2.5},
+                 {'gamma1': 0.3, 'gamma2': 0.3}]
         return upper
 
     @property
     def lens_model_list(self):
-        return ['PEMD', 'SHEAR']
+        return ['EPL', 'SHEAR']
 
     @property
     def redshift_list(self):

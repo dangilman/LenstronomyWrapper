@@ -9,7 +9,6 @@ class ArcQuadLensSystem(LensBase):
     def __init__(self, macromodel, z_source, background_quasar_class, lens_light_model, source_light_model,
                  substructure_realization=None, pyhalo_cosmology=None):
 
-
         self.lens_light_model = lens_light_model
         self.source_light_model = source_light_model
         self.background_quasar = background_quasar_class
@@ -40,7 +39,19 @@ class ArcQuadLensSystem(LensBase):
 
     def get_lens_model_components(self):
 
-        return self.macromodel, self.source_light_model, self.lens_light_model
+        return self.macromodel, self.source_light_model, self.lens_light_model, self.background_quasar
+
+    def add_source_light_component(self, new_component):
+
+        self.source_light_model.add_component(new_component)
+
+    def add_lens_light_component(self, new_component):
+
+        self.lens_light_model.add_component(new_component)
+
+    def add_macromodel_component(self, new_component):
+
+        self.macromodel.add_component(new_component)
 
     @classmethod
     def fromQuad(cls, quad_lens_system, lens_light_model, source_light_model, inherit_substructure_realization=True):
@@ -129,15 +140,17 @@ class ArcQuadLensSystem(LensBase):
             ind2 = count + component.n_models
             kwargs_component = new_lens_light_kwargs[ind1:ind2]
             component._kwargs = kwargs_component
+            count += component.n_models
 
     def update_source_light(self, new_source_light_kwargs):
 
         count = 0
-        for component in self.lens_light_model.components:
+        for component in self.source_light_model.components:
             ind1 = count
             ind2 = count + component.n_models
             kwargs_component = new_source_light_kwargs[ind1:ind2]
             component._kwargs = kwargs_component
+            count += component.n_models
 
     def get_lens_light(self):
 
@@ -162,3 +175,10 @@ class ArcQuadLensSystem(LensBase):
             lens_model, kwargs_lensmodel = self.get_lensmodel()
 
         return self.background_quasar.plot_images(x, y, lens_model, kwargs_lensmodel)
+
+    def add_mcmc_model(self, kwargs_list, kwargs_model, kwargs_result,
+                       multi_band_list, kwargs_special):
+
+        self.mcmc_output_kwargs = {'kwargs_list': kwargs_list, 'kwargs_result': kwargs_result,
+                                 'kwargs_model': kwargs_model, 'multi_band_list': multi_band_list,
+                                'kwargs_special': kwargs_special}

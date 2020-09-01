@@ -3,16 +3,32 @@ from lenstronomywrapper.LensSystem.LensComponents.macromodel_base import Compone
 class EllpiticalSersic(ComponentBase):
 
     def __init__(self, redshift, kwargs_init, prior=[],
-                 fixed=False, convention_index=False, reoptimize=False, concentric_with_model=None,
-                 fixed_sersic_index=None):
+                 convention_index=False, reoptimize=False,
+                 concentric_with_lens_model=None,
+                 concentric_with_lens_light=None, kwargs_fixed=None,
+                 custom_prior=None
+                 ):
 
         self._redshift = redshift
         self._prior = prior
         self.reoptimize = reoptimize
-        self._fixed_sersic_index = fixed_sersic_index
+
+        self._concentric_with_lens_model = concentric_with_lens_model
+        self._concentric_with_lens_light = concentric_with_lens_light
+        self.kwargs_fixed = kwargs_fixed
 
         super(EllpiticalSersic, self).__init__(self.lens_model_list, [redshift], kwargs_init,
-                                           convention_index, fixed, reoptimize, concentric_with_model)
+                                           convention_index, False, reoptimize, custom_prior)
+
+    @property
+    def concentric_with_lens_light(self):
+
+        return self._concentric_with_lens_light
+
+    @property
+    def concentric_with_lens_model(self):
+
+        return self._concentric_with_lens_model
 
     @property
     def n_models(self):
@@ -40,10 +56,10 @@ class EllpiticalSersic(ComponentBase):
         if self.fixed:
             return self.kwargs
         else:
-            if self._fixed_sersic_index is not None:
-                return [{'n_sersic': self._fixed_sersic_index}]
+            if self.kwargs_fixed is None:
+                return [{}]
             else:
-                return [{''}]
+                return [self.kwargs_fixed]
 
     @property
     def param_init(self):
@@ -53,40 +69,26 @@ class EllpiticalSersic(ComponentBase):
     @property
     def param_sigma(self):
 
-        if self._fixed_sersic_index is not None:
-            n_sersic_sigma = 1e-9
-        else:
-            n_sersic_sigma = 1.5
-
         if self.reoptimize:
-            return [{'k_eff': 0.05, 'R_sersic': 0.25, 'n_sersic': n_sersic_sigma/3., 'e1': 0.2, 'e2': 0.2, 'center_x': 0.1, 'center_y': 0.1}]
+            return [{'k_eff': 0.05, 'R_sersic': 0.25, 'n_sersic': 0.5, 'e1': 0.2, 'e2': 0.2, 'center_x': 0.1, 'center_y': 0.1}]
         else:
-            return [{'k_eff': 0.5, 'R_sersic': 1., 'n_sersic': n_sersic_sigma, 'e1': 0.3, 'e2': 0.3, 'center_x': 0.5, 'center_y': 0.5}]
+            return [{'k_eff': 0.5, 'R_sersic': 1., 'n_sersic': 3., 'e1': 0.3, 'e2': 0.3, 'center_x': 0.5, 'center_y': 0.5}]
 
     @property
     def param_lower(self):
 
-        lower = [{'k_eff': 0., 'R_sersic': 0.,
+        lower = [{'k_eff': 0., 'R_sersic': 0., 'n_sersic': 0.5,
                   'e1': -0.5, 'e2': -0.5, 'center_x': -100.,
                   'center_y': -100.}]
-
-        if self._fixed_sersic_index is None:
-            lower[0]['n_sersic'] = 0.5
-        else:
-            lower[0]['n_sersic'] = self._fixed_sersic_index * 0.9999
 
         return lower
 
     @property
     def param_upper(self):
-        upper = [{'k_eff': 100., 'R_sersic': 100.,
+        upper = [{'k_eff': 100., 'R_sersic': 10., 'n_sersic': 10.,
                            'e1': 0.5, 'e2': 0.5, 'center_x': 100.,
                            'center_y': 100.}]
 
-        if self._fixed_sersic_index is None:
-            upper[0]['n_sersic'] = 9
-        else:
-            upper[0]['n_sersic'] = self._fixed_sersic_index * 1.00001
 
         return upper
 
