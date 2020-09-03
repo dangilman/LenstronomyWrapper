@@ -1,6 +1,8 @@
 import numpy as np
 from lenstronomywrapper.LensSystem.macrolensmodel import MacroLensModel
 from lenstronomywrapper.LensSystem.LensComponents.powerlawshear import PowerLawShear
+from lenstronomywrapper.LensSystem.LensComponents.SIS import SISsatellite
+from lenstronomywrapper.LensSystem.LensComponents.multipole import Multipole
 
 from lenstronomywrapper.LensData.lensed_quasar import LensedQuasar
 from lenstronomywrapper.LensSystem.BackgroundSource.quasar import Quasar
@@ -107,7 +109,6 @@ def load_lens_source(prior_list_cosmo, keywords):
 
     return zlens, keywords['zsource'], samples
 
-
 def build_kwargs_macro_powerlaw_ellipsoid(prior_list_macromodel):
 
     samples = {}
@@ -151,8 +152,8 @@ def load_background_quasar(prior_list_source, keywords):
     else:
         raise Exception('only single sources implemented, not '+str(n_sources))
 
-
-def load_powerlaw_ellipsoid_macromodel(zlens, prior_list_macromodel, kwargs_macro_ref):
+def load_powerlaw_ellipsoid_macromodel(zlens, prior_list_macromodel,
+                                       kwargs_macro_ref, secondary_lens_components):
 
     samples = {}
 
@@ -178,8 +179,17 @@ def load_powerlaw_ellipsoid_macromodel(zlens, prior_list_macromodel, kwargs_macr
         constrain_params = {'shear': shear}
         samples['shear'] = shear
 
-    deflector = PowerLawShear(zlens, kwargs_init)
-    component_list = [deflector]
+    main_deflector = PowerLawShear(zlens, kwargs_init)
+    component_list = [main_deflector]
+
+    secondary_models, samples_secondary = load_seccondary_lens_components(prior_list_macromodel,
+                                                 secondary_lens_components,
+                                                 zlens)
+
+    for name_secondary in samples_secondary.keys():
+        samples[name_secondary] = samples_secondary[name_secondary]
+
+    component_list += secondary_models
 
     if constrain_params is None:
         opt_routine = 'fixed_powerlaw_shear'
@@ -187,6 +197,67 @@ def load_powerlaw_ellipsoid_macromodel(zlens, prior_list_macromodel, kwargs_macr
         opt_routine = 'fixedshearpowerlaw'
 
     return MacroLensModel(component_list), samples, constrain_params, opt_routine
+
+def load_seccondary_lens_components(prior_list_macro,
+                                    secondary_lens_components,
+                                    z_main):
+
+    lens_component_list = []
+    params_sampled = {}
+
+    if secondary_lens_components is None:
+        return lens_component_list, params_sampled
+    else:
+        assert isinstance(secondary_lens_components, list)
+
+    for idx, comp in enumerate(secondary_lens_components):
+
+        component_name = comp[0]
+        component_kwargs = comp[1]
+        kwargs_model = {}
+
+        if component_name == 'SIS':
+
+            component_class = SISsatellite
+            names = ['theta_E', 'center_x', 'center_y']
+
+        elif component_name == 'multipole':
+
+            component_class = Multipole
+            names = ['m', 'a_m', 'phi_m', 'center_x', 'center_y']
+
+        else:
+            raise Exception('component name '+str(component_name) +
+                            ' not recognized.')
+
+        names_input = [ni + '_' + str(idx + 1) for ni in names]
+
+        for input, output in zip(names_input, names):
+            if input in prior_list_macro.keys():
+                value = prior_list_macro[input]()
+                kwargs_model[output] = value
+                params_sampled[input] = value
+            else:
+                assert output in component_kwargs.keys()
+                kwargs_model[output] = component_kwargs[output]
+
+        z_name = 'z_' + str(idx)
+        if z_name in prior_list_macro.keys():
+            z_comp = prior_list_macro[z_name]()
+            params_sampled[z_name] = z_comp
+        else:
+            assert 'redshift' in component_kwargs.keys()
+            if component_kwargs['redshift'] == 'zlens':
+                z_comp = z_main
+            else:
+                z_comp = component_kwargs['redshift']
+
+        kwargs_component = {'redshift': z_comp, 'kwargs_init': [kwargs_model]}
+
+        new_component = component_class(**kwargs_component)
+        lens_component_list.append(new_component)
+
+    return lens_component_list, params_sampled
 
 def load_optimization_settings(keywords):
 

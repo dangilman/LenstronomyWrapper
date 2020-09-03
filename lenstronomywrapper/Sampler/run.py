@@ -54,6 +54,7 @@ def run(job_index, chain_ID, output_path, path_to_folder,
     else:
         print('running job index '+str(job_index) + ', '+str(n_run) + ' realizations remaining')
 
+    ############ Extract and organize key word arguments ###############
     prior_list_realization, \
     prior_list_macromodel, \
     prior_list_source, \
@@ -95,8 +96,10 @@ def run(job_index, chain_ID, output_path, path_to_folder,
         params_sampled.update(lens_source_sampled)
 
         ######## Sample keyword arguments for the macromodel ##########
+
         macromodel, macro_samples, constrain_params, opt_routine = \
-            load_powerlaw_ellipsoid_macromodel(zlens, prior_list_macromodel, kwargs_macro_ref)
+            load_powerlaw_ellipsoid_macromodel(zlens, prior_list_macromodel, kwargs_macro_ref,
+                                               keyword_arguments['secondary_lens_components'])
         params_sampled.update(macro_samples)
 
         ######## Sample keyword arguments for the background source ##########
@@ -106,10 +109,6 @@ def run(job_index, chain_ID, output_path, path_to_folder,
 
         ################## Set up the data to fit ####################
         data_to_fit = load_data_to_fit(keyword_arguments)
-
-        # import matplotlib.pyplot as plt
-        # plt.scatter(data_to_fit.x, data_to_fit.y)
-        # plt.show()
 
         ################ Get the optimization settings ################
         optimization_settings = load_optimization_settings(keyword_arguments)
