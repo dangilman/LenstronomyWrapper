@@ -162,10 +162,18 @@ class ArcQuadLensSystem(LensBase):
         instance, kwargs = self.source_light_model.sourceLight, self.source_light_model.kwargs_light
         return instance, kwargs
 
-    def quasar_magnification(self, x, y, lens_model=None, kwargs_lensmodel=None, normed=True):
+    def quasar_magnification(self, x, y, lens_model=None, kwargs_lensmodel=None, normed=True,
+                             point_source=False):
 
         if lens_model is None or kwargs_lensmodel is None:
             lens_model, kwargs_lensmodel = self.get_lensmodel()
+
+        if point_source:
+            mags = lens_model.magnification(x, y, kwargs_lensmodel)
+            mags = abs(mags)
+            if normed:
+                mags *= max(mags) ** -1
+            return mags, False
 
         return self.background_quasar.magnification(x, y, lens_model, kwargs_lensmodel, normed)
 

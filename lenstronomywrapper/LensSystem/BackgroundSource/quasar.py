@@ -37,14 +37,19 @@ class Quasar(SourceBase):
                 raise Exception('Must initialize quasar class before using it.')
             return False
 
-    def setup(self, pc_per_arcsec_zsource):
+    def setup(self, pc_per_arcsec_zsource=None, source_size_pc=None):
 
         if self._check_initialized(with_error=False):
             return
 
         self._initialized = True
 
-        source_size_pc = self._kwargs_init['source_fwhm_pc']
+        if not hasattr(self, '_pc_per_arcsec_zsource'):
+            assert pc_per_arcsec_zsource is not None
+            self._pc_per_arcsec_zsource = pc_per_arcsec_zsource
+
+        if source_size_pc is None:
+            source_size_pc = self._kwargs_init['source_fwhm_pc']
 
         if self._grid_rmax is None:
             grid_rmax = self._auto_grid_size(source_size_pc)
@@ -58,7 +63,7 @@ class Quasar(SourceBase):
         else:
             self.grid_resolution = self._grid_resolution
 
-        self._kwargs_quasar = self._kwargs_transform(self._kwargs_init, pc_per_arcsec_zsource)
+        self._kwargs_quasar = self._kwargs_transform(self._kwargs_init, self._pc_per_arcsec_zsource)
 
         self._sourcelight = LightModel(light_model_list=['GAUSSIAN'])
 
@@ -83,7 +88,8 @@ class Quasar(SourceBase):
 
         return surf_bright
 
-    def _kwargs_transform(self, kwargs, pc_per_arcsec_zsrc):
+    @staticmethod
+    def _kwargs_transform(kwargs, pc_per_arcsec_zsrc):
 
         newkw = deepcopy(kwargs)
         fwhm_arcsec = newkw['source_fwhm_pc'] / pc_per_arcsec_zsrc

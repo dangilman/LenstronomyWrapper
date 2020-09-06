@@ -3,6 +3,7 @@ from lenstronomywrapper.LensSystem.lens_base import LensBase
 from pyHalo.Cosmology.cosmology import Cosmology
 from lenstronomywrapper.LensSystem.BackgroundSource.quasar import Quasar
 from lenstronomywrapper.Utilities.lensing_util import interpolate_ray_paths_system
+from copy import deepcopy
 
 class QuadLensSystem(LensBase):
 
@@ -31,6 +32,27 @@ class QuadLensSystem(LensBase):
         self.background_quasar.setup(pc_per_arcsec_zsource)
 
         super(QuadLensSystem, self).__init__(macromodel, z_source, substructure_realization, pyhalo_cosmology)
+
+    @classmethod
+    def fromArcQuadLens(cls, lens_system):
+
+        macromodel = deepcopy(lens_system.macromodel)
+        background_source_class = deepcopy(lens_system.background_quasar)
+        z_source = deepcopy(lens_system.zsource)
+        substructure_realization, pyhalo_cosmology = deepcopy(lens_system.realization), \
+                                                     deepcopy(lens_system.pyhalo_cosmology)
+
+        system = QuadLensSystem(macromodel, z_source, background_source_class, substructure_realization,
+                                pyhalo_cosmology)
+
+        return system
+
+    @classmethod
+    def fromkwargs(cls, lens_system, kwargs_macro_new):
+
+        system_copy = deepcopy(lens_system)
+        system_copy.update_kwargs_macro(kwargs_macro_new)
+        return system_copy
 
     @classmethod
     def shift_background_auto(cls, lens_data_class, macromodel, zsource,
@@ -145,7 +167,7 @@ class QuadLensSystem(LensBase):
                              kwargs_lensmodel=None, normed=True,
                              retry_if_blended=0,
                              enforce_unblended=False,
-                             adaptive=False, verbose=False):
+                             adaptive=False, verbose=False, point_source=False):
 
         """
         Computes the magnifications (or flux ratios if normed=True)
@@ -156,10 +178,18 @@ class QuadLensSystem(LensBase):
         :param kwargs_lensmodel: key word arguments for the lens_model
         :param normed: if True returns flux ratios
         :param retry_if_blended: a integer that specifies how many times to try
-        increasing the size of the ray tracing window if an image comes out blended together.
+        increasing the size of the ray tracing window if an image comes out blended together
+        :param point_source: if True, computes the magnification of a point source
         """
         if lens_model is None or kwargs_lensmodel is None:
             lens_model, kwargs_lensmodel = self.get_lensmodel()
+
+        if point_source:
+            mags = lens_model.magnification(x, y, kwargs_lensmodel)
+            mags = abs(mags)
+            if normed:
+                mags *= max(mags) ** -1
+            return mags, False
 
         return self.background_quasar.magnification(x, y, lens_model,
                                                     kwargs_lensmodel,

@@ -8,7 +8,7 @@ from MagniPy.Analysis.Visualization.triplot2 import TriPlot2
 path_out = os.getenv('HOME') + '/data/sims/processed_chains/CDMforecast4/'
 
 nbins = 5
-n_keep = 1000
+n_keep = 500
 samples_list, samples_list_weighted = [], []
 
 param_names = ['sigma_sub', 'power_law_index', 'shear']
