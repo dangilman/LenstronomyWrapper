@@ -9,11 +9,16 @@ class Multipole(ComponentBase):
                  concentric_with_lens_model=None,
                  concentric_with_lens_light=None,
                  kwargs_fixed=None,
-                 custom_prior=None):
+                 custom_prior=None,
+                 amp_range_scale=1.):
 
         self._redshift = redshift
         self._prior = prior
         self.reoptimize = reoptimize
+
+        self._m = kwargs_init[0]['m']
+
+        self._amp_range_scale = amp_range_scale
 
         self._concentric_with_lens_model = concentric_with_lens_model
         self._concentric_with_lens_light = concentric_with_lens_light
@@ -37,11 +42,18 @@ class Multipole(ComponentBase):
 
         if self.fixed:
             return self.kwargs
+
         else:
             if self.kwargs_fixed is None:
-                return [{}]
+                return [{'m': int(self._m)}]
             else:
-                return [self.kwargs_fixed]
+                kw = {}
+                for keyword in self.kwargs_fixed.keys():
+                    kw[keyword] = self.kwargs_fixed[keyword]
+                if 'm' not in self.kwargs_fixed.keys():
+                    kw['m'] = self._m
+
+                return [kw]
 
     @property
     def n_models(self):
@@ -77,13 +89,25 @@ class Multipole(ComponentBase):
             return [{'m': 1, 'a_m': 0.005, 'phi_m': pi/10, 'center_x': 1., 'center_y': 1.}]
 
     @property
+    def amp_minmax(self):
+
+        if self._m == 2:
+            return 0.05
+        elif self._m == 3:
+            return 0.03
+        elif self._m == 4:
+            return 0.025
+        else:
+            return 0.02
+
+    @property
     def param_lower(self):
-        lower = [{'m': 2, 'a_m': 0.00, 'phi_m': 0., 'center_x': -10, 'center_y': -10}]
+        lower = [{'m': 2, 'a_m': -self._amp_range_scale * self.amp_minmax, 'phi_m': -3.14159, 'center_x': -10, 'center_y': -10}]
         return lower
 
     @property
     def param_upper(self):
-        upper = [{'m': 100, 'a_m': 1., 'phi_m': 180., 'center_x': 10, 'center_y': 10}]
+        upper = [{'m': 10, 'a_m': self._amp_range_scale *self.amp_minmax, 'phi_m': 3.14159, 'center_x': 10, 'center_y': 10}]
         return upper
 
     @property

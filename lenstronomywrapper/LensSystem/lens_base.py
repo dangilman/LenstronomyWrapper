@@ -71,7 +71,8 @@ class LensBase(object):
         self._lensmodel_static = None
         self._kwargs_static = None
 
-    def get_lensmodel(self, include_substructure=True, set_multiplane=True, substructure_realization=None):
+    def get_lensmodel(self, include_substructure=True, set_multiplane=True,
+                      substructure_realization=None, include_macromodel=True):
 
         if self._static_lensmodel and include_substructure is True:
 
@@ -84,6 +85,15 @@ class LensBase(object):
 
         names, redshifts, kwargs, numercial_alpha_class, convention_index = self.get_lenstronomy_args(
             include_substructure, substructure_realization)
+
+        if include_macromodel is False:
+            n_macro = self.macromodel.n_lens_models
+            names = names[n_macro:]
+            kwargs = kwargs[n_macro:]
+            redshifts = list(redshifts)[n_macro:]
+            if isinstance(convention_index, list) or isinstance(convention_index, np.ndarray):
+                convention_index = np.array(convention_index)[n_macro:] - n_macro
+                convention_index = list(convention_index)
 
         self._numerical_alpha_class = numercial_alpha_class
 

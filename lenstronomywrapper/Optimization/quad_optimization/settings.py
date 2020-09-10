@@ -188,7 +188,7 @@ class HierarchicalSettingsCDM(object):
         # add this everywhere
         globalmin_masses = [self.log_mass_cut_global, self.log_mass_cut_global, self.log_mass_cut_global]
         # window size
-        window_sizes = [100, 0.3, 0.08]
+        window_sizes = [100, 0.3, 0.1]
         # controls starting points for re-optimizations
         scale = [1, 0.5, 0.25]
         # determines whether to use PSO for re-optimizations
@@ -254,7 +254,7 @@ class HierarchicalSettingsCDM2(object):
         # add this everywhere
         globalmin_masses = [self.log_mass_cut_global, self.log_mass_cut_global, self.log_mass_cut_global]
         # window size
-        window_sizes = [100, 0.3, 0.08]
+        window_sizes = [100, 0.3, 0.1]
         # controls starting points for re-optimizations
         scale = [1, 0.5, 0.25]
         # determines whether to use PSO for re-optimizations
@@ -319,7 +319,7 @@ class HierarchicalSettingsCDM3(object):
         # add this everywhere
         globalmin_masses = [self.log_mass_cut_global, self.log_mass_cut_global]
         # window size
-        window_sizes = [100, 0.08]
+        window_sizes = [100, 0.1]
         # controls starting points for re-optimizations
         scale = [1, 0.25]
         # determines whether to use PSO for re-optimizations
@@ -384,7 +384,7 @@ class HierarchicalSettingsCDM4(object):
         # add this everywhere
         globalmin_masses = [self.log_mass_cut_global, self.log_mass_cut_global]
         # window size
-        window_sizes = [100, 0.08]
+        window_sizes = [100, 0.1]
         # controls starting points for re-optimizations
         scale = [1, 0.25]
         # determines whether to use PSO for re-optimizations
