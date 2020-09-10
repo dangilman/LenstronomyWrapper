@@ -83,3 +83,10 @@ def write_macro(output_path, kwargs_macro, mode, write_header):
                 f.write(str(np.round(kwargs_macro[row][key], 4)) + ' ')
             f.write('\n')
 
+def write_sampling_rate(output_path, rate):
+
+    seconds_per_realization = 1/rate
+    minutes_per_realization = np.round(seconds_per_realization / 60, 5)
+    with open(output_path, 'a') as f:
+        f.write(str(minutes_per_realization)+'\n')
+

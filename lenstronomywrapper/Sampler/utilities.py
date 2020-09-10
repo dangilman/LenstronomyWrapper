@@ -7,19 +7,20 @@ from lenstronomywrapper.LensSystem.LensComponents.multipole import Multipole
 from lenstronomywrapper.LensData.lensed_quasar import LensedQuasar
 from lenstronomywrapper.LensSystem.BackgroundSource.quasar import Quasar
 
-from lenstronomywrapper.Utilities.misc import write_fluxes, write_params, write_macro
+from lenstronomywrapper.Utilities.misc import write_fluxes, write_params, write_macro, write_sampling_rate
 
 from lenstronomywrapper.Sampler.prior_sample import PriorDistribution
 
 from copy import deepcopy
 
-def readout(readout_path, kwargs_macro, fluxes, parameters, header, write_header, write_mode):
+def readout(readout_path, kwargs_macro, fluxes, parameters, header, write_header, write_mode,
+            sampling_rate):
 
     write_params(parameters, readout_path + 'parameters.txt', header, mode=write_mode,
                  write_header=write_header)
     write_fluxes(readout_path + 'fluxes.txt', fluxes=fluxes, mode=write_mode)
     write_macro(readout_path + 'macro.txt', kwargs_macro, mode=write_mode, write_header=write_header)
-
+    write_sampling_rate(readout_path + 'sampling_rate.txt', sampling_rate)
 
 def load_keywords(path_to_folder, job_index):
 

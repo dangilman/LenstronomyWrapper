@@ -6,7 +6,7 @@ from time import time
 #job_index = int(sys.argv[1])
 job_index = 1
 # the name of the folder containing paramdictionary files
-chain_ID = 'CDM_forecast_hoffman_6_test'
+chain_ID = 'HE0435_test'
 
 # where to generate output files
 #out_path = '/scratch/abenson/'

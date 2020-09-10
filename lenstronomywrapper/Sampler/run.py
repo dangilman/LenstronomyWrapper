@@ -10,12 +10,16 @@ from lenstronomywrapper.Utilities.parameter_util import kwargs_e1e2_to_polar, kw
 from pyHalo.pyhalo_dynamic import pyHaloDynamic
 from pyHalo.pyhalo import pyHalo
 
+from time import time
+
 from lenstronomywrapper.Optimization.quad_optimization.dynamic import DynamicOptimization
 from lenstronomywrapper.Optimization.quad_optimization.hierarchical import HierarchicalOptimization
 from lenstronomywrapper.Utilities.misc import write_lensdata
 
 def run(job_index, chain_ID, output_path, path_to_folder,
         test_mode=False):
+
+    t_start = time()
 
     output_path += chain_ID + '/'
     path_to_folder += chain_ID
@@ -171,6 +175,9 @@ def run(job_index, chain_ID, output_path, path_to_folder,
                       'CHECK WITH DANIEL IF THIS IS OK BEFORE CONTINUING!!!')
                 settings_class = 'default'
 
+            if keyword_arguments['verbose']:
+                print('realization has '+str(len(realization_initial.halos))+' halos in total')
+
             hierarchical_opt = HierarchicalOptimization(lens_system, settings_class=settings_class)
             kwargs_lens_fit, lensModel_fit, _ = hierarchical_opt.optimize(
                 data_to_fit, opt_routine, constrain_params, keyword_arguments['verbose']
@@ -236,12 +243,16 @@ def run(job_index, chain_ID, output_path, path_to_folder,
             parameters_sampled = np.vstack((parameters_sampled, parameters))
 
         if (counter+1) % readout_steps == 0:
+            t_end = time()
+            t_ellapsed = t_end - t_start
+            sampling_rate = fluxes_computed.shape[0] / t_ellapsed
             readout(readout_path, kwargs_macro, fluxes_computed, parameters_sampled,
-                    header, write_header, write_mode)
+                    header, write_header, write_mode, sampling_rate)
             fluxes_computed, parameters_sampled = None, None
             kwargs_macro = []
             write_mode = 'a'
             write_header = False
+            t_start = time()
 
         counter += 1
 

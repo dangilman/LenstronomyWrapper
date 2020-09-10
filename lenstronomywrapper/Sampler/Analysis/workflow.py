@@ -5,13 +5,13 @@ import dill
 from MagniPy.Analysis.KDE.NDdensity import *
 from MagniPy.Analysis.Visualization.triplot2 import TriPlot2
 
-path_out = os.getenv('HOME') + '/data/sims/processed_chains/CDMforecast6/'
+path_out = os.getenv('HOME') + '/data/sims/processed_chains/CDMforecast4/'
 
 nbins = 10
-n_keep = 2000
+n_keep = 600
 samples_list, samples_list_weighted = [], []
 
-param_names = ['sigma_sub', 'power_law_index']
+param_names = ['sigma_sub', 'power_law_index', 'center_x', 'center_y']
 
 for lens_idx in range(1, 2):
 
@@ -32,18 +32,19 @@ for lens_idx in range(1, 2):
     print('kept '+str(len(x[:,0])/iter) + ' realizations...')
     print(np.max(stats), stats.shape)
     print(x.shape)
+    print(x_ranges)
 
-    pname_weights = ['a_m_1']
-    means = [0.]
-    sigmas = [0.01]
-
-    weights = samples.gaussian_weight(x_full, pname_weights, means, sigmas)
-    weights = [weights]
+    # weight_names = ['center_x', 'center_y']
+    # mean_list = [0., 0.]
+    # sigma_list = [0.01, 0.01]
+    #weights = [samples.gaussian_weight(x_full, weight_names,
+    #                                  mean_list, sigma_list)]
+    weights = None
     data = [x]
 
     samples_list.append(DensitySamples([x], param_names, weights,
                              param_ranges=x_ranges, nbins=nbins,
-                             use_kde=True, bwidth_scale=0.4))
+                             use_kde=False, bwidth_scale=0.4))
 
 density = IndepdendentDensities(samples_list)
 density_weighted = IndepdendentDensities(samples_list_weighted)
