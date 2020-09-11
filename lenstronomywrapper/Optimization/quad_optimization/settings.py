@@ -87,7 +87,7 @@ class HierarchicalSettingsDefault(object):
 
     @property
     def n_iterations(self):
-        return 250
+        return 300
 
     @property
     def n_iterations_background(self):
@@ -152,7 +152,7 @@ class HierarchicalSettingsCDM(object):
 
     @property
     def n_iterations(self):
-        return 250
+        return 300
 
     @property
     def n_iterations_background(self):
@@ -218,7 +218,7 @@ class HierarchicalSettingsCDM2(object):
 
     @property
     def n_iterations(self):
-        return 250
+        return 300
 
     @property
     def n_iterations_background(self):
@@ -283,7 +283,7 @@ class HierarchicalSettingsCDM3(object):
 
     @property
     def n_iterations(self):
-        return 250
+        return 300
 
     @property
     def n_iterations_background(self):
@@ -348,7 +348,7 @@ class HierarchicalSettingsCDM4(object):
 
     @property
     def n_iterations(self):
-        return 250
+        return 300
 
     @property
     def n_iterations_background(self):
