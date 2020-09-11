@@ -87,7 +87,7 @@ class HierarchicalSettingsDefault(object):
 
     @property
     def n_iterations(self):
-        return 300
+        return 350
 
     @property
     def n_iterations_background(self):
@@ -123,7 +123,7 @@ class HierarchicalSettingsDefault(object):
         # add this everywhere
         globalmin_masses = [self.log_mass_cut_global, self.log_mass_cut_global, self.log_mass_cut_global]
         # window size
-        window_sizes = [100, 0.3, 0.08]
+        window_sizes = [100, 0.3, 0.1]
         # controls starting points for re-optimizations
         scale = [1, 0.5, 0.25]
         # determines whether to use PSO for re-optimizations
@@ -152,7 +152,7 @@ class HierarchicalSettingsCDM(object):
 
     @property
     def n_iterations(self):
-        return 300
+        return 350
 
     @property
     def n_iterations_background(self):
@@ -218,7 +218,7 @@ class HierarchicalSettingsCDM2(object):
 
     @property
     def n_iterations(self):
-        return 300
+        return 350
 
     @property
     def n_iterations_background(self):
@@ -283,7 +283,7 @@ class HierarchicalSettingsCDM3(object):
 
     @property
     def n_iterations(self):
-        return 300
+        return 350
 
     @property
     def n_iterations_background(self):
@@ -348,7 +348,7 @@ class HierarchicalSettingsCDM4(object):
 
     @property
     def n_iterations(self):
-        return 300
+        return 350
 
     @property
     def n_iterations_background(self):
