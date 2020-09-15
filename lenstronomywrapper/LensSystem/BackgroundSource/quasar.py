@@ -72,6 +72,17 @@ class Quasar(SourceBase):
         self._kwargs_quasar['center_x'] = x
         self._kwargs_quasar['center_y'] = y
 
+    def surface_birghtness_from_coords(self, beta_x, beta_y):
+
+        self._check_initialized()
+
+        shape0 = beta_x.shape
+
+        surf_bright = self._sourcelight.surface_brightness(beta_x.ravel(),
+                                                           beta_y.ravel(),
+                                                           [self._kwargs_quasar])
+        return surf_bright.reshape(shape0)
+
     def surface_brightness(self, xgrid, ygrid, lensmodel, lensmodel_kwargs):
 
         self._check_initialized()
