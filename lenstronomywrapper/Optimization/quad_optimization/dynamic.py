@@ -81,7 +81,7 @@ class DynamicOptimization(OptimizationBase):
 
             for i in range(0, len(log_mass_cuts)-1):
                 if log_mass_cuts[i] <= log_mass_cuts[i+1]:
-                    raise Exception('Aperture masses must be decreasing, you provided: ' + str(aperture_sizes))
+                    raise Exception('Aperture masses must be decreasing, you provided: ' + str(log_mass_cuts))
             for i in range(0, len(log_mass_cuts)-1):
                 if aperture_sizes[i] < aperture_sizes[i+1]:
                     print('WARNING: Aperture sizes are not monotically decreasing functions of halo mass.'
@@ -103,9 +103,15 @@ class DynamicOptimization(OptimizationBase):
 
         self.pyhalo_dynamic = pyhalo_dynamic
 
-        self._brute = BruteOptimization(lens_system, n_particles, simplex_n_iter)
+        self.simplex_n_iter = simplex_n_iter
 
         super(DynamicOptimization, self).__init__(lens_system)
+
+    def _gen_brute(self):
+
+        brute = BruteOptimization(self.lens_system, self.n_particles, self.simplex_n_iter)
+
+        return brute
 
     def optimize(self, data_to_fit, opt_routine='fixed_powerlaw_shear',
                  constrain_params=None, verbose=False):
@@ -144,7 +150,8 @@ class DynamicOptimization(OptimizationBase):
             print('n background halos: ', realization_global.number_of_halos_after_redshift(self.lens_system.zlens))
 
         # Add the large halos, fit a lens model
-        kwargs_lens_final, lens_model_full, source = self._brute.fit(
+        brute = self._gen_brute()
+        kwargs_lens_final, lens_model_full, source = brute.fit(
             data_to_fit, opt_routine, constrain_params=constrain_params, verbose=verbose,
                  include_substructure=True, realization=realization_global, re_optimize=False,
                  particle_swarm=True)
@@ -192,7 +199,8 @@ class DynamicOptimization(OptimizationBase):
 
             if fit:
 
-                kwargs_lens_final, lens_model_full, source = self._brute.fit(
+                brute = self._gen_brute()
+                kwargs_lens_final, lens_model_full, source = brute.fit(
                     data_to_fit, opt_routine, constrain_params=constrain_params, verbose=verbose,
                     include_substructure=True, realization=realization_global, re_optimize=re_optimize,
                     particle_swarm=particle_swarm)
@@ -229,6 +237,7 @@ class DynamicOptimization(OptimizationBase):
                                                         macro_redshifts, terminate_at_source=True)
 
         if isinstance(self.kwargs_rendering, list):
+            print('generating global realization with first set of keywords in kwargs_rendering...')
             kwargs_init = deepcopy(self.kwargs_rendering[0])
         else:
             kwargs_init = deepcopy(self.kwargs_rendering)
