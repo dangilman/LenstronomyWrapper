@@ -85,9 +85,7 @@ def ray_angles(alpha_x, alpha_y, lens_model, kwargs_lens, zsource):
 
     x0, y0 = 0., 0.
     zstart = 0.
-    alpha_x += 0.0001
-    alpha_y += 0.00001
-
+    
     for zi in np.unique(redshift_list):
         x0, y0, alpha_x, alpha_y = lens_model.lens_model.ray_shooting_partial(x0, y0, alpha_x, alpha_y, zstart, zi,
                                                                                kwargs_lens)

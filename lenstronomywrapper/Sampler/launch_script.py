@@ -6,8 +6,7 @@ from time import time
 #job_index = int(sys.argv[1])
 job_index = 1
 # the name of the folder containing paramdictionary files
-chain_ID = 'RXJ0911_test'
-
+chain_ID = 'HE0435_varyLOSindex'
 # where to generate output files
 #out_path = '/scratch/abenson/'
 out_path = os.getenv('HOME') + '/data/sims/'
@@ -21,6 +20,6 @@ print(job_index)
 t0 = time()
 # launch and forget
 run(job_index, chain_ID, out_path,
-    paramdictionary_folder_path, test_mode=True)
+    paramdictionary_folder_path, test_mode=False)
 tend = time()
 print('time ellapsed: ', tend - t0)
