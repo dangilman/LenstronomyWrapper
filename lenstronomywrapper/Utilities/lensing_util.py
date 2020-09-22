@@ -64,11 +64,7 @@ def interpolate_ray_paths(x_image, y_image, lens_model, kwargs_lens, zsource,
 
     for (xi, yi) in zip(x_image, y_image):
 
-        x, y, redshifts, tz = lens_model.lens_model.ray_shooting_partial_steps(0., 0., xi, yi, 0, zsource,
-                                                                               kwargs_lens)
-
-        angle_x = [xi] + [x_comoving / tzi for x_comoving, tzi in zip(x[1:], tz[1:])]
-        angle_y = [yi] + [y_comoving / tzi for y_comoving, tzi in zip(y[1:], tz[1:])]
+        angle_x, angle_y, tz = ray_angles(xi, yi, lens_model, kwargs_lens, zsource)
 
         if terminate_at_source:
             angle_x[-1] = source_x
@@ -78,6 +74,31 @@ def interpolate_ray_paths(x_image, y_image, lens_model, kwargs_lens, zsource,
         ray_angles_y.append(interp1d(tz, angle_y))
 
     return ray_angles_x, ray_angles_y
+
+def ray_angles(alpha_x, alpha_y, lens_model, kwargs_lens, zsource):
+
+    redshift_list = lens_model.redshift_list + [zsource]
+
+    x_angle_list, y_angle_list, tz = [alpha_x], [alpha_y], [0.]
+
+    cosmo_calc = lens_model.lens_model._multi_plane_base._cosmo_bkg.T_xy
+
+    x0, y0 = 0., 0.
+    zstart = 0.
+    alpha_x += 0.0001
+    alpha_y += 0.00001
+
+    for zi in np.unique(redshift_list):
+        x0, y0, alpha_x, alpha_y = lens_model.lens_model.ray_shooting_partial(x0, y0, alpha_x, alpha_y, zstart, zi,
+                                                                               kwargs_lens)
+        d = cosmo_calc(0., zi)
+        x_angle_list.append(x0/d)
+        y_angle_list.append(y0/d)
+        tz.append(d)
+
+        zstart = zi
+
+    return x_angle_list, y_angle_list, tz
 
 def interpolate_ray_paths_system(x_image, y_image, lens_system,
                                  include_substructure=True, realization=None, terminate_at_source=False,
