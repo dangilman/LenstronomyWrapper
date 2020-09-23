@@ -14,11 +14,11 @@ sigmas_0405 = ([0.04, 0.03/0.7, 0.04/1.28, 0.05/0.94], False)
 sigmas_2033 = ([0.03, 0.03/0.65, 0.02/0.5, 0.02/0.53], False)
 
 base = os.getenv('HOME') + '/data/sims/processed_chains/'
-names = ['B1422_varyLOSindex', 'PG1115', 'HE0435', 'PSJ1606', 'WGD2038',
-         'WGDJ0405', 'WFI2033']
-paths_base = {name: base + name for name in names}
 
-sigmas_dict = {'B1422_varyLOSindex': sigmas_1422, 'PG1115': sigmas_1115,
+names_base = ['B1422', 'PG1115', 'HE0435', 'PSJ1606', 'WGD2038',
+         'WGDJ0405', 'WFI2033']
+
+sigmas_dict = {'B1422': sigmas_1422, 'PG1115': sigmas_1115,
                'HE0435': sigmas_0435, 'PSJ1606': sigmas_1606,
               'WGD2038': sigmas_2038, 'WGDJ0405': sigmas_0405,
               'WFI2033': sigmas_2033}
@@ -26,17 +26,22 @@ sigmas_dict = {'B1422_varyLOSindex': sigmas_1422, 'PG1115': sigmas_1115,
 nbins = 15
 n_keep = 400
 
-param_names = ['sigma_sub', 'power_law_index']
+param_names = ['sigma_sub', 'delta_power_law_index', 'theta_E']
 samples_list_weighted = []
 
-include_list = ['B1422_varyLOSindex', 'PG1115', 'PSJ1606', 'WGDJ0405',
-                'WFI2033', 'HE0435', 'WGD2038']
-include_list = ['HE0435']
-paths = [paths_base[lens_name] + '/' for lens_name in include_list]
+
+include_list = ['B1422']
+extension = '_varyLOSindex_uni'
+
+names = [nb + extension for nb in names_base]
+paths_base = {name: base + name for name in names}
+
+paths = [paths_base[lens_name + extension] + '/' for lens_name in include_list]
 flux_sigmas_list = [sigmas_dict[lens_name][0] for lens_name in include_list]
 uncertainty_in_ratios = [sigmas_dict[lens_name][1] for lens_name in include_list]
 
 for n, path_out in enumerate(paths):
+    print(path_out)
 
     print(path_out + 'lens_'+str(1))
     file = open(path_out+'lens_'+str(1), 'rb')
@@ -51,7 +56,7 @@ for n, path_out in enumerate(paths):
     print(np.max(stats), stats.shape)
     print(x.shape)
     print(x_ranges)
-    #x_ranges = [[0, 0.2], [-2.7, -1.1], [-0.03, 0.17]]
+    x_ranges = [[0, 0.2], [-0.8, 0.8], [0.65, 0.98]]
 
     weight_names = ['center_x', 'center_y', 'LOS_normalization']
     mean_list = [0., 0., 0.8]
@@ -71,8 +76,5 @@ triplot.truth_color = 'b'
 out = triplot.make_triplot(param_names=param_names,
                      filled_contours=True, show_intervals=False,
                      show_contours=True, levels=levels)
-#out[1].annotate('4 lenses', xy=(0.5, 0.5), xycoords='axes fraction', fontsize=16)
-#triplot.make_marginal(param_names[1])
 
-plt.savefig('posterior_vary_SHMF.pdf')
 plt.show()
