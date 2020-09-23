@@ -159,14 +159,13 @@ def run(job_index, chain_ID, output_path, path_to_folder,
         elif keyword_arguments['keywords_optimizer']['routine'] == 'hierarchical':
 
             if 'zlens' in params_sampled.keys():
-                kwargs_hmf = keyword_arguments['kwargs_halo_mass_function']
+                kwargs_hmf = keyword_arguments['realization_kwargs']['kwargs_halo_mass_function']
                 pyhalo = pyHalo(zlens, zsource, kwargs_halo_mass_function=kwargs_hmf)
             else:
-                kwargs_hmf = keyword_arguments['kwargs_halo_mass_function']
+                kwargs_hmf = keyword_arguments['realization_kwargs']['kwargs_halo_mass_function']
                 if pyhalo is None:
                     pyhalo = pyHalo(zlens, zsource, kwargs_halo_mass_function=kwargs_hmf)
-            print(kwargs_hmf)
-            exit(1)
+            
             realization_initial = pyhalo.render(keyword_arguments['realization_type'],
                                         kwargs_rendering)[0]
             lens_system = QuadLensSystem.addRealization(lens_system, realization_initial)
