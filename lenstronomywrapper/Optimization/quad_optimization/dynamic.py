@@ -10,7 +10,7 @@ class DynamicOptimization(OptimizationBase):
     def __init__(self, lens_system, pyhalo_dynamic, kwargs_rendering, global_log_mlow,
                  log_mass_cuts, aperture_sizes, refit,
                  particle_swarm, re_optimize, realization_type,
-                 n_particles=30, simplex_n_iter=300, initial_pso=True):
+                 n_particles=35, simplex_n_iter=300, initial_pso=True):
 
         """
         :param lens_system: an instance of QuadLensSystem (see documentation in LensSystem.quad_lens
@@ -153,8 +153,8 @@ class DynamicOptimization(OptimizationBase):
         brute = self._gen_brute()
         kwargs_lens_final, lens_model_full, source = brute.fit(
             data_to_fit, opt_routine, constrain_params=constrain_params, verbose=verbose,
-                 include_substructure=True, realization=realization_global, re_optimize=False,
-                 particle_swarm=True)
+                 include_substructure=True, realization=realization_global, re_optimize=True,
+                 particle_swarm=True, pso_convergence_mean=150000)
         self.update_lens_system(source, kwargs_lens_final, lens_model_full, realization_global)
 
         if isinstance(self.kwargs_rendering, list):
@@ -203,7 +203,7 @@ class DynamicOptimization(OptimizationBase):
                 kwargs_lens_final, lens_model_full, source = brute.fit(
                     data_to_fit, opt_routine, constrain_params=constrain_params, verbose=verbose,
                     include_substructure=True, realization=realization_global, re_optimize=re_optimize,
-                    particle_swarm=particle_swarm)
+                    particle_swarm=particle_swarm, pso_convergence_mean=150000)
                 self.update_lens_system(source, kwargs_lens_final, lens_model_full, realization_global)
 
             else:
@@ -230,11 +230,9 @@ class DynamicOptimization(OptimizationBase):
 
         lens_model_macro, macro_model_z, _ = self.lenstronomy_args_from_lensmodel(macro_lens_model)
 
-        macro_redshifts = [0.] + self.lens_system.macromodel.redshift_list
-        macro_redshifts = np.unique(macro_redshifts)
-
         x_interp_list, y_interp_list = self._get_interp([lens_centroid_x], [lens_centroid_y],
-                                                        macro_redshifts, terminate_at_source=True)
+                                                        macro_model_z,
+                                                        terminate_at_source=True)
 
         if isinstance(self.kwargs_rendering, list):
             print('generating global realization with first set of keywords in kwargs_rendering...')
@@ -264,28 +262,16 @@ class DynamicOptimization(OptimizationBase):
 
         lens_model, kwargs = self.lens_system.get_lensmodel()
 
-        if not hasattr(self, '_lens_model_list_empty'):
-            self._lens_model_list_empty = []
-            self._zlist_empty = []
-            self._kwargs_empty = []
-            for i, zi in enumerate(lens_plane_redshifts):
-                self._lens_model_list_empty.append('CONVERGENCE')
-                self._zlist_empty.append(zi)
-                self._kwargs_empty.append({'kappa_ext': 0.})
-
-        lens_model_list, redshift_list, convention_index = \
+        lens_model_list, lens_plane_redshifts, convention_index = \
             self.lenstronomy_args_from_lensmodel(lens_model)
 
-        lens_model_list += self._lens_model_list_empty
-        redshift_list += self._zlist_empty
-        kwargs += self._kwargs_empty
-
         lensmodel_new = LensModel(lens_model_list, z_lens=self.pyhalo_dynamic.zlens,
-                                  z_source=self.pyhalo_dynamic.zsource, lens_redshift_list=redshift_list,
+                                  z_source=self.pyhalo_dynamic.zsource, lens_redshift_list=lens_plane_redshifts,
                                   cosmo=lens_model.cosmo, multi_plane=True,
                                   numerical_alpha_class=self.lens_system._numerical_alpha_class)
 
         source_x, source_y = self.lens_system.source_centroid_x, self.lens_system.source_centroid_y
+
         x_interp, y_interp = interpolate_ray_paths(x_coords, y_coords,
                               lensmodel_new, kwargs, self.pyhalo_dynamic.zsource,
                                                    terminate_at_source=terminate_at_source,

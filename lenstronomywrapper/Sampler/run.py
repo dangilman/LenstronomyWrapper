@@ -165,7 +165,7 @@ def run(job_index, chain_ID, output_path, path_to_folder,
                 kwargs_hmf = keyword_arguments['realization_kwargs']['kwargs_halo_mass_function']
                 if pyhalo is None:
                     pyhalo = pyHalo(zlens, zsource, kwargs_halo_mass_function=kwargs_hmf)
-            
+
             realization_initial = pyhalo.render(keyword_arguments['realization_type'],
                                         kwargs_rendering)[0]
             lens_system = QuadLensSystem.addRealization(lens_system, realization_initial)
