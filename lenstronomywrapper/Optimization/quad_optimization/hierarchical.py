@@ -5,7 +5,7 @@ from lenstronomywrapper.Utilities.lensing_util import interpolate_ray_paths_syst
 class HierarchicalOptimization(BruteOptimization):
 
     def __init__(self, lens_system, n_particles=None, simplex_n_iter=None, settings_class='default',
-                 settings_kwargs={}):
+                 settings_kwargs={}, kwargs_settings_class={}):
 
         if settings_class == 'default':
             settings_class = HierarchicalSettingsDefault()
@@ -19,9 +19,9 @@ class HierarchicalOptimization(BruteOptimization):
             settings_class = HierarchicalSettingsCDM3()
         elif settings_class == 'default_CDM_4':
             settings_class = HierarchicalSettingsCDM4()
-
+        elif settings_class == 'custom':
+            settings_class = SettingsClass(**kwargs_settings_class)
         else:
-
             settings_class = settings_class()
 
         if n_particles is None:

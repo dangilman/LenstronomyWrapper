@@ -65,7 +65,7 @@ def interpolate_ray_paths(x_image, y_image, lens_model, kwargs_lens, zsource,
     for (xi, yi) in zip(x_image, y_image):
 
         angle_x, angle_y, tz = ray_angles(xi, yi, lens_model, kwargs_lens, zsource)
-      
+
         if terminate_at_source:
             angle_x[-1] = source_x
             angle_y[-1] = source_y

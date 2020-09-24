@@ -395,3 +395,46 @@ class HierarchicalSettingsCDM4(object):
         re_optimize_iteration = [True, True]
 
         return aperture_masses, globalmin_masses, window_sizes, scale, optimize_iteration, particle_swarm_reopt, re_optimize_iteration
+
+class SettingsClass(object):
+
+    def __init__(self, log_mass_cut_global, foreground_kwargs, background_kwargs, n_particles=30, n_iterations=350):
+
+        self._names = ['aperture_masses', 'globalmin_masses', 'window_sizes', 'scale', 'particle_swarm_reopt',
+                 'optimize_iteration', 're_optimize_iteration']
+
+        self.log_mass_cut_global = log_mass_cut_global
+        self.n_particles = n_particles
+        self.n_iterations = n_iterations
+
+        self.n_iterations_foreground = self._set_foreground(foreground_kwargs)
+        self.n_iterations_background = self._set_background(background_kwargs)
+
+
+    @property
+    def foreground_settings(self):
+        out = self._foreground
+        return out[0], out[1], out[2], out[3], out[4], out[5], out[6]
+
+    @property
+    def background_settings(self):
+        out = self._background
+        return out[0], out[1], out[2], out[3], out[4], out[5], out[6]
+
+    def _set_foreground(self, kwargs):
+
+        self._check(kwargs)
+        self._foreground = [kwargs[name] for name in self._names]
+        return len(kwargs['aperture_masses'])
+
+    def _set_background(self, kwargs):
+
+        self._check(kwargs)
+        self._background = [kwargs[name] for name in self._names]
+        return len(kwargs['aperture_masses'])
+
+    def _check(self, kwargs):
+
+        L = len(kwargs['aperture_masses'])
+        for name in self._names:
+            assert L == len(kwargs[name])
