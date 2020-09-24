@@ -172,15 +172,22 @@ def run(job_index, chain_ID, output_path, path_to_folder,
 
             if 'settings_class' in keyword_arguments['keywords_optimizer'].keys():
                 settings_class = keyword_arguments['keywords_optimizer']['settings_class']
+                if settings_class == 'custom':
+                    assert 'kwargs_settings_class' in keyword_arguments['keywords_optimizer'].keys()
+                    kwargs_settings_class = keyword_arguments['keywords_optimizer']['kwargs_settings_class']
+                else:
+                    kwargs_settings_class = None
             else:
                 print('WARNING, USUING A DEFAULT SETTING FOR THE LENS MODELING COMPUTATIONS. '
                       'CHECK WITH DANIEL IF THIS IS OK BEFORE CONTINUING!!!')
                 settings_class = 'default'
-
+                kwargs_settings_class = None
+            
             if keyword_arguments['verbose']:
                 print('realization has '+str(len(realization_initial.halos))+' halos in total')
 
-            hierarchical_opt = HierarchicalOptimization(lens_system, settings_class=settings_class)
+            hierarchical_opt = HierarchicalOptimization(lens_system, settings_class=settings_class,
+                                                        kwargs_settings_class=kwargs_settings_class)
             kwargs_lens_fit, lensModel_fit, _ = hierarchical_opt.optimize(
                 data_to_fit, opt_routine, constrain_params, keyword_arguments['verbose']
             )
