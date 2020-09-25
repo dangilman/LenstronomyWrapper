@@ -182,7 +182,7 @@ def run(job_index, chain_ID, output_path, path_to_folder,
                       'CHECK WITH DANIEL IF THIS IS OK BEFORE CONTINUING!!!')
                 settings_class = 'default'
                 kwargs_settings_class = None
-            
+
             if keyword_arguments['verbose']:
                 print('realization has '+str(len(realization_initial.halos))+' halos in total')
 

@@ -168,14 +168,12 @@ class Quasar(SourceBase):
         step_factor = 0.1
 
         mags = []
-        #print('computing magnification adaptive.... ')
+
         for i, grid in enumerate(grids):
 
-            #print('computing image '+str(i))
             r_start = 0.05 * grid.rmax
             step_size = step_factor * grid.rmax
 
-            #print('magnification: ', 0)
             magnification_last = self._iterate_adaptive(
                 grid, 0., r_start, lensModel, kwargs_lens)
             converged = False
@@ -187,8 +185,13 @@ class Quasar(SourceBase):
 
             while converged is False:
 
-                magnification_new = self._iterate_adaptive(
-                    grid, r_min, r_max, lensModel, kwargs_lens)
+                if isinstance(lensModel, list):
+                    magnification_new = self._iterate_adaptive(
+                            grid, r_min, r_max, lensModel[i], kwargs_lens[i])
+                else:
+                    magnification_new = self._iterate_adaptive(
+                        grid, r_min, r_max, lensModel, kwargs_lens)
+
                 delta = 1 - magnification_last / magnification_new
                 converged = _converged(delta)
 
@@ -225,9 +228,13 @@ class Quasar(SourceBase):
         images, mags = [], []
 
         for i in range(0, len(xpos)):
-            surface_brightness_image = self.surface_brightness(xgrids[i].ravel(), ygrids[i].ravel(),
-                                                               lensModel, kwargs_lens)
 
+            if isinstance(lensModel, list):
+                surface_brightness_image = self.surface_brightness(xgrids[i].ravel(), ygrids[i].ravel(),
+                                                               lensModel[i], kwargs_lens[i])
+            else:
+                surface_brightness_image = self.surface_brightness(xgrids[i].ravel(), ygrids[i].ravel(),
+                                                                   lensModel, kwargs_lens)
             n = int(np.sqrt(len(surface_brightness_image)))
 
             images.append(surface_brightness_image.reshape(n, n))
