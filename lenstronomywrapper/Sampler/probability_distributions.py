@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.interpolate import interp1d
 
-n_decimals = 5
+n_decimals = 6
 
 class Uniform(object):
 
