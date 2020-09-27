@@ -153,7 +153,7 @@ class DynamicOptimization(OptimizationBase):
         brute = self._gen_brute()
         kwargs_lens_final, lens_model_full, source = brute.fit(
             data_to_fit, opt_routine, constrain_params=constrain_params, verbose=verbose,
-                 include_substructure=True, realization=realization_global, re_optimize=True,
+                 include_substructure=True, realization=realization_global, re_optimize=False,
                  particle_swarm=True, pso_convergence_mean=150000)
         self.update_lens_system(source, kwargs_lens_final, lens_model_full, realization_global)
 

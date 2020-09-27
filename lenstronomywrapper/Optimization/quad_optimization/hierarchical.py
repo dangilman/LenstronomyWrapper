@@ -22,7 +22,7 @@ class HierarchicalOptimization(BruteOptimization):
         elif settings_class == 'custom':
             settings_class = SettingsClass(**kwargs_settings_class)
         else:
-            settings_class = settings_class()
+            settings_class = settings_class
 
         if n_particles is None:
             n_particles = settings_class.n_particles
