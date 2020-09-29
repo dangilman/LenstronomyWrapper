@@ -65,6 +65,19 @@ def realization_keywords(keywords_init, prior_list_realization):
 
     keywords.update(keywords_sampled)
 
+    if 'mc_model' in keywords.keys():
+
+        mc_model = {'custom': True}
+        params = ['c0', 'zeta', 'beta']
+        for name in params:
+            if name in keywords_sampled.keys():
+                mc_model[name] = keywords_sampled[name]
+            else:
+                assert name in keywords.keys()
+                mc_model[name] = keywords[name]
+
+        keywords['mc_model'] = mc_model
+        print(keywords['mc_model'])
     return keywords, samples
 
 def build_priors(params_to_vary):

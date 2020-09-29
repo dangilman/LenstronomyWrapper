@@ -20,9 +20,9 @@ class LocalImageHessian(LocalImageBase):
         xinit = np.array([hessian_constraints[0], hessian_constraints[1],
                           hessian_constraints[2], hessian_constraints[3]])
 
-        foreground1 = self.foreground_rayshooting(x, y)
-        foreground2 = self.foreground_rayshooting(x + scale, y)
-        foreground3 = self.foreground_rayshooting(x, y + scale)
+        foreground1 = self.foreground_rayshooting(x, y, self.zlens)
+        foreground2 = self.foreground_rayshooting(x + scale, y, self.zlens)
+        foreground3 = self.foreground_rayshooting(x, y + scale, self.zlens)
         args = (hessian_constraints, x, y, kwargs_shift, scale, foreground1, foreground2, foreground3)
 
         opt = minimize(self._minimize_hessian, xinit, args=args, method='Nelder-Mead')

@@ -6,7 +6,7 @@ from MagniPy.Analysis.KDE.NDdensity import *
 from MagniPy.Analysis.Visualization.triplot2 import TriPlot2
 
 sigmas_1422 = ([0.01/0.88, 0.01, 0.006/0.47, None], False)
-sigmas_0435 = ([0.1*0.05, 0.1*0.049, 0.1*0.048, 0.1*0.056], False)
+sigmas_0435 = ([0.05, 0.049, 0.048, 0.056], False)
 sigmas_2038 = ([0.01, 0.017, 0.022, 0.022], False)
 sigmas_1606 = ([0.03, 0.03, 0.02/0.59, 0.02/0.79], False)
 sigmas_1115 = ([0.01] * 3, True)
@@ -23,14 +23,14 @@ sigmas_dict = {'B1422': sigmas_1422, 'PG1115': sigmas_1115,
               'WGD2038': sigmas_2038, 'WGDJ0405': sigmas_0405,
               'WFI2033': sigmas_2033}
 
-nbins = 5
-n_keep = 100
+nbins = 10
+n_keep = 150
 
-param_names = ['sigma_sub', 'delta_power_law_index', 'shear']
+param_names = ['sigma_sub', 'delta_power_law_index', 'LOS_normalization']
 samples_list_weighted = []
 
-include_list = ['HE0435']
-extension = 'mock_fixshear'
+include_list = ['B1422']
+extension = 'mock'
 
 names = [nb + extension for nb in names_base]
 paths_base = {name: base + name for name in names}
@@ -47,11 +47,11 @@ for n, path_out in enumerate(paths):
     samples = dill.load(file)
     param_names_full = samples.param_name_list
     print(samples.ranges_dictionary)
-    iter = 1
+    iter = 5
     #new_truth = {'sigma_sub': 0.045, 'delta_power_law_index': -0.4}
     #new_sigma = {'sigma_sub': 0.005, 'delta_power_law_index': 0.02}
-    #new_fluxes = np.array([1., 0.90030964, 0.76751514, 0.42419274])
-    #samples = samples.resample_from_fluxes(new_fluxes)
+    new_fluxes = np.array([0.88 , 1., 0.474, 0.025])
+    samples = samples.resample_from_fluxes(new_fluxes)
     #samples = samples.resample_from_parameters(new_truth, new_sigma)
 
     x, x_full, x_ranges, stats = samples.sample_with_flux_uncertainties(
@@ -62,21 +62,22 @@ for n, path_out in enumerate(paths):
     print(np.max(stats), stats.shape)
     print(x.shape)
     print(x_ranges)
-    x_ranges = [[0, 0.2], [-0.8, 0.8], [0, 0.25]]
+    #x_ranges = [[0, 0.2], [-0.8, 0.8]]
 
     weight_names = ['center_x', 'center_y', 'power_law_index']
     mean_list = [0., 0., -1.9]
-    sigma_list = [0.5, 0.5, 0.5]
+    sigma_list = [0.05, 0.05, 0.05]
     weights = [samples.gaussian_weight(x_full, weight_names,
                                        mean_list, sigma_list)]
 
     samples_list_weighted.append(DensitySamples([x], param_names, weights,
                                        param_ranges=x_ranges, nbins=nbins,
-                                       use_kde=False, bwidth_scale=0.4))
+                                       use_kde=True, bwidth_scale=0.4))
 
 sim_weighted = IndepdendentDensities(samples_list_weighted)
 
 levels = [0.05, 0.32, 1.]
+
 triplot = TriPlot2([sim_weighted], param_names, x_ranges)
 triplot.truth_color = 'b'
 truths = None

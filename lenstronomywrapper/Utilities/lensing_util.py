@@ -81,15 +81,28 @@ def ray_angles(alpha_x, alpha_y, lens_model, kwargs_lens, zsource):
 
     x_angle_list, y_angle_list, tz = [alpha_x], [alpha_y], [0.]
 
-    cosmo_calc = lens_model.lens_model._multi_plane_base._cosmo_bkg.T_xy
+    try:
+        cosmo_calc = lens_model.lens_model._multi_plane_base._cosmo_bkg.T_xy
+    except:
+        cosmo_calc = lens_model.astropy.comoving_transverse_distance
 
     x0, y0 = 0., 0.
     zstart = 0.
 
-    for zi in np.unique(redshift_list):
-        x0, y0, alpha_x, alpha_y = lens_model.lens_model.ray_shooting_partial(x0, y0, alpha_x, alpha_y, zstart, zi,
+    unique_redshifts = np.unique(redshift_list)
+    sort = np.argsort(unique_redshifts)
+    unique_sorted_redshifts = unique_redshifts[sort]
+
+    for zi in unique_sorted_redshifts:
+        try:
+            x0, y0, alpha_x, alpha_y = lens_model.lens_model.ray_shooting_partial(x0, y0, alpha_x, alpha_y, zstart, zi,
                                                                                kwargs_lens)
-        d = cosmo_calc(0., zi)
+            d = cosmo_calc(0., zi)
+        except:
+            x0, y0, alpha_x, alpha_y = lens_model.ray_shooting_partial(x0, y0, alpha_x, alpha_y, zstart, zi,
+                                                                               kwargs_lens)
+            d = cosmo_calc(zi).value
+
         x_angle_list.append(x0/d)
         y_angle_list.append(y0/d)
         tz.append(d)
