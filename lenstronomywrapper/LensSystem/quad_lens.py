@@ -28,8 +28,8 @@ class QuadLensSystem(LensBase):
             background_quasar_class = Quasar(kwargs_default)
 
         self.background_quasar = background_quasar_class
-        pc_per_arcsec_zsource = 1000 * pyhalo_cosmology.astropy.arcsec_per_kpc_proper(z_source).value ** -1
-        self.background_quasar.setup(pc_per_arcsec_zsource)
+        self._pc_per_arcsec_zsource = 1000 * pyhalo_cosmology.astropy.arcsec_per_kpc_proper(z_source).value ** -1
+        self.background_quasar.setup(self._pc_per_arcsec_zsource)
 
         super(QuadLensSystem, self).__init__(macromodel, z_source, substructure_realization, pyhalo_cosmology)
 
@@ -167,7 +167,10 @@ class QuadLensSystem(LensBase):
                              kwargs_lensmodel=None, normed=True,
                              retry_if_blended=0,
                              enforce_unblended=False,
-                             adaptive=False, verbose=False, point_source=False):
+                             adaptive=False, verbose=False, point_source=False,
+                             source_size_pc=None,
+                             center_x=None,
+                             center_y=None):
 
         """
         Computes the magnifications (or flux ratios if normed=True)
@@ -190,6 +193,10 @@ class QuadLensSystem(LensBase):
             if normed:
                 mags *= max(mags) ** -1
             return mags, False
+
+        if source_size_pc is not None:
+            self.background_quasar.setup(source_size_pc=source_size_pc, reset=True,
+                                         center_x=center_x, center_y=center_y)
 
         return self.background_quasar.magnification(x, y, lens_model,
                                                     kwargs_lensmodel,

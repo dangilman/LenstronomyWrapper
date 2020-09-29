@@ -77,7 +77,7 @@ def realization_keywords(keywords_init, prior_list_realization):
                 mc_model[name] = keywords[name]
 
         keywords['mc_model'] = mc_model
-        print(keywords['mc_model'])
+
     return keywords, samples
 
 def build_priors(params_to_vary):

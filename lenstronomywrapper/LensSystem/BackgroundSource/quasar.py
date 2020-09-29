@@ -37,9 +37,10 @@ class Quasar(SourceBase):
                 raise Exception('Must initialize quasar class before using it.')
             return False
 
-    def setup(self, pc_per_arcsec_zsource=None, source_size_pc=None):
+    def setup(self, pc_per_arcsec_zsource=None, source_size_pc=None, reset=False,
+              center_x=None, center_y=None):
 
-        if self._check_initialized(with_error=False):
+        if reset is False and self._check_initialized(with_error=False):
             return
 
         self._initialized = True
@@ -64,6 +65,11 @@ class Quasar(SourceBase):
             self.grid_resolution = self._grid_resolution
 
         self._kwargs_quasar = self._kwargs_transform(self._kwargs_init, self._pc_per_arcsec_zsource)
+
+        if center_x is not None:
+            self._kwargs_quasar['center_x'] = center_x
+        if center_y is not None:
+            self._kwargs_quasar['center_y'] = center_y
 
         self._sourcelight = LightModel(light_model_list=['GAUSSIAN'])
 

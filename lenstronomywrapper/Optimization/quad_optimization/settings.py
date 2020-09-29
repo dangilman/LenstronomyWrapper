@@ -318,7 +318,7 @@ class HierarchicalSettingsShallowSLOPE(object):
         # window size
         window_sizes = [100, 0.2]
         # controls starting points for re-optimizations
-        scale = [1, 0.4, 0.2]
+        scale = [1, 0.4]
         # determines whether to use PSO for re-optimizations
         particle_swarm_reopt = [False, False]
         # wheter to actually re-fit the lens model
