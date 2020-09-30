@@ -56,13 +56,19 @@ class Quasar(SourceBase):
             grid_rmax = self._auto_grid_size(source_size_pc)
             self.grid_rmax = grid_rmax
         else:
-            self.grid_rmax = self._grid_rmax
+            if reset is False:
+                self.grid_rmax = self._grid_rmax
+            else:
+                self.grid_rmax = self._auto_grid_size(source_size_pc)
 
         if self._grid_resolution is None:
             grid_resolution = self._auto_grid_resolution(source_size_pc)
             self.grid_resolution = grid_resolution
         else:
-            self.grid_resolution = self._grid_resolution
+            if reset is False:
+                self.grid_resolution = self._grid_resolution
+            else:
+                self.grid_resolution = self._auto_grid_resolution(source_size_pc)
 
         self._kwargs_quasar = self._kwargs_transform(self._kwargs_init, self._pc_per_arcsec_zsource)
 
@@ -160,7 +166,10 @@ class Quasar(SourceBase):
     def magnification_adaptive(self, xpos, ypos, lensModel, kwargs_lens, normed, tol=0.005,
                                verbose=False, enforce_unblended=False):
 
-        def _converged(dm):
+        def _converged(dm, mnew):
+
+            if mnew < 0.005:
+                return False
 
             if dm < tol:
                 return True
@@ -199,7 +208,7 @@ class Quasar(SourceBase):
                         grid, r_min, r_max, lensModel, kwargs_lens)
 
                 delta = 1 - magnification_last / magnification_new
-                converged = _converged(delta)
+                converged = _converged(delta, magnification_new)
 
                 if verbose:
                     print('magnification: ', magnification_new)
@@ -384,12 +393,16 @@ class Quasar(SourceBase):
 
     def _auto_grid_size(self, max_source_size_parsec):
 
-        # smaller sources seem to require a different model that larger sources
+        # smaller sources seem to require a different model than larger sources
         grid_size_0 = 0.0003
         size_0 = 0.1
         power = 1.15
 
-        if max_source_size_parsec > 5:
+        if max_source_size_parsec > 25:
+            grid_size_0 *= 0.5
+            grid_size = grid_size_0 * (max_source_size_parsec / size_0) ** power
+
+        elif max_source_size_parsec > 5:
 
             grid_size = grid_size_0 * (max_source_size_parsec / size_0) ** power
 

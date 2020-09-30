@@ -200,15 +200,16 @@ class HierarchicalSettingsCDM(object):
 
         return aperture_masses, globalmin_masses, window_sizes, scale, optimize_iteration, particle_swarm_reopt, re_optimize_iteration
 
-class HierarchicalSettingsSteepSLOPE(object):
+class HierarchicalSettingsSteep(object):
 
     """
-    Good for dealing with mass functions with many very low mass halos
+    Good for dealing with dark matter halos between 10^5 - 10^10 M_sun
+    with small source sizes <10 pc
     """
 
     @property
     def log_mass_cut_global(self):
-        return 7.
+        return 7.5
 
     @property
     def n_particles(self):
@@ -220,7 +221,7 @@ class HierarchicalSettingsSteepSLOPE(object):
 
     @property
     def n_iterations_background(self):
-        return 2
+        return 3
 
     @property
     def n_iterations_foreground(self):
@@ -250,15 +251,15 @@ class HierarchicalSettingsSteepSLOPE(object):
         # add this only within the window
         aperture_masses = [self.log_mass_cut_global, 6.5, 0]
         # add this everywhere
-        globalmin_masses = [self.log_mass_cut_global] * 3
+        globalmin_masses = [self.log_mass_cut_global, self.log_mass_cut_global, self.log_mass_cut_global]
         # window size
-        window_sizes = [100, 0.1, 0.1]
+        window_sizes = [100, 0.3, 0.05]
         # controls starting points for re-optimizations
-        scale = [1, 0.4, 0.2]
+        scale = [1, 0.5, 0.25]
         # determines whether to use PSO for re-optimizations
         particle_swarm_reopt = [False, False, False]
         # wheter to actually re-fit the lens model
-        optimize_iteration = [True, True, False]
+        optimize_iteration = [True, True, True]
         # whether to re-optimize (aka start from a model very close to input model)
         re_optimize_iteration = [True, True, True]
 

@@ -13,6 +13,8 @@ class HierarchicalOptimization(BruteOptimization):
             settings_class = HierarchicalSettingsDeltaFunction(**settings_kwargs)
         elif settings_class == 'default_CDM':
             settings_class = HierarchicalSettingsCDM()
+        elif settings_class == 'steep':
+            settings_class = HierarchicalSettingsSteep()
         elif settings_class == 'custom':
             settings_class = SettingsClass(**kwargs_settings_class)
         else:
