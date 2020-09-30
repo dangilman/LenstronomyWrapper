@@ -236,7 +236,7 @@ class HierarchicalSettingsSteep(object):
         # window size
         window_sizes = [100, 0.3, 0.1]
         # controls starting points for re-optimizations
-        scale = [1, 0.1]
+        scale = [1, 0.1, 0.1]
         # determines whether to use PSO for re-optimizations
         particle_swarm_reopt = [True, False, False]
         # wheter to actually re-fit the lens model
