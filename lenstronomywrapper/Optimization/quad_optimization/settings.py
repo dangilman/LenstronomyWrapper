@@ -232,7 +232,7 @@ class HierarchicalSettingsSteep(object):
         # add this only within the window
         aperture_masses = [self.log_mass_cut_global, 6.7, 0]
         # add this everywhere
-        globalmin_masses = [self.log_mass_cut_global]*3
+        globalmin_masses = [self.log_mass_cut_global] * 3
         # window size
         window_sizes = [100, 0.3, 0.1]
         # controls starting points for re-optimizations
