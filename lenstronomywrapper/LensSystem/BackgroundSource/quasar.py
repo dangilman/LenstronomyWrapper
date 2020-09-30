@@ -384,7 +384,7 @@ class Quasar(SourceBase):
 
     def _auto_grid_resolution(self, min_source_size_parsec):
 
-        grid_res_0 = 0.0000035
+        grid_res_0 = 0.000004
         size_0 = 0.1
         power = 1
         grid_res = grid_res_0 * (min_source_size_parsec / size_0) ** power
@@ -399,7 +399,7 @@ class Quasar(SourceBase):
         power = 1.15
 
         if max_source_size_parsec > 25:
-            grid_size_0 *= 0.5
+            grid_size_0 *= 0.6
             grid_size = grid_size_0 * (max_source_size_parsec / size_0) ** power
 
         elif max_source_size_parsec > 5:
