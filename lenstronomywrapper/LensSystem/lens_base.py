@@ -27,6 +27,8 @@ class LensBase(object):
 
         self.clear_static_lensmodel()
 
+        self.pc_per_arcsec_zsource = 1000 * pyhalo_cosmology.astropy.arcsec_per_kpc_proper(z_source).value ** -1
+
     def fit(self, data_to_fit, optimization_class, verbose=False, **kwargs_optimizer):
 
         optimizer = optimization_class(self)

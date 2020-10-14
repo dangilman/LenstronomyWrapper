@@ -4,23 +4,29 @@ from lenstronomywrapper.LensSystem.LensComponents.powerlawshear import PowerLawS
 from lenstronomywrapper.LensSystem.LensComponents.SIS import SISsatellite
 from lenstronomywrapper.LensSystem.LensComponents.multipole import Multipole
 
+from lenstronomy.LensModel.lens_model import LensModel
 from lenstronomywrapper.LensData.lensed_quasar import LensedQuasar
 from lenstronomywrapper.LensSystem.BackgroundSource.quasar import Quasar
 
-from lenstronomywrapper.Utilities.misc import write_fluxes, write_params, write_macro, write_sampling_rate
+from lenstronomywrapper.Utilities.misc import write_fluxes, write_params, write_macro, write_sampling_rate, write_delta_hessian
 
 from lenstronomywrapper.Sampler.prior_sample import PriorDistribution
 
 from copy import deepcopy
 
 def readout(readout_path, kwargs_macro, fluxes, parameters, header, write_header, write_mode,
-            sampling_rate):
+            sampling_rate, readout_macro, delta_hessian):
 
     write_params(parameters, readout_path + 'parameters.txt', header, mode=write_mode,
                  write_header=write_header)
     write_fluxes(readout_path + 'fluxes.txt', fluxes=fluxes, mode=write_mode)
-    write_macro(readout_path + 'macro.txt', kwargs_macro, mode=write_mode, write_header=write_header)
+    if readout_macro:
+        write_macro(readout_path + 'macro.txt', kwargs_macro, mode=write_mode, write_header=write_header)
     write_sampling_rate(readout_path + 'sampling_rate.txt', sampling_rate)
+
+    if delta_hessian is not None:
+        write_delta_hessian(readout_path + 'delta_hessian.txt', delta_hessian, write_mode,
+                            write_header)
 
 def load_keywords(path_to_folder, job_index):
 
@@ -165,6 +171,23 @@ def load_background_quasar(prior_list_source, keywords):
 
     else:
         raise Exception('only single sources implemented, not '+str(n_sources))
+
+def load_local_image_keywords(keywords_local_image, lens_system):
+
+    keywords_sampled = {}
+
+    macro_indicies_fixed = keywords_local_image['macro_indicies_fixed']
+    lensmodel, kwargs_lensmodel = lens_system.get_lensmodel(include_substructure=False)
+    kwargs_opt = keywords_local_image['keywords_optimization']
+
+    hessian_samples = keywords_local_image['hessian_samples']
+    assert len(hessian_samples) == 4, 'Need hessian samples for all four images'
+    for hi in hessian_samples:
+        assert hi[0].shape[0] == 3
+        assert hi[0].shape[1] >= 100, "Should have at least 100 samples in hessian_pdf"
+
+    return macro_indicies_fixed, hessian_samples, lensmodel, \
+           kwargs_lensmodel, keywords_sampled, kwargs_opt
 
 def load_powerlaw_ellipsoid_macromodel(zlens, prior_list_macromodel,
                                        kwargs_macro_ref, secondary_lens_components):

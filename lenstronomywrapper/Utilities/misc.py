@@ -83,6 +83,19 @@ def write_macro(output_path, kwargs_macro, mode, write_header):
                 f.write(str(np.round(kwargs_macro[row][key], 4)) + ' ')
             f.write('\n')
 
+def write_delta_hessian(output_path, delta_hessian, mode, write_header):
+
+    delta_kappa, delta_gamma1, delta_gamma2 = delta_hessian[0], delta_hessian[1], delta_hessian[2]
+    with open(output_path, mode) as f:
+        if write_header:
+            f.write('kappa1 kappa2 kappa3 kappa4 gamma1_1 gamma1_2 gamma1_3 gamma1_4 '
+                    'gamma2_1 gamma2_2 gamma2_3 gamma2_4\n')
+        for row in delta_kappa.shape[0]:
+            for component in (delta_kappa, delta_gamma1, delta_gamma2):
+                for val in component[row,:]:
+                    f.write(str(val+' '))
+            f.write('\n')
+
 def write_sampling_rate(output_path, rate):
 
     seconds_per_realization = 1/rate

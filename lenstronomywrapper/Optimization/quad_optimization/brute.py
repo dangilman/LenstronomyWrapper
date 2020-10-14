@@ -46,7 +46,8 @@ class BruteOptimization(OptimizationBase):
 
     def fit(self, data_to_fit, opt_routine, constrain_params=None, verbose=False,
                  include_substructure=True, realization=None, opt_kwargs={}, tol_centroid=0.3, re_optimize=False,
-                 particle_swarm=True, n_particles=None, pso_convergence_mean=80000):
+                 particle_swarm=True, n_particles=None, pso_convergence_mean=80000, tol_mag=None,
+            pso_compute_magnification=1e+6):
 
         self._check_routine(opt_routine, constrain_params)
 
@@ -55,10 +56,11 @@ class BruteOptimization(OptimizationBase):
 
         run_kwargs = {'optimizer_routine': opt_routine, 'magnification_target': data_to_fit.m,
                       'multiplane': True, 'z_main': self.lens_system.zlens, 'z_source': self.lens_system.zsource,
-                      'tol_centroid': tol_centroid, 'astropy_instance': self.lens_system.astropy, 'tol_mag': None,
+                      'tol_centroid': tol_centroid, 'astropy_instance': self.lens_system.astropy, 'tol_mag': tol_mag,
                       'verbose': verbose, 're_optimize': re_optimize, 'particle_swarm': particle_swarm,
                       'pso_convergence_mean': pso_convergence_mean, 'constrain_params': constrain_params,
-                      'simplex_n_iterations': self.n_iterations, 'optimizer_kwargs': opt_kwargs}
+                      'simplex_n_iterations': self.n_iterations, 'optimizer_kwargs': opt_kwargs,
+                      'pso_compute_magnification': pso_compute_magnification}
 
         kwargs_lens_final, lens_model_full, source = self._fit(data_to_fit,
                                     include_substructure, n_particles, realization, run_kwargs)

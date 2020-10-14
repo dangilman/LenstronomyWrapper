@@ -368,17 +368,12 @@ class SamplerInit(object):
         source_position_tolerance = 0.001
         source_position_sigma = 0.001
 
-        if image_position_uncertainty == 0:
-            image_position_likelihood = False
-        else:
-            image_position_likelihood = True
-
         custom_loglike = self.custom_LogLike
 
         kwargs = {'check_bounds': check_bounds,
                   'force_no_add_image': force_no_add_image,
                   'source_marg': source_marg,
-                  'image_position_likelihood': image_position_likelihood,
+                  'image_position_likelihood': False,
                   'image_position_uncertainty': image_position_uncertainty,
                   'check_matched_source_position': check_matched_source_position,
                   'source_position_tolerance': source_position_tolerance,

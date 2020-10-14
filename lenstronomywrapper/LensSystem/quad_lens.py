@@ -28,8 +28,8 @@ class QuadLensSystem(LensBase):
             background_quasar_class = Quasar(kwargs_default)
 
         self.background_quasar = background_quasar_class
-        self._pc_per_arcsec_zsource = 1000 * pyhalo_cosmology.astropy.arcsec_per_kpc_proper(z_source).value ** -1
-        self.background_quasar.setup(self._pc_per_arcsec_zsource)
+        self.pc_per_arcsec_zsource = 1000 * pyhalo_cosmology.astropy.arcsec_per_kpc_proper(z_source).value ** -1
+        self.background_quasar.setup(self.pc_per_arcsec_zsource)
 
         super(QuadLensSystem, self).__init__(macromodel, z_source, substructure_realization, pyhalo_cosmology)
 
@@ -136,7 +136,7 @@ class QuadLensSystem(LensBase):
         smooth_lens = QuadLensSystem(self.macromodel, self.zsource, self.background_quasar,
                                                   None, self.pyhalo_cosmology)
 
-        smooth_lens.update_source_centroid(self.source_centroid_y, self.source_centroid_y)
+        smooth_lens.update_source_centroid(self.source_centroid_x, self.source_centroid_y)
 
         return smooth_lens
 

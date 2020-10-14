@@ -189,8 +189,13 @@ class Quasar(SourceBase):
             r_start = 0.05 * grid.rmax
             step_size = step_factor * grid.rmax
 
-            magnification_last = self._iterate_adaptive(
-                grid, 0., r_start, lensModel, kwargs_lens)
+            if isinstance(lensModel, list):
+                magnification_last = self._iterate_adaptive(
+                    grid, 0., r_start, lensModel[i], kwargs_lens[i])
+            else:
+                magnification_last = self._iterate_adaptive(
+                    grid, 0., r_start, lensModel, kwargs_lens)
+
             converged = False
             r_min = r_start
             r_max = r_min + step_size
