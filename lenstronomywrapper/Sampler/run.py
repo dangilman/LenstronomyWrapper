@@ -7,13 +7,16 @@ from lenstronomywrapper.Utilities.data_util import approx_theta_E
 
 from lenstronomywrapper.Utilities.parameter_util import kwargs_e1e2_to_polar, kwargs_gamma1gamma2_to_polar
 
-from pyHalo.pyhalo_dynamic import pyHaloDynamic
+from lenstronomywrapper.LensSystem.local_image_quad import LocalImageQuad
 from pyHalo.pyhalo import pyHalo
 
 from time import time
 
+from scipy.stats.kde import gaussian_kde
+
 from lenstronomywrapper.Optimization.quad_optimization.dynamic import DynamicOptimization
 from lenstronomywrapper.Optimization.quad_optimization.hierarchical import HierarchicalOptimization
+from lenstronomywrapper.Optimization.quad_optimization.hierarchical_local import HierarchicalOptimizationLocal
 from lenstronomywrapper.Utilities.misc import write_lensdata
 
 def run(job_index, chain_ID, output_path, path_to_folder,
@@ -81,6 +84,10 @@ def run(job_index, chain_ID, output_path, path_to_folder,
     kwargs_macro_ref = None
     fluxes_computed = None
     parameters_sampled = None
+    delta_kappa = None
+    delta_gamma1 = None
+    delta_gamma2 = None
+    hessian_kde = None
 
     adaptive_mag = keyword_arguments['adaptive_mag']
 
@@ -117,12 +124,11 @@ def run(job_index, chain_ID, output_path, path_to_folder,
         ################ Get the optimization settings ################
         optimization_settings = load_optimization_settings(keyword_arguments)
 
-        ################ Perform the fit ################
+        ################ Perform a fit with only a smooth model ################
         lens_system = QuadLensSystem(macromodel, zsource, background_quasar,
                                      None, None)
-        if initialize:
-            lens_system.initialize(data_to_fit_init, opt_routine, constrain_params)
-            kwargs_macro_ref = lens_system.macromodel.components[0].kwargs
+        lens_system.initialize(data_to_fit_init, opt_routine, constrain_params)
+        kwargs_macro_ref = lens_system.macromodel.components[0].kwargs
 
         kwargs_rendering['cone_opening_angle'] = kwargs_rendering['opening_angle_factor'] * \
                                                  theta_E_approx
@@ -140,13 +146,53 @@ def run(job_index, chain_ID, output_path, path_to_folder,
             print('zsource', zsource)
             print('Einstein radius', theta_E_approx)
 
-        if keyword_arguments['keywords_optimizer']['routine'] == 'dynamic':
+        if 'zlens' in params_sampled.keys():
+            kwargs_hmf = keyword_arguments['realization_kwargs']['kwargs_halo_mass_function']
+            pyhalo = pyHalo(zlens, zsource, kwargs_halo_mass_function=kwargs_hmf)
+        else:
+            kwargs_hmf = keyword_arguments['realization_kwargs']['kwargs_halo_mass_function']
+            if pyhalo is None:
+                pyhalo = pyHalo(zlens, zsource, kwargs_halo_mass_function=kwargs_hmf)
 
-            if 'zlens' in params_sampled.keys():
-                pyhalo = pyHaloDynamic(zlens, zsource)
-            else:
-                if pyhalo is None:
-                    pyhalo = pyHaloDynamic(zlens, zsource)
+        deltas, delta_hessian = None, None
+        readout_macro = True
+        if keyword_arguments['keywords_optimizer']['routine'] == 'local':
+
+            readout_macro = False
+            source_x, source_y = source_samples['source_x'], source_samples['source_y']
+            if 'local_image_keywords' not in keyword_arguments.keys():
+                raise Exception('when using optimizer class local, must specify lens_model_list, kwargs_macro, '
+                                'redshift_list, and macro_indicies_fixed in local_image_keywords')
+
+            macro_indicies_fixed, hessian_samples, lensmodel_macro, kwargs_lens_macro, \
+            angular_scale, samples_local_image, kwargs_opt = load_local_image_keywords(keyword_arguments['local_image_keywords'], lens_system)
+
+            if hessian_kde is None:
+                hessian_kde = [gaussian_kde(dataset=hessian_samples[0], bw_method='silverman'),
+                               gaussian_kde(dataset=hessian_samples[1], bw_method='silverman'),
+                               gaussian_kde(dataset=hessian_samples[2], bw_method='silverman'),
+                               gaussian_kde(dataset=hessian_samples[3], bw_method='silverman')]
+
+            hessian_constraints = []
+            for h in hessian_kde:
+                (fxx, fxy, fyy) = h.resample(1).T[0]
+                hess = np.array([fxx, fxy, fxy, fyy])
+                hessian_constraints.append(hess)
+
+            params_sampled.update(samples_local_image)
+
+            lens_system = LocalImageQuad(data_to_fit.x, data_to_fit.y, source_x, source_y,
+                                              lensmodel_macro, kwargs_lens_macro, zlens, zsource,
+                                              macro_indicies_fixed, pyhalo.cosmology)
+            opt = HierarchicalOptimizationLocal(lens_system)
+            deltas = opt.fit(angular_scale, hessian_constraints, verbose=False, **kwargs_opt)
+
+            background_quasar.setup(center_x=source_x, center_y=source_y)
+            magnification_function_kwargs = {'source_model': background_quasar,
+                                            'adaptive': adaptive_mag, 'verbose': keyword_arguments['verbose']}
+            magnification_function = lens_system.magnification
+
+        elif keyword_arguments['keywords_optimizer']['routine'] == 'dynamic':
 
             dynamic_opt = DynamicOptimization(lens_system, pyhalo,
                                               kwargs_rendering, **optimization_settings)
@@ -156,15 +202,15 @@ def run(job_index, chain_ID, output_path, path_to_folder,
                 constrain_params=constrain_params, verbose=keyword_arguments['verbose']
             )
 
-        elif keyword_arguments['keywords_optimizer']['routine'] == 'hierarchical':
+            magnification_function = lens_system.quasar_magnification
+            magnification_function_kwargs = {'x': data_to_fit.x, 'y': data_to_fit.y,
+                                             'lens_model': lensModel_fit, 'kwargs_lensmodel': kwargs_lens_fit,
+                                             'normed': True,
+                                             'enforce_unblended': True, 'adaptive': adaptive_mag,
+                                             'verbose': keyword_arguments['verbose']}
 
-            if 'zlens' in params_sampled.keys():
-                kwargs_hmf = keyword_arguments['realization_kwargs']['kwargs_halo_mass_function']
-                pyhalo = pyHalo(zlens, zsource, kwargs_halo_mass_function=kwargs_hmf)
-            else:
-                kwargs_hmf = keyword_arguments['realization_kwargs']['kwargs_halo_mass_function']
-                if pyhalo is None:
-                    pyhalo = pyHalo(zlens, zsource, kwargs_halo_mass_function=kwargs_hmf)
+
+        elif keyword_arguments['keywords_optimizer']['routine'] == 'hierarchical':
 
             realization_initial = pyhalo.render(keyword_arguments['realization_type'],
                                         kwargs_rendering)[0]
@@ -192,18 +238,22 @@ def run(job_index, chain_ID, output_path, path_to_folder,
                 data_to_fit, opt_routine, constrain_params, keyword_arguments['verbose']
             )
 
+            magnification_function = lens_system.quasar_magnification
+            magnification_function_kwargs = {'x': data_to_fit.x, 'y': data_to_fit.y,
+                         'lens_model': lensModel_fit, 'kwargs_lensmodel': kwargs_lens_fit, 'normed': True,
+                             'enforce_unblended': True, 'adaptive': adaptive_mag, 'verbose': keyword_arguments['verbose']}
+
         else:
             raise Exception('optimization routine '+ keyword_arguments['keywords_optimizer']['routine']
                             + 'not recognized.')
 
-        flux_ratios_fit, blended = lens_system.quasar_magnification(
-            data_to_fit.x, data_to_fit.y, lensModel_fit,
-            kwargs_lens_fit, enforce_unblended=True,
-            adaptive=adaptive_mag, verbose=keyword_arguments['verbose']
-        )
+        flux_ratios_fit, blended = magnification_function(**magnification_function_kwargs)
 
         if test_mode:
             import matplotlib.pyplot as plt
+            if deltas is not None:
+                for delta in deltas:
+                    print(delta)
 
             ax = plt.gca()
             ax.scatter(data_to_fit.x, data_to_fit.y)
@@ -222,14 +272,15 @@ def run(job_index, chain_ID, output_path, path_to_folder,
 
         flux_ratios_fit = np.round(flux_ratios_fit, 5)
 
-        comp1 = kwargs_e1e2_to_polar(lens_system.macromodel.components[0].kwargs[0])
-        comp2 = kwargs_gamma1gamma2_to_polar(lens_system.macromodel.components[0].kwargs[1])
-        kwargs_macro_new = {}
-        for key in comp1.keys():
-            kwargs_macro_new[key] = comp1[key]
-        for key in comp2.keys():
-            kwargs_macro_new[key] = comp2[key]
-        kwargs_macro.append(kwargs_macro_new)
+        if readout_macro:
+            comp1 = kwargs_e1e2_to_polar(lens_system.macromodel.components[0].kwargs[0])
+            comp2 = kwargs_gamma1gamma2_to_polar(lens_system.macromodel.components[0].kwargs[1])
+            kwargs_macro_new = {}
+            for key in comp1.keys():
+                kwargs_macro_new[key] = comp1[key]
+            for key in comp2.keys():
+                kwargs_macro_new[key] = comp2[key]
+            kwargs_macro.append(kwargs_macro_new)
 
         if keyword_arguments['verbose']:
             print('flux_ratios_fit:', flux_ratios_fit)
@@ -245,19 +296,34 @@ def run(job_index, chain_ID, output_path, path_to_folder,
 
             fluxes_computed = flux_ratios_fit
             parameters_sampled = parameters
+            if deltas is not None:
+                delta_kappa = deltas[0]
+                delta_gamma1 = deltas[1]
+                delta_gamma2 = deltas[2]
 
         else:
 
             fluxes_computed = np.vstack((fluxes_computed, flux_ratios_fit))
             parameters_sampled = np.vstack((parameters_sampled, parameters))
+            if deltas is not None:
+                delta_kappa = np.vstack((delta_kappa, deltas[0]))
+                delta_gamma1 = np.vstack((delta_gamma1, deltas[1]))
+                delta_gamma2 = np.vstack((delta_gamma2, deltas[2]))
 
         if (counter+1) % readout_steps == 0:
             t_end = time()
             t_ellapsed = t_end - t_start
             sampling_rate = fluxes_computed.shape[0] / t_ellapsed
+
+            if delta_kappa is not None:
+                delta_hessian = (delta_kappa, delta_gamma1, delta_gamma2)
+            else:
+                delta_hessian = None
+
             readout(readout_path, kwargs_macro, fluxes_computed, parameters_sampled,
-                    header, write_header, write_mode, sampling_rate)
+                    header, write_header, write_mode, sampling_rate, readout_macro, delta_hessian)
             fluxes_computed, parameters_sampled = None, None
+            delta_kappa, delta_gamma1, delta_gamma2 = None, None, None
             kwargs_macro = []
             write_mode = 'a'
             write_header = False
