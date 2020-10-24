@@ -130,7 +130,8 @@ class Quasar(SourceBase):
         grids = []
         grid_rmax = grid_rmax_scale * self.grid_rmax
         for sep, theta in zip(image_separations, relative_angles):
-            grids.append(RayShootingGrid(min(grid_rmax, 0.5 * sep), self.grid_resolution, rot=theta))
+            grids.append(RayShootingGrid(min(grid_rmax, 0.5 * sep),
+                                         self.grid_resolution, rot=0.))
 
         xgrids, ygrids = self._get_grids(xpos, ypos, grids)
 
@@ -146,7 +147,7 @@ class Quasar(SourceBase):
         for sep, theta, xi, yi in zip(image_separations, relative_angles, xpos, ypos):
 
             end_rmax = min(grid_rmax, 0.5 * sep)
-
+            theta = 0.
             new_grid = AdaptiveGrid(end_rmax, self.grid_resolution, theta,
                                     xi, yi)
             grids.append(new_grid)
@@ -414,7 +415,7 @@ class Quasar(SourceBase):
         else:
 
             power = 1.2
-            grid_size_0 = 0.0006 / 5
+            grid_size_0 = 0.0002 / 5
             size_0 = 0.1 / 5
 
             grid_size = grid_size_0 * (max_source_size_parsec / size_0) ** power

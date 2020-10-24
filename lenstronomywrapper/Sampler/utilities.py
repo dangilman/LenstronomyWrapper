@@ -15,18 +15,23 @@ from lenstronomywrapper.Sampler.prior_sample import PriorDistribution
 from copy import deepcopy
 
 def readout(readout_path, kwargs_macro, fluxes, parameters, header, write_header, write_mode,
-            sampling_rate, readout_macro, delta_hessian):
+            sampling_rate, readout_macro, delta_hessian,
+            readout_flux_only=False, flux_file_extension=''):
 
-    write_params(parameters, readout_path + 'parameters.txt', header, mode=write_mode,
-                 write_header=write_header)
-    write_fluxes(readout_path + 'fluxes.txt', fluxes=fluxes, mode=write_mode)
-    if readout_macro:
-        write_macro(readout_path + 'macro.txt', kwargs_macro, mode=write_mode, write_header=write_header)
-    write_sampling_rate(readout_path + 'sampling_rate.txt', sampling_rate)
+    if readout_flux_only:
+        write_fluxes(readout_path + 'fluxes' + flux_file_extension+'.txt', fluxes=fluxes, mode=write_mode)
 
-    if delta_hessian is not None:
-        write_delta_hessian(readout_path + 'delta_hessian.txt', delta_hessian, write_mode,
-                            write_header)
+    else:
+        write_params(parameters, readout_path + 'parameters.txt', header, mode=write_mode,
+                     write_header=write_header)
+        write_fluxes(readout_path + 'fluxes' + flux_file_extension+'.txt', fluxes=fluxes, mode=write_mode)
+        if readout_macro:
+            write_macro(readout_path + 'macro.txt', kwargs_macro, mode=write_mode, write_header=write_header)
+        write_sampling_rate(readout_path + 'sampling_rate.txt', sampling_rate)
+
+        if delta_hessian is not None:
+            write_delta_hessian(readout_path + 'delta_hessian.txt', delta_hessian, write_mode,
+                                write_header)
 
 def load_keywords(path_to_folder, job_index):
 

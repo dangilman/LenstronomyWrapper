@@ -12,7 +12,14 @@ class DoubleGaussian(SourceBase):
 
     def __init__(self, kwargs_quasar,
                  grid_resolution=None, grid_rmax=None):
+        """
+        kwargs_quasar contains the keyword arguments: center_x, center_y, source_fwhm_pc, dx, dy, size_scale, amp_scale
 
+        the first gaussian component is set by center_x, center_y, source_fwhm_pc, and the second is located at
+        center_x + dx, center_y + dy, and the size is source_fwhm_pc * size_scale. The main source position, i.e. what
+        is saved as source_centroid_x/y, corresponds to the first component at (center_x, center_y). The relative brightness
+        of the second source to the first is set by amp_scale
+        """
         self._kwargs_init = kwargs_quasar
         self._grid_resolution = grid_resolution
         self._grid_rmax = grid_rmax
