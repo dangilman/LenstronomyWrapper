@@ -145,7 +145,7 @@ def run(job_index, chain_ID, output_path, path_to_folder,
             print('zlens', zlens)
             print('zsource', zsource)
             print('Einstein radius', theta_E_approx)
-
+        #print(
         if 'zlens' in params_sampled.keys():
             kwargs_hmf = keyword_arguments['realization_kwargs']['kwargs_halo_mass_function']
             pyhalo = pyHalo(zlens, zsource, kwargs_halo_mass_function=kwargs_hmf)
