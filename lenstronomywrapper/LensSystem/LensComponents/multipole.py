@@ -12,6 +12,10 @@ class Multipole(ComponentBase):
                  custom_prior=None,
                  amp_range_scale=1.):
 
+
+        """
+        kwargs_init include 'm', 'a_m', 'phi_m', 'center_x', 'center_y'
+        """
         self._redshift = redshift
         self._prior = prior
         self.reoptimize = reoptimize

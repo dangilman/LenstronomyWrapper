@@ -1,5 +1,5 @@
 import numpy as np
-from lenstronomywrapper.Sampler.Analysis.single_lens_samples import LensSamplesRaw
+from lenstronomywrapper.Sampling.Analysis.single_lens_samples import LensSamplesRaw
 import matplotlib.pyplot as plt
 import os
 import dill
@@ -40,85 +40,91 @@ nbins = 12
 n_keep = 600
 
 param_names = ['sigma_sub', 'delta_power_law_index', 'c0', 'beta', 'LOS_normalization']
-
+param_names = ['center_x', 'center_y', 'ellip_PA']
 samples_list_weighted = []
 samples_list_weighted_2 = []
 
-include_list = ['WFI2033', 'HE0435', 'B1422', 'PSJ1606',
+include_list_master = ['WFI2033', 'HE0435', 'B1422', 'PSJ1606',
                 'WGD2038', 'WGDJ0405', 'RXJ0911']
-include_list = ['B1422']
-extension = '_lowMhalo'
+extension = ''
+include_list_master = ['RXJ0911']
+for lens_name in include_list_master:
+    include_list = [lens_name]
 
-names = [nb + extension for nb in names_base]
-paths_base = {name: base + name for name in names}
+    names = [nb + extension for nb in names_base]
+    paths_base = {name: base + name for name in names}
 
-paths = [paths_base[lens_name + extension] + '/' for lens_name in include_list]
-flux_sigmas_list = []
-for lens_name in include_list:
-    new = []
-    for val in sigmas_dict[lens_name][0]:
-        if val is not None:
-            new.append(val * sigma_scale)
+    paths = [paths_base[lens_name + extension] + '/' for lens_name in include_list]
+    flux_sigmas_list = []
+    for lens_name in include_list:
+        new = []
+        for val in sigmas_dict[lens_name][0]:
+            if val is not None:
+                new.append(val * sigma_scale)
+            else:
+                new.append(val)
+        flux_sigmas_list.append(new)
+
+    uncertainty_in_ratios = [sigmas_dict[lens_name][1] for lens_name in include_list]
+
+    for n, path_out in enumerate(paths):
+        print(path_out)
+
+        print(path_out + 'lens_'+str(1))
+        file = open(path_out+'lens_'+str(1), 'rb')
+        samples = dill.load(file)
+        param_names_full = samples.param_name_list
+        print(samples.ranges_dictionary)
+        iter = 1
+        #samples = samples.apply_param_cuts(samples, {'sigma_sub': [0., 0.1]})
+        x, x_full, x_ranges, stats = samples.sample_with_flux_uncertainties(
+            param_names, flux_sigmas_list[n], uncertainty_in_ratios[n], iter=iter, n_keep=n_keep, auto_range_sigma=3.5)
+
+        print('kept '+str(len(x[:,0])/iter) + ' realizations...')
+        print(np.max(stats), stats.shape)
+        print(x.shape)
+        print(x_ranges)
+
+        #x_ranges = [[-0.5, 0.8], [0, 1.25], [0., 2], [0, 2]]
+
+        weight_names_hyper = ['power_law_index']
+        weight_names = ['center_x', 'center_y']
+
+        mean_list_hyper = [-1.9]
+        sigma_list_hyper = [0.05]
+
+        mean_list = [0.0, 0.0]
+        sigma_list = [100, 100]
+
+        apply_hyper = [0]
+
+        if n in apply_hyper:
+            weights = [samples.gaussian_weight(
+                x_full, weight_names_hyper + weight_names,
+                mean_list_hyper + mean_list, sigma_list_hyper + sigma_list)]
+
         else:
-            new.append(val)
-    flux_sigmas_list.append(new)
+            weights = [samples.gaussian_weight(
+                x_full, weight_names, mean_list, sigma_list)]
 
-uncertainty_in_ratios = [sigmas_dict[lens_name][1] for lens_name in include_list]
+        samples_list_weighted.append(DensitySamples([x], param_names, weights,
+                                           param_ranges=x_ranges, nbins=nbins,
+                                           use_kde=True, bwidth_scale=0.3))
 
-for n, path_out in enumerate(paths):
-    print(path_out)
+    sim_weighted = IndepdendentDensities(samples_list_weighted)
 
-    print(path_out + 'lens_'+str(1))
-    file = open(path_out+'lens_'+str(1), 'rb')
-    samples = dill.load(file)
-    param_names_full = samples.param_name_list
-    print(samples.ranges_dictionary)
-    iter = 5
-    #samples = samples.apply_param_cuts(samples, {'sigma_sub': [0., 0.1]})
-    x, x_full, x_ranges, stats = samples.sample_with_flux_uncertainties(
-        param_names, flux_sigmas_list[n], uncertainty_in_ratios[n], iter=iter, n_keep=n_keep, auto_range_sigma=3.5)
+    levels = [0.05, 0.32, 1.]
+    print(samples.param_name_list)
+    triplot = TriPlot2([sim_weighted], param_names, x_ranges)
+    triplot.truth_color = 'b'
+    triplot.get_parameter_confidence_interval(param_names[0], 2)
+    triplot.get_parameter_confidence_interval(param_names[1], 2)
+    triplot.get_parameter_confidence_interval('ellip_PA', 2)
+    out = triplot.make_triplot(param_names=param_names, truths=None,
+                         filled_contours=False, show_intervals=False,
+                         show_contours=True, levels=levels)
 
-    print('kept '+str(len(x[:,0])/iter) + ' realizations...')
-    print(np.max(stats), stats.shape)
-    print(x.shape)
-    print(x_ranges)
+    #plt.savefig('mock_8.pdf')
 
-    #x_ranges = [[-0.5, 0.8], [0, 1.25], [0., 2], [0, 2]]
-
-    weight_names_hyper = ['power_law_index']
-    weight_names = ['center_x', 'center_y']
-
-    mean_list_hyper = [-1.9]
-    sigma_list_hyper = [0.05]
-
-    mean_list = [0.0, 0.0]
-    sigma_list = [0.05, 0.05]
-
-    apply_hyper = [0]
-
-    if n in apply_hyper:
-        weights = [samples.gaussian_weight(
-            x_full, weight_names_hyper + weight_names,
-            mean_list_hyper + mean_list, sigma_list_hyper + sigma_list)]
-
-    else:
-        weights = [samples.gaussian_weight(
-            x_full, weight_names, mean_list, sigma_list)]
-
-    samples_list_weighted.append(DensitySamples([x], param_names, weights,
-                                       param_ranges=x_ranges, nbins=nbins,
-                                       use_kde=True, bwidth_scale=0.3))
-
-sim_weighted = IndepdendentDensities(samples_list_weighted)
-
-levels = [0.05, 0.32, 1.]
-
-triplot = TriPlot2([sim_weighted], param_names, x_ranges)
-triplot.truth_color = 'b'
-
-out = triplot.make_triplot(param_names=param_names, truths=None,
-                     filled_contours=False, show_intervals=False,
-                     show_contours=True, levels=levels)
-#plt.savefig('mock_8.pdf')
-
-plt.show()
+    plt.show()
+    a=input('continue')
