@@ -1,6 +1,6 @@
 import os
 
-from lenstronomywrapper.Sampling.utilities import *
+from lenstronomywrapper.Sampler.utilities import *
 from lenstronomywrapper.Utilities.misc import create_directory
 from lenstronomywrapper.LensSystem.quad_lens import QuadLensSystem
 from lenstronomywrapper.Utilities.data_util import approx_theta_E
