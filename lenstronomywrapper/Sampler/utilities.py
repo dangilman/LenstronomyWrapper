@@ -10,7 +10,7 @@ from lenstronomywrapper.LensSystem.BackgroundSource.quasar import Quasar
 
 from lenstronomywrapper.Utilities.misc import write_fluxes, write_params, write_macro, write_sampling_rate, write_delta_hessian
 
-from lenstronomywrapper.Sampling.prior_sample import PriorDistribution
+from lenstronomywrapper.Sampler.prior_sample import PriorDistribution
 
 from copy import deepcopy
 
