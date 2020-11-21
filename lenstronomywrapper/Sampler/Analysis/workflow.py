@@ -1,5 +1,5 @@
 import numpy as np
-from lenstronomywrapper.Sampling.Analysis.single_lens_samples import LensSamplesRaw
+from lenstronomywrapper.Sampler.Analysis.single_lens_samples import LensSamplesRaw
 import matplotlib.pyplot as plt
 import os
 import dill
