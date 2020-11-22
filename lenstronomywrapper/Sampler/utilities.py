@@ -270,13 +270,14 @@ def load_seccondary_lens_components(prior_list_macro,
         names_input = [ni + '_' + str(idx + 1) for ni in names]
 
         for input, output in zip(names_input, names):
+
             if input in prior_list_macro.keys():
                 value = prior_list_macro[input]()
                 kwargs_model[output] = value
                 params_sampled[input] = value
             else:
 
-                assert output in component_kwargs.keys()
+                assert output in component_kwargs.keys(), 'error: did not find expected parameter '+str(output)
                 kwargs_model[output] = component_kwargs[output]
 
         z_name = 'z_' + str(idx)
