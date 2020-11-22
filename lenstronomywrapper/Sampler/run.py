@@ -312,7 +312,8 @@ def run(job_index, chain_ID, output_path, path_to_folder,
                 readout_best = True
                 print('storing new realization...')
                 current_best_statistic = new_statistic
-                best_realization = SavedRealization(lensModel_fit, kwargs_lens_fit, flux_ratios_fit, new_statistic)
+                best_realization = SavedRealization(lensModel_fit, kwargs_lens_fit, flux_ratios_fit,
+                                                    new_statistic, parameters)
 
         if readout_macro:
             comp1 = kwargs_e1e2_to_polar(lens_system.macromodel.components[0].kwargs[0])
@@ -383,9 +384,10 @@ def run(job_index, chain_ID, output_path, path_to_folder,
 class SavedRealization(object):
 
     def __init__(self, lensmodel_instance, kwargs_lens_fit, fluxes_modeled,
-                 statistic):
+                 statistic, params):
 
         self.lensmodel = lensmodel_instance
         self.kwargs = kwargs_lens_fit
         self.fluxes_modeled = fluxes_modeled
         self.statistic = statistic
+        self.params = params
