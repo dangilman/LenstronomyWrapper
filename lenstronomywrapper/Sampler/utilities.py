@@ -233,12 +233,7 @@ def load_powerlaw_ellipsoid_macromodel(zlens, prior_list_macromodel,
 
     component_list += secondary_models
 
-    if constrain_params is None:
-        opt_routine = 'fixed_powerlaw_shear'
-    else:
-        opt_routine = 'fixedshearpowerlaw'
-
-    return MacroLensModel(component_list), samples, constrain_params, opt_routine
+    return MacroLensModel(component_list), samples, constrain_params
 
 def load_seccondary_lens_components(prior_list_macro,
                                     secondary_lens_components,
@@ -280,6 +275,7 @@ def load_seccondary_lens_components(prior_list_macro,
                 kwargs_model[output] = value
                 params_sampled[input] = value
             else:
+
                 assert output in component_kwargs.keys()
                 kwargs_model[output] = component_kwargs[output]
 

@@ -140,7 +140,8 @@ class QuadLensSystem(LensBase):
 
         return smooth_lens
 
-    def initialize(self, data_to_fit, opt_routine='fixed_powerlaw_shear', constrain_params=None, verbose=False,
+    def initialize(self, data_to_fit, opt_routine='free_shear_powerlaw',
+                   constrain_params=None, verbose=False,
                    include_substructure=False, kwargs_optimizer={}):
 
         """

@@ -1,4 +1,6 @@
-from lenstronomy.LensModel.Optimizer.optimizer import Optimizer
+from lenstronomy.LensModel.QuadOptimizer.param_manager import PowerLawFixedShear, \
+    PowerLawFixedShearMultipole, PowerLawFreeShear, PowerLawFreeShearMultipole
+from lenstronomy.LensModel.QuadOptimizer.optimizer import Optimizer
 from lenstronomywrapper.Optimization.quad_optimization.optimization_base import OptimizationBase
 
 class BruteOptimization(OptimizationBase):
@@ -33,42 +35,53 @@ class BruteOptimization(OptimizationBase):
 
         super(BruteOptimization, self).__init__(lens_system)
 
-    def optimize(self, data_to_fit, opt_routine, constrain_params, verbose,
+    def optimize(self, data_to_fit, param_class, args_param_class, verbose,
                  include_substructure, kwargs_optimizer):
 
-        kwargs_lens_final, lens_model_full, [source_x, source_y] = self.fit(data_to_fit, opt_routine, constrain_params, verbose,
-                        include_substructure, **kwargs_optimizer)
+        kwargs_lens_final, lens_model_full, [source_x, source_y] = self.fit(data_to_fit, param_class,
+                                      args_param_class, verbose, include_substructure, **kwargs_optimizer)
 
         return self.return_results(
             [source_x, source_y], kwargs_lens_final, lens_model_full,
             self.realization_initial, None
         )
 
-    def fit(self, data_to_fit, opt_routine, constrain_params=None, verbose=False,
-                 include_substructure=True, realization=None, opt_kwargs={}, tol_centroid=0.3, re_optimize=False,
-                 particle_swarm=True, n_particles=None, pso_convergence_mean=80000, tol_mag=None,
-            pso_compute_magnification=1e+6):
+    def _set_param_class(self, param_class_name, constrain_params):
 
-        self._check_routine(opt_routine, constrain_params)
+        if param_class_name == 'free_shear_powerlaw':
+            return PowerLawFreeShear, None
+        elif param_class_name == 'fixed_shear_powerlaw':
+            return PowerLawFixedShear, [constrain_params['shear']]
+        elif param_class_name == 'free_shear_powerlaw_multipole':
+            return PowerLawFreeShearMultipole, None
+        elif param_class_name == 'fixed_shear_powerlaw_multipole':
+            return PowerLawFixedShearMultipole, [constrain_params['shear']]
+        else:
+            raise Exception('did not recognize param_class_name = '+param_class_name)
+
+    def fit(self, data_to_fit, param_class, constrain_params, verbose=False,
+                 include_substructure=True, realization=None, re_optimize=False,
+            re_optimize_scale=1., particle_swarm=True, n_particles=None, pso_convergence_mean=80000,
+            pool=None):
 
         if n_particles is None:
             n_particles = self.n_particles
 
-        run_kwargs = {'optimizer_routine': opt_routine, 'magnification_target': data_to_fit.m,
-                      'multiplane': True, 'z_main': self.lens_system.zlens, 'z_source': self.lens_system.zsource,
-                      'tol_centroid': tol_centroid, 'astropy_instance': self.lens_system.astropy, 'tol_mag': tol_mag,
-                      'verbose': verbose, 're_optimize': re_optimize, 'particle_swarm': particle_swarm,
-                      'pso_convergence_mean': pso_convergence_mean, 'constrain_params': constrain_params,
-                      'simplex_n_iterations': self.n_iterations, 'optimizer_kwargs': opt_kwargs,
-                      'pso_compute_magnification': pso_compute_magnification}
+        param_class, args_param_class = self._set_param_class(param_class, constrain_params)
 
-        kwargs_lens_final, lens_model_full, source = self._fit(data_to_fit,
-                                    include_substructure, n_particles, realization, run_kwargs)
+        run_kwargs = {'x_image': data_to_fit.x, 'y_image': data_to_fit.y, 'z_lens': self.lens_system.zlens,
+                      'z_source': self.lens_system.zsource, 'astropy_instance': self.lens_system.astropy,
+                 'particle_swarm': particle_swarm, 're_optimize':re_optimize, 're_optimize_scale': re_optimize_scale,
+                      'pso_convergence_mean': pso_convergence_mean,
+                      'foreground_rays': None, 'simplex_n_iterations': self.n_iterations}
 
-        return kwargs_lens_final, lens_model_full, source
+        kwargs_lens_final, ray_shooting_class, source = self._fit(run_kwargs, param_class, args_param_class,
+                                    include_substructure, n_particles, realization, verbose, pool)
 
-    def _fit(self, data_to_fit, include_substructure, nparticles,
-            realization, run_kwargs):
+        return kwargs_lens_final, ray_shooting_class, source
+
+    def _fit(self, run_kwargs, param_class, args_param_class, include_substructure, nparticles,
+            realization, verbose, pool=None):
 
         """
         run_kwargs: {'optimizer_routine', 'constrain_params', 'simplex_n_iter'}
@@ -78,14 +91,24 @@ class BruteOptimization(OptimizationBase):
         lens_model_list, redshift_list, kwargs_lens, numerical_alpha_class, convention_index = \
             self.lens_system.get_lenstronomy_args(include_substructure, realization=realization)
 
-        opt = Optimizer(data_to_fit.x, data_to_fit.y, redshift_list, lens_model_list,
-                        kwargs_lens, numerical_alpha_class, **run_kwargs)
+        if args_param_class is None:
+            param_class = param_class(kwargs_lens)
+        else:
+            param_class = param_class(kwargs_lens, *args_param_class)
 
-        kwargs_lens_final, [source_x, source_y], _ = opt.optimize(nparticles)
+        run_kwargs['lens_model_list'] = lens_model_list
+        run_kwargs['redshift_list'] = redshift_list
+        run_kwargs['numerical_alpha_class'] = numerical_alpha_class
+        run_kwargs['parameter_class'] = param_class
 
-        lens_model_full = opt._lensModel
+        opt = Optimizer(**run_kwargs)
 
-        return kwargs_lens_final, lens_model_full, [source_x, source_y]
+        kwargs_lens_final, [source_x, source_y] = opt.optimize(nparticles, self.n_iterations,
+                                                               verbose=verbose, pool=pool)
+
+        ray_shooting_class = opt.fast_rayshooting.lensModel
+
+        return kwargs_lens_final, ray_shooting_class, [source_x, source_y]
 
 class BruteSettingsDefault(object):
 

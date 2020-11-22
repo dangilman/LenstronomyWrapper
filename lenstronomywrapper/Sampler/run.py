@@ -125,7 +125,7 @@ def run(job_index, chain_ID, output_path, path_to_folder,
 
         ######## Sample keyword arguments for the macromodel ##########
 
-        macromodel, macro_samples, constrain_params, opt_routine = \
+        macromodel, macro_samples, constrain_params = \
             load_powerlaw_ellipsoid_macromodel(zlens, prior_list_macromodel, kwargs_macro_ref,
                                                keyword_arguments['secondary_lens_components'])
         params_sampled.update(macro_samples)
@@ -142,9 +142,10 @@ def run(job_index, chain_ID, output_path, path_to_folder,
         optimization_settings = load_optimization_settings(keyword_arguments)
 
         ################ Perform a fit with only a smooth model ################
+        optimization_routine = keyword_arguments['optimization_routine']
         lens_system = QuadLensSystem(macromodel, zsource, background_quasar,
                                      None, None)
-        lens_system.initialize(data_to_fit_init, opt_routine, constrain_params)
+        lens_system.initialize(data_to_fit_init, optimization_routine, constrain_params)
         kwargs_macro_ref = lens_system.macromodel.components[0].kwargs
 
         kwargs_rendering['cone_opening_angle'] = kwargs_rendering['opening_angle_factor'] * \
@@ -215,7 +216,7 @@ def run(job_index, chain_ID, output_path, path_to_folder,
                                               kwargs_rendering, **optimization_settings)
             kwargs_lens_fit, lensModel_fit, _ = \
             dynamic_opt.optimize(
-                data_to_fit, opt_routine=opt_routine,
+                data_to_fit, opt_routine=optimization_routine,
                 constrain_params=constrain_params, verbose=keyword_arguments['verbose']
             )
 
@@ -252,7 +253,7 @@ def run(job_index, chain_ID, output_path, path_to_folder,
             hierarchical_opt = HierarchicalOptimization(lens_system, settings_class=settings_class,
                                                         kwargs_settings_class=kwargs_settings_class)
             kwargs_lens_fit, lensModel_fit, _ = hierarchical_opt.optimize(
-                data_to_fit, opt_routine, constrain_params, keyword_arguments['verbose']
+                data_to_fit, optimization_routine, constrain_params, keyword_arguments['verbose']
             )
 
             magnification_function = lens_system.quasar_magnification
@@ -281,6 +282,17 @@ def run(job_index, chain_ID, output_path, path_to_folder,
 
             lens_system.plot_images(data_to_fit.x, data_to_fit.y, adaptive=adaptive_mag)
             plt.show()
+
+            _x = _y = np.linspace(-1.5, 1.5, 100)
+            xx, yy = np.meshgrid(_x, _y)
+            shape0 = xx.shape
+            mag_surface = lensModel_fit.magnification(xx.ravel(), yy.ravel(),
+                                        kwargs_lens_fit).reshape(shape0)
+
+            plt.imshow(np.log10(mag_surface), extent=[-1.5, 1.5, -1.5, 1.5], origin='lower')
+            plt.scatter(data_to_fit.x, data_to_fit.y, color='k')
+            plt.show()
+
             a = input('continue')
 
         if blended:

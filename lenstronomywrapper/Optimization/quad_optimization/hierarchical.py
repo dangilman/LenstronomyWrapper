@@ -2,6 +2,7 @@ from lenstronomywrapper.Optimization.quad_optimization.brute import BruteOptimiz
 from lenstronomywrapper.Optimization.quad_optimization.settings import *
 from lenstronomywrapper.Utilities.lensing_util import interpolate_ray_paths_system
 
+
 class HierarchicalOptimization(BruteOptimization):
 
     def __init__(self, lens_system, n_particles=None, simplex_n_iter=None, settings_class='default',
@@ -29,9 +30,7 @@ class HierarchicalOptimization(BruteOptimization):
 
         super(HierarchicalOptimization, self).__init__(lens_system, n_particles, simplex_n_iter)
 
-    def optimize(self, data_to_fit, opt_routine='fixed_powerlaw_shear', constrain_params=None, verbose=False):
-
-        self._check_routine(opt_routine, constrain_params)
+    def optimize(self, data_to_fit, param_class_name, constrain_params, verbose=False, pool=None):
 
         realization = self.realization_initial
 
@@ -41,13 +40,14 @@ class HierarchicalOptimization(BruteOptimization):
             foreground_realization, background_realization = None, None
 
         lens_model_full, kwargs_lens_final, foreground_realization_filtered, [source_x, source_y] = \
-            self._fit_foreground(data_to_fit, foreground_realization, opt_routine, constrain_params, verbose)
+            self._fit_foreground(data_to_fit, foreground_realization, param_class_name, constrain_params,
+                                 pool, verbose)
 
         lens_model_full, kwargs_lens_final, realization_filtered, \
         [source_x, source_y], reoptimized_realizations = \
             self._fit_background(data_to_fit, foreground_realization_filtered, background_realization,
-                                 opt_routine, lens_model_full, source_x, source_y,
-                                 constrain_params, verbose)
+                                 param_class_name, constrain_params, lens_model_full, source_x, source_y,
+                                 pool, verbose)
 
         kwargs_return = {'reoptimized_realizations': reoptimized_realizations}
         return self.return_results(
@@ -55,7 +55,7 @@ class HierarchicalOptimization(BruteOptimization):
             realization_filtered, kwargs_return
         )
 
-    def _fit_foreground(self, data_to_fit, realization_foreground, opt_routine, constrain_params=None, verbose=False):
+    def _fit_foreground(self, data_to_fit, realization_foreground, param_class, constrain_params, pool, verbose=False):
 
         aperture_masses, globalmin_masses, window_sizes, scale, optimize_iteration, particle_swarm_reopt, \
         re_optimize_iteration = self.settings.foreground_settings
@@ -130,10 +130,15 @@ class HierarchicalOptimization(BruteOptimization):
 
             if do_optimization:
 
-                kwargs_lens_final, lens_model_full, [source_x, source_y] = self.fit(data_to_fit, opt_routine, constrain_params,
-                   verbose=verbose, include_substructure=True, realization=realization_filtered,
-                   opt_kwargs={'re_optimize_scale': scale[run]}, re_optimize=re_optimize_iteration[run],
-                 particle_swarm=particle_swarm_reopt[run])
+                # kwargs_lens_final, lens_model_full, [source_x, source_y] = self.fit(data_to_fit, opt_routine, constrain_params,
+                #    verbose=verbose, include_substructure=True, realization=realization_filtered,
+                #    opt_kwargs={'re_optimize_scale': scale[run]}, re_optimize=re_optimize_iteration[run],
+                #  particle_swarm=particle_swarm_reopt[run])
+
+                kwargs_lens_final, lens_model_full, [source_x, source_y] = self.fit(data_to_fit, param_class, constrain_params, verbose=verbose,
+                 include_substructure=True, realization=realization_filtered, re_optimize=re_optimize_iteration[run],
+                                              re_optimize_scale=scale[run], particle_swarm=particle_swarm_reopt[run],
+                                                                                    pool=pool)
 
                 N_foreground_halos_last = N_foreground_halos
 
@@ -155,8 +160,8 @@ class HierarchicalOptimization(BruteOptimization):
         return lens_model_full, kwargs_lens_final, realization_filtered, [source_x, source_y]
 
     def _fit_background(self, data_to_fit, foreground_realization_filtered, realization_background,
-                                 opt_routine, lens_model_full, source_x, source_y,
-                                 constrain_params, verbose):
+                                 param_class, constrain_params, lens_model_full, source_x, source_y,
+                                 pool, verbose):
 
         aperture_masses, globalmin_masses, window_sizes, scale, optimize_iteration, particle_swarm_reopt, \
         re_optimize_iteration = self.settings.background_settings
@@ -245,14 +250,15 @@ class HierarchicalOptimization(BruteOptimization):
 
             if do_optimization:
 
-                opt_kwargs = {'re_optimize_scale': scale[run]}
-
-                kwargs_lens_final, lens_model_full, [source_x, source_y] = self.fit(
-                    data_to_fit, opt_routine, constrain_params, verbose=verbose,
-                    include_substructure=True, realization=realization_filtered,
-                    opt_kwargs=opt_kwargs, re_optimize=re_optimize_iteration[run],
-                    particle_swarm=particle_swarm_reopt[run]
-                )
+                kwargs_lens_final, lens_model_full, [source_x, source_y] = self.fit(data_to_fit, param_class,
+                                                                                    constrain_params, verbose=verbose,
+                                                                                    include_substructure=True,
+                                                                                    realization=realization_filtered,
+                                                                                    re_optimize=re_optimize_iteration[
+                                                                                        run],
+                                                                                    re_optimize_scale=scale[run],
+                                                                                    particle_swarm=particle_swarm_reopt[
+                                                                                        run], pool=pool)
 
                 reoptimized_realizations.append(realization_filtered)
 

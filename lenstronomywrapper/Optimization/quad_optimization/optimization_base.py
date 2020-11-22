@@ -11,14 +11,6 @@ class OptimizationBase(object):
 
         return kwargs_lens_final, lens_model_full, kwargs_return
 
-    def _check_routine(self, opt_routine, contrain_params):
-
-        if opt_routine == 'fixed_powerlaw_shear':
-            pass
-        elif opt_routine == 'fixedshearpowerlaw':
-            assert contrain_params is not None
-            assert 'shear' in contrain_params.keys()
-
     def update_lens_system(self, source_centroid, new_kwargs, lens_model_full, realization_final):
 
         self.lens_system.clear_static_lensmodel()
