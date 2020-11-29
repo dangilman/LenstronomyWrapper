@@ -163,6 +163,26 @@ def load_background_quasar(prior_list_source, keywords):
 
     samples = {}
 
+    kwargs_quasar = {'center_x': 0., 'center_y': 0., 'source_fwhm_pc': None}
+    if 'source_fwhm_pc' not in keywords.keys():
+        assert 'source_fwhm_pc' in prior_list_source.keys()
+        kwargs_quasar['source_fwhm_pc'] = prior_list_source['source_fwhm_pc']()
+    quasar = Quasar(kwargs_quasar)
+    samples['source_fwhm_pc'] = kwargs_quasar['source_fwhm_pc']
+
+    if 'dx_source_2' in prior_list_source.keys():
+        assert 'dy_source_2' in prior_list_source.keys()
+        assert 'size_scale_2' in prior_list_source.keys()
+        assert 'amp_scale_2' in prior_list_source.keys()
+        for name in ['dx_source_2', 'dy_source_2', 'size_scale_2', 'amp_scale_2']:
+            samples[name] = prior_list_source[name]()
+
+    return quasar, samples
+
+def load_double_background_quasar(prior_list_source, keywords):
+
+    samples = {}
+
     n_sources = len(prior_list_source)
 
     if n_sources == 1:
