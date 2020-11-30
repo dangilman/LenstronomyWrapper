@@ -205,7 +205,10 @@ def run_1131(job_index, chain_ID, output_path, path_to_folder,
 
             aperture_diameter = 0.77
             # 2.5 because adaptive mag rescales the size by 2.5
-            aperture_radius = aperture_diameter / 2 / 2.5
+            if adaptive_mag:
+                aperture_radius = aperture_diameter / 2 / 2.5
+            else:
+                aperture_radius = aperture_diameter / 2
 
             quasar_single = Quasar(kwargs_src_single, grid_rmax=aperture_radius)
             quasar_single.setup(lens_system.pc_per_arcsec_zsource)
@@ -216,7 +219,7 @@ def run_1131(job_index, chain_ID, output_path, path_to_folder,
             magnification_function_dbl = quasar_dbl.magnification
             magnification_function_kwargs = {'xpos': data_to_fit.x, 'ypos': data_to_fit.y,
                                              'lensModel': lensModel_fit, 'kwargs_lens': kwargs_lens_fit, 'normed': True,
-                                             'enforce_unblended': True, 'adaptive': adaptive_mag,
+                                             'enforce_unblended': False, 'adaptive': adaptive_mag,
                                              'verbose': keyword_arguments['verbose']}
 
         else:
@@ -226,11 +229,6 @@ def run_1131(job_index, chain_ID, output_path, path_to_folder,
         flux_ratios_fit_single, blended_single = magnification_function_single(**magnification_function_kwargs)
         flux_ratios_fit_double, blended_dbl = magnification_function_dbl(**magnification_function_kwargs)
 
-        if blended_single:
-            blended = True
-        else:
-            blended = False
-
         if test_mode:
             import matplotlib.pyplot as plt
             if deltas is not None:
@@ -239,16 +237,16 @@ def run_1131(job_index, chain_ID, output_path, path_to_folder,
 
             quasar_single.plot_images(data_to_fit.x, data_to_fit.y,
                                   lensModel_fit, kwargs_lens_fit,
-                                  normed=True, adaptive=True)
+                                  normed=True, adaptive=adaptive_mag)
             plt.show()
             a=input('continue')
             quasar_dbl.plot_images(data_to_fit.x, data_to_fit.y,
                                      lensModel_fit, kwargs_lens_fit,
-                                     normed=True, adaptive=True)
+                                     normed=True, adaptive=adaptive_mag)
             plt.show()
             a = input('continue')
 
-        if blended:
+        if magnification_function_kwargs['enforce_unblended']:
             print('images are blended together')
             continue
 
