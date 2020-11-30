@@ -207,9 +207,9 @@ def run_1131(job_index, chain_ID, output_path, path_to_folder,
             # 2.5 because adaptive mag rescales the size by 2.5
             aperture_radius = aperture_diameter / 2 / 2.5
 
-            quasar_single = Quasar(kwargs_src_single, grid_rmax=aperture_radius, grid_resolution=0.001)
+            quasar_single = Quasar(kwargs_src_single, grid_rmax=aperture_radius)
             quasar_single.setup(lens_system.pc_per_arcsec_zsource)
-            quasar_dbl = DoubleGaussian(kwargs_src_double, grid_rmax=aperture_radius, grid_resolution=0.001)
+            quasar_dbl = DoubleGaussian(kwargs_src_double, grid_rmax=aperture_radius)
             quasar_dbl.setup(lens_system.pc_per_arcsec_zsource)
 
             magnification_function_single = quasar_single.magnification
