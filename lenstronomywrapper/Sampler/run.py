@@ -5,6 +5,7 @@ from lenstronomywrapper.Utilities.misc import create_directory
 from lenstronomywrapper.LensSystem.quad_lens import QuadLensSystem
 from lenstronomywrapper.Utilities.data_util import approx_theta_E
 import dill
+from pyHalo.single_realization import add_core_collapsed_subhalos
 from lenstronomywrapper.Utilities.parameter_util import kwargs_e1e2_to_polar, kwargs_gamma1gamma2_to_polar
 
 from lenstronomywrapper.LensSystem.local_image_quad import LocalImageQuad
@@ -232,6 +233,11 @@ def run(job_index, chain_ID, output_path, path_to_folder,
 
             realization_initial = pyhalo.render(keyword_arguments['realization_type'],
                                         kwargs_rendering)[0]
+            
+            if 'f_core_collapsed' in realization_samples.keys():
+                f = realization_samples['f_core_collapsed']
+                realization_initial = add_core_collapsed_subhalos(f, realization_initial)
+
             lens_system = QuadLensSystem.addRealization(lens_system, realization_initial)
 
             if 'settings_class' in keyword_arguments['keywords_optimizer'].keys():
