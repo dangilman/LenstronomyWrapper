@@ -258,25 +258,26 @@ class SamplerInit(object):
 
         for k, component in enumerate(self.system.lens_light_model.components):
 
-            if component.custom_prior is False or component.custom_prior is None:
+            if len(component.custom_prior) == 0:
                 pass
 
             else:
 
-                if component.custom_prior.linked_with_lens_light_model:
-                    raise Exception('Custom priors linked with other light models not '
-                                    'implemented for light model classes')
+                for i in range(0, len(component.custom_prior)):
+                    if component.custom_prior.linked_with_lens_light_model:
+                        raise Exception('Custom priors linked with other light models not '
+                                        'implemented for light model classes')
 
-                elif component.custom_prior.linked_with_lens_model:
+                    elif component.custom_prior.linked_with_lens_model:
 
-                    raise Exception('Custom priors linked with lens mass models not '
-                                    'implemented for light model classes, try adding the custom prior to the '
-                                    'lens mass model class instead.')
+                        raise Exception('Custom priors linked with lens mass models not '
+                                        'implemented for light model classes, try adding the custom prior to the '
+                                        'lens mass model class instead.')
 
-                else:
-                    component.custom_prior.set_eval(eval_kwargs_lens_light=k_light)
+                    else:
+                        component.custom_prior[i].set_eval(eval_kwargs_lens_light=k_light)
 
-                custom_functions.append(component.custom_prior)
+                    custom_functions.append(component.custom_prior[i])
 
             k_light += component.n_models
 
@@ -289,31 +290,32 @@ class SamplerInit(object):
 
         k_lens = 0
 
-        for k, component in enumerate(self.system.macromodel.components):
+        for k, component in enumerate(self.system.lens_light_model.components):
 
-            if component.custom_prior is False or component.custom_prior is None:
+            if len(component.custom_prior) == 0:
                 pass
 
             else:
 
-                if component.custom_prior.linked_with_lens_light_model:
-                    light_component_index = component.custom_prior.lens_light_component_index
-                    i_light = self.kwargs_index_from_component_index(self.system.lens_light_model,
-                                                                     light_component_index)
-                    component.custom_prior.set_eval(eval_kwargs_lens=k_lens,
-                                                    eval_kwargs_lens_light=i_light)
+                for i in range(0, len(component.custom_prior)):
+                    if component.custom_prior[i].linked_with_lens_light_model:
+                        light_component_index = component.custom_prior[i].lens_light_component_index
+                        i_light = self.kwargs_index_from_component_index(self.system.lens_light_model,
+                                                                         light_component_index)
+                        component.custom_prior[i].set_eval(eval_kwargs_lens=k_lens,
+                                                        eval_kwargs_lens_light=i_light)
 
-                elif component.custom_prior.linked_with_lens_model:
+                    elif component.custom_prior[i].linked_with_lens_model:
 
-                    lens_component_index = component.custom_prior.lens_component_index
-                    i_lens = self.kwargs_index_from_component_index(self.system.macromodel,
-                                                                    lens_component_index)
-                    component.custom_prior.set_eval(eval_kwargs_lens=i_lens)
+                        lens_component_index = component.custom_prior[i].lens_component_index
+                        i_lens = self.kwargs_index_from_component_index(self.system.macromodel,
+                                                                        lens_component_index)
+                        component.custom_prior[i].set_eval(eval_kwargs_lens=i_lens)
 
-                else:
-                    component.custom_prior.set_eval(eval_kwargs_lens=k_lens)
+                    else:
+                        component.custom_prior[i].set_eval(eval_kwargs_lens=k_lens)
 
-                custom_functions.append(component.custom_prior)
+                    custom_functions.append(component.custom_prior[i])
 
             k_lens += component.n_models
 

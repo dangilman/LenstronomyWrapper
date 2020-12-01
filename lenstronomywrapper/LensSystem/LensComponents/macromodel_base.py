@@ -15,17 +15,19 @@ class ComponentBase(ReconstructBase):
 
         self.x_center, self.y_center = kwargs[0]['center_x'], kwargs[0]['center_y']
 
-        self.custom_prior = custom_prior
+        if isinstance(custom_prior, list):
+            self.custom_prior = custom_prior
+        else:
+            if custom_prior is None or custom_prior is False:
+                self.custom_prior = []
+            else:
+                self.custom_prior = [custom_prior]
 
         super(ComponentBase).__init__()
 
     def update_prior(self, new_prior):
 
         self._prior = new_prior
-
-    def lenstronomy_args(self):
-
-        return self.lens_model_names, self.redshifts, self._kwargs, [self.convention_index]*len(self.lens_model_names)
 
     def update_kwargs(self, kwargs):
 

@@ -59,12 +59,12 @@ class MacroLensModel(object):
 
         lens_model_list, redshift_list, kwargs, observed_convention_index_bool = [], [], [], []
         for component in self.components:
-            model_names, model_redshifts, model_kwargs, model_convention_index = component.lenstronomy_args()
-            observed_convention_index_bool += model_convention_index
 
-            lens_model_list += model_names
-            redshift_list += model_redshifts
-            kwargs += model_kwargs
+            #model_names, model_redshifts, model_kwargs, model_convention_index = component.lenstronomy_args()
+            lens_model_list += component.lens_model_list
+            redshift_list += component.redshift_list
+            kwargs += component.kwargs
+            observed_convention_index_bool += [component.convention_index] * component.n_models
 
         observed_convention_index = None
         for i, value in enumerate(observed_convention_index_bool):

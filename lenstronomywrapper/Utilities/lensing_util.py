@@ -94,6 +94,9 @@ def ray_angles(alpha_x, alpha_y, lens_model, kwargs_lens, zsource):
     unique_sorted_redshifts = unique_redshifts[sort]
 
     for zi in unique_sorted_redshifts:
+
+        assert len(lens_model.lens_model_list) == len(kwargs_lens)
+
         try:
             x0, y0, alpha_x, alpha_y = lens_model.lens_model.ray_shooting_partial(x0, y0, alpha_x, alpha_y, zstart, zi,
                                                                                kwargs_lens)
@@ -116,6 +119,7 @@ def interpolate_ray_paths_system(x_image, y_image, lens_system,
                                  source_x=None, source_y=None):
 
     lens_model, kwargs_lens = lens_system.get_lensmodel(include_substructure, True, realization)
+
     zsource = lens_system.zsource
 
     return interpolate_ray_paths(x_image, y_image, lens_model, kwargs_lens, zsource,

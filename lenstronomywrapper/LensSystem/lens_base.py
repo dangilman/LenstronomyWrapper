@@ -126,6 +126,7 @@ class LensBase(object):
                 realization.lensing_quantities()
         else:
             halo_names, halo_redshifts, kwargs_halos, kwargs_lenstronomy = [], [], [], None
+
         halo_redshifts = list(halo_redshifts)
         names = lens_model_names + halo_names
         redshifts = macro_redshifts + halo_redshifts

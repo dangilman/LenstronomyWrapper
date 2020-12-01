@@ -56,7 +56,8 @@ class QuadLensSystem(LensBase):
 
     @classmethod
     def shift_background_auto(cls, lens_data_class, macromodel, zsource,
-                              background_quasar, realization, cosmo=None, particle_swarm_init=False):
+                              background_quasar, realization, cosmo=None, particle_swarm_init=False,
+                              opt_routine='free_shear_powerlaw', constrain_params=None):
 
         """
         This method takes a macromodel and a substructure realization, fits a smooth model to the data
@@ -92,7 +93,7 @@ class QuadLensSystem(LensBase):
         lens_system_init = QuadLensSystem(macromodel, zsource, background_quasar, None,
                                           pyhalo_cosmology=cosmo)
 
-        lens_system_init.initialize(lens_data_class,
+        lens_system_init.initialize(lens_data_class, opt_routine=opt_routine, constrain_params=constrain_params,
                                     kwargs_optimizer={'particle_swarm': particle_swarm_init})
 
         source_x, source_y = lens_system_init.source_centroid_x, lens_system_init.source_centroid_y

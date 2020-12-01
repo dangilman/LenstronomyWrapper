@@ -14,8 +14,6 @@ class HierarchicalOptimization(BruteOptimization):
             settings_class = HierarchicalSettingsDeltaFunction(**settings_kwargs)
         elif settings_class == 'default_CDM':
             settings_class = HierarchicalSettingsCDM()
-        elif settings_class == 'steep':
-            settings_class = HierarchicalSettingsSteep()
         elif settings_class == 'custom':
             settings_class = SettingsClass(**kwargs_settings_class)
         else:
@@ -30,7 +28,7 @@ class HierarchicalOptimization(BruteOptimization):
 
         super(HierarchicalOptimization, self).__init__(lens_system, n_particles, simplex_n_iter)
 
-    def optimize(self, data_to_fit, param_class_name, constrain_params, verbose=False, pool=None):
+    def optimize(self, data_to_fit, param_class_name, constrain_params, verbose=False, threadCount=1):
 
         realization = self.realization_initial
 
@@ -41,13 +39,13 @@ class HierarchicalOptimization(BruteOptimization):
 
         lens_model_full, kwargs_lens_final, foreground_realization_filtered, [source_x, source_y] = \
             self._fit_foreground(data_to_fit, foreground_realization, param_class_name, constrain_params,
-                                 pool, verbose)
+                                 threadCount, verbose)
 
         lens_model_full, kwargs_lens_final, realization_filtered, \
         [source_x, source_y], reoptimized_realizations = \
             self._fit_background(data_to_fit, foreground_realization_filtered, background_realization,
                                  param_class_name, constrain_params, lens_model_full, source_x, source_y,
-                                 pool, verbose)
+                                 threadCount, verbose)
 
         kwargs_return = {'reoptimized_realizations': reoptimized_realizations}
         return self.return_results(
@@ -55,7 +53,7 @@ class HierarchicalOptimization(BruteOptimization):
             realization_filtered, kwargs_return
         )
 
-    def _fit_foreground(self, data_to_fit, realization_foreground, param_class, constrain_params, pool, verbose=False):
+    def _fit_foreground(self, data_to_fit, realization_foreground, param_class, constrain_params, threadCount, verbose=False):
 
         aperture_masses, globalmin_masses, window_sizes, scale, optimize_iteration, particle_swarm_reopt, \
         re_optimize_iteration = self.settings.foreground_settings
@@ -138,7 +136,7 @@ class HierarchicalOptimization(BruteOptimization):
                 kwargs_lens_final, lens_model_full, [source_x, source_y] = self.fit(data_to_fit, param_class, constrain_params, verbose=verbose,
                  include_substructure=True, realization=realization_filtered, re_optimize=re_optimize_iteration[run],
                                               re_optimize_scale=scale[run], particle_swarm=particle_swarm_reopt[run],
-                                                                                    pool=pool)
+                                                                                    threadCount=threadCount)
 
                 N_foreground_halos_last = N_foreground_halos
 
@@ -161,7 +159,7 @@ class HierarchicalOptimization(BruteOptimization):
 
     def _fit_background(self, data_to_fit, foreground_realization_filtered, realization_background,
                                  param_class, constrain_params, lens_model_full, source_x, source_y,
-                                 pool, verbose):
+                                 threadCount, verbose):
 
         aperture_masses, globalmin_masses, window_sizes, scale, optimize_iteration, particle_swarm_reopt, \
         re_optimize_iteration = self.settings.background_settings
@@ -258,7 +256,7 @@ class HierarchicalOptimization(BruteOptimization):
                                                                                         run],
                                                                                     re_optimize_scale=scale[run],
                                                                                     particle_swarm=particle_swarm_reopt[
-                                                                                        run], pool=pool)
+                                                                                        run], threadCount=threadCount)
 
                 reoptimized_realizations.append(realization_filtered)
 

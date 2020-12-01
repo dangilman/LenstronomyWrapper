@@ -10,12 +10,12 @@ from lenstronomywrapper.Utilities.lensing_util import flux_at_edge
 class Quasar(SourceBase):
 
     def __init__(self, kwargs_quasars,
-                 grid_resolution=None, grid_rmax=None):
+                 grid_resolution=None, grid_rmax=None, grid_rmax_scale=1.):
 
         self._kwargs_init = kwargs_quasars
         self._grid_resolution = grid_resolution
         self._grid_rmax = grid_rmax
-        self._grid_rmax_scale = 1
+        self._grid_rmax_scale = grid_rmax_scale
         self._initialized = False
 
         super(Quasar, self).__init__(False, [], None, None, None)
@@ -400,7 +400,7 @@ class Quasar(SourceBase):
     def _auto_grid_size(self, max_source_size_parsec):
 
         # smaller sources seem to require a different model than larger sources
-        grid_size_0 = 0.0003
+        grid_size_0 = 0.0003 * self._grid_rmax_scale
         size_0 = 0.1
         power = 1.15
 

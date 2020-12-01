@@ -56,13 +56,24 @@ class BruteOptimization(OptimizationBase):
             return PowerLawFreeShearMultipole, None
         elif param_class_name == 'fixed_shear_powerlaw_multipole':
             return PowerLawFixedShearMultipole, [constrain_params['shear']]
+        elif param_class_name == 'NFWShearBulge':
+            from lenstronomywrapper.Optimization.quad_optimization.fitting_classes import NFWShearBulge
+            return NFWShearBulge, [constrain_params['n_sersic'], constrain_params['Rs']]
+        elif param_class_name == 'FixedNFWShearBulge':
+            from lenstronomywrapper.Optimization.quad_optimization.fitting_classes import FixedNFWShearBulge
+            return FixedNFWShearBulge, [constrain_params['n_sersic'], constrain_params['alpha_Rs'],
+                                        constrain_params['Rs']]
+        elif param_class_name == 'FixedNFWShearBulgeDisk':
+            from lenstronomywrapper.Optimization.quad_optimization.fitting_classes import FixedNFWShearBulgeDisk
+            return FixedNFWShearBulgeDisk, [constrain_params['n_sersic'], constrain_params['alpha_Rs'],
+                                        constrain_params['Rs'], constrain_params['q_bulge']]
         else:
             raise Exception('did not recognize param_class_name = '+param_class_name)
 
     def fit(self, data_to_fit, param_class, constrain_params, verbose=False,
                  include_substructure=True, realization=None, re_optimize=False,
             re_optimize_scale=1., particle_swarm=True, n_particles=None, pso_convergence_mean=80000,
-            pool=None):
+            threadCount=1):
 
         if n_particles is None:
             n_particles = self.n_particles
@@ -76,12 +87,12 @@ class BruteOptimization(OptimizationBase):
                       'foreground_rays': None, 'simplex_n_iterations': self.n_iterations}
 
         kwargs_lens_final, ray_shooting_class, source = self._fit(run_kwargs, param_class, args_param_class,
-                                    include_substructure, n_particles, realization, verbose, pool)
+                                    include_substructure, n_particles, realization, verbose, threadCount)
 
         return kwargs_lens_final, ray_shooting_class, source
 
     def _fit(self, run_kwargs, param_class, args_param_class, include_substructure, nparticles,
-            realization, verbose, pool=None):
+            realization, verbose, threadCount=1):
 
         """
         run_kwargs: {'optimizer_routine', 'constrain_params', 'simplex_n_iter'}
@@ -104,7 +115,7 @@ class BruteOptimization(OptimizationBase):
         opt = Optimizer(**run_kwargs)
 
         kwargs_lens_final, [source_x, source_y] = opt.optimize(nparticles, self.n_iterations,
-                                                               verbose=verbose, pool=pool)
+                                                               verbose=verbose, threadCount=threadCount)
 
         ray_shooting_class = opt.fast_rayshooting.lensModel
 

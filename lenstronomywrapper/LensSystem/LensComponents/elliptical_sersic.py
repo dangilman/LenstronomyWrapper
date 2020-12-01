@@ -98,4 +98,4 @@ class EllpiticalSersic(ComponentBase):
 
     @property
     def redshift_list(self):
-        return [self._redshift] * len(self.lens_model_list)
+        return [self._redshift]

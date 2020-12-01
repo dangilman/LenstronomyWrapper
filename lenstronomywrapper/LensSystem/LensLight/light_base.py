@@ -7,7 +7,13 @@ class LightBase(LightReconstructBase):
         self._prior = priors
         self.concentric_with_model = concentric_with_model
         self.is_source_light = False
-        self.custom_prior = custom_prior
+        if isinstance(custom_prior, list):
+            self.custom_prior = custom_prior
+        else:
+            if custom_prior is None or custom_prior is False:
+                self.custom_prior = []
+            else:
+                self.custom_prior = [custom_prior]
         super(LightBase, self).__init__()
 
     def surface_brightness(self, xgrid, ygrid, lensmodel, lensmodel_kwargs):
