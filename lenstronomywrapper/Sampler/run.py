@@ -109,6 +109,11 @@ def run(job_index, chain_ID, output_path, path_to_folder,
         save_best_realization = False
     readout_best = False
 
+    if 'enforce_unblended' in keyword_arguments.keys():
+        enforce_unblended = keyword_arguments['enforce_unblended']
+    else:
+        enforce_unblended = True
+
     counter = 0
     while counter < n_run:
 
@@ -211,29 +216,11 @@ def run(job_index, chain_ID, output_path, path_to_folder,
                                             'adaptive': adaptive_mag, 'verbose': keyword_arguments['verbose']}
             magnification_function = lens_system.magnification
 
-        elif keyword_arguments['keywords_optimizer']['routine'] == 'dynamic':
-
-            dynamic_opt = DynamicOptimization(lens_system, pyhalo,
-                                              kwargs_rendering, **optimization_settings)
-            kwargs_lens_fit, lensModel_fit, _ = \
-            dynamic_opt.optimize(
-                data_to_fit, opt_routine=optimization_routine,
-                constrain_params=constrain_params, verbose=keyword_arguments['verbose']
-            )
-
-            magnification_function = lens_system.quasar_magnification
-            magnification_function_kwargs = {'x': data_to_fit.x, 'y': data_to_fit.y,
-                                             'lens_model': lensModel_fit, 'kwargs_lensmodel': kwargs_lens_fit,
-                                             'normed': True,
-                                             'enforce_unblended': True, 'adaptive': adaptive_mag,
-                                             'verbose': keyword_arguments['verbose']}
-
-
         elif keyword_arguments['keywords_optimizer']['routine'] == 'hierarchical':
 
             realization_initial = pyhalo.render(keyword_arguments['realization_type'],
                                         kwargs_rendering)[0]
-            
+
             if 'f_core_collapsed' in realization_samples.keys():
                 f = realization_samples['f_core_collapsed']
                 realization_initial = add_core_collapsed_subhalos(f, realization_initial)
@@ -265,7 +252,7 @@ def run(job_index, chain_ID, output_path, path_to_folder,
             magnification_function = lens_system.quasar_magnification
             magnification_function_kwargs = {'x': data_to_fit.x, 'y': data_to_fit.y,
                          'lens_model': lensModel_fit, 'kwargs_lensmodel': kwargs_lens_fit, 'normed': True,
-                             'enforce_unblended': True, 'adaptive': adaptive_mag, 'verbose': keyword_arguments['verbose']}
+                             'enforce_unblended': enforce_unblended, 'adaptive': adaptive_mag, 'verbose': keyword_arguments['verbose']}
 
         else:
             raise Exception('optimization routine '+ keyword_arguments['keywords_optimizer']['routine']
@@ -301,7 +288,7 @@ def run(job_index, chain_ID, output_path, path_to_folder,
 
             a = input('continue')
 
-        if blended:
+        if blended and enforce_unblended:
             print('images are blended together')
             continue
 

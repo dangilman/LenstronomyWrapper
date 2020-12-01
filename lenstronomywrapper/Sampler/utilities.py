@@ -164,10 +164,20 @@ def load_background_quasar(prior_list_source, keywords):
     samples = {}
 
     kwargs_quasar = {'center_x': 0., 'center_y': 0., 'source_fwhm_pc': None}
-    if 'source_fwhm_pc' not in keywords.keys():
-        assert 'source_fwhm_pc' in prior_list_source.keys()
-        kwargs_quasar['source_fwhm_pc'] = prior_list_source['source_fwhm_pc']()
-    quasar = Quasar(kwargs_quasar)
+
+    kwargs_quasar['source_fwhm_pc'] = prior_list_source['source_fwhm_pc']()
+
+    if 'grid_rmax' in keywords.keys():
+        grid_rmax = keywords['grid_rmax']
+    else:
+        grid_rmax = None
+
+    if 'grid_rmax_scale' not in keywords.keys():
+        grid_rmax_scale = 1
+    else:
+        grid_rmax_scale = keywords['grid_rmax_scale']
+
+    quasar = Quasar(kwargs_quasar, grid_rmax=grid_rmax, grid_rmax_scale=grid_rmax_scale)
     samples['source_fwhm_pc'] = kwargs_quasar['source_fwhm_pc']
 
     if 'dx_source_2' in prior_list_source.keys():
