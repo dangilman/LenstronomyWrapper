@@ -219,7 +219,7 @@ def run_1131(job_index, chain_ID, output_path, path_to_folder,
             magnification_function_dbl = quasar_dbl.magnification
             magnification_function_kwargs = {'xpos': data_to_fit.x, 'ypos': data_to_fit.y,
                                              'lensModel': lensModel_fit, 'kwargs_lens': kwargs_lens_fit, 'normed': True,
-                                             'enforce_unblended': False, 'adaptive': adaptive_mag,
+                                             'enforce_unblended': keyword_arguments['enforce_unblended'], 'adaptive': adaptive_mag,
                                              'verbose': keyword_arguments['verbose']}
 
         else:
@@ -265,7 +265,7 @@ def run_1131(job_index, chain_ID, output_path, path_to_folder,
 
         if keyword_arguments['verbose']:
             print('flux_ratios_fit single:', flux_ratios_fit_single)
-            print('flux_ratios_fit mid double:', flux_ratios_fit_double)
+            print('flux ratios fit double:', flux_ratios_fit_double)
             print('n remaining: ', keyword_arguments['Nsamples'] - (counter + 1))
 
         header = ''

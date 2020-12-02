@@ -268,8 +268,8 @@ def run(job_index, chain_ID, output_path, path_to_folder,
 
             ax = plt.gca()
             ax.scatter(data_to_fit.x, data_to_fit.y)
-            ax.set_xlim(-1.5*theta_E_approx, 1.5*theta_E_approx)
-            ax.set_ylim(-1.5 * theta_E_approx, 1.5 * theta_E_approx)
+            ax.set_xlim(-1.9*theta_E_approx, 1.9*theta_E_approx)
+            ax.set_ylim(-1.9 * theta_E_approx, 1.9 * theta_E_approx)
             ax.set_aspect('equal')
             plt.show()
 
