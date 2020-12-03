@@ -7,7 +7,7 @@ from lenstronomywrapper.Utilities.data_util import approx_theta_E
 
 from lenstronomywrapper.Utilities.parameter_util import kwargs_e1e2_to_polar, kwargs_gamma1gamma2_to_polar
 from lenstronomywrapper.LensSystem.BackgroundSource.double_gaussian import DoubleGaussian
-from lenstronomywrapper.LensSystem.local_image_quad import LocalImageQuad
+import dill
 from pyHalo.pyhalo import pyHalo
 
 from time import time
@@ -44,7 +44,7 @@ def run_1131(job_index, chain_ID, output_path, path_to_folder,
     if not os.path.exists(readout_path):
         create_directory(readout_path)
 
-    fname_fluxes = readout_path + 'fluxes_NL.txt'
+    fname_fluxes = readout_path + 'fluxes_single_source.txt'
 
     write_header = True
     write_mode = 'w'
@@ -87,6 +87,23 @@ def run_1131(job_index, chain_ID, output_path, path_to_folder,
     parameters_sampled = None
 
     adaptive_mag = keyword_arguments['adaptive_mag']
+
+    if 'save_best_realization' in keyword_arguments.keys():
+        assert 'fluxes' in keyword_arguments.keys(), "must specify target fluxes if saving best realizations"
+        save_best_realization = keyword_arguments['save_best_realization']
+        if os.path.exists(readout_path + 'best_realization'):
+            f = open(readout_path + 'best_realization', 'rb')
+            best_realization = dill.load(f)
+            f.close()
+            current_best_statistic = best_realization.statistic
+            print('starting from best statistic of: ', current_best_statistic)
+
+        else:
+            current_best_statistic = 1e+6
+
+    else:
+        save_best_realization = False
+    readout_best = False
 
     counter = 0
     while counter < n_run:
@@ -253,6 +270,20 @@ def run_1131(job_index, chain_ID, output_path, path_to_folder,
         flux_ratios_fit_single = np.round(flux_ratios_fit_single, 5)
         flux_ratios_fit_double = np.round(flux_ratios_fit_double, 5)
 
+        if save_best_realization:
+            fluxes_measured = np.array(keyword_arguments['fluxes'])
+            df = flux_ratios_fit_double[1:]/flux_ratios_fit_double[0] - fluxes_measured[1:]/fluxes_measured[0]
+            new_statistic = np.sum(np.sqrt(df ** 2))
+            if test_mode or keyword_arguments['verbose']:
+                print('new statistic: ', new_statistic)
+                print('current best statistic: ', current_best_statistic)
+            if new_statistic < current_best_statistic:
+                readout_best = True
+                print('storing new realization...')
+                current_best_statistic = new_statistic
+                best_realization = SavedRealization(lensModel_fit, kwargs_lens_fit, flux_ratios_fit_double,
+                                                    new_statistic, parameters)
+
         if readout_macro:
             comp1 = kwargs_e1e2_to_polar(lens_system.macromodel.components[0].kwargs[0])
             comp2 = kwargs_gamma1gamma2_to_polar(lens_system.macromodel.components[0].kwargs[1])
@@ -304,6 +335,22 @@ def run_1131(job_index, chain_ID, output_path, path_to_folder,
             write_header = False
             t_start = time()
 
+            if save_best_realization and readout_best:
+                f = open(readout_path + 'best_realization', 'wb')
+                dill.dump(best_realization, f)
+                f.close()
+
         counter += 1
 
     return
+
+class SavedRealization(object):
+
+    def __init__(self, lensmodel_instance, kwargs_lens_fit, fluxes_modeled,
+                 statistic, params):
+
+        self.lensmodel = lensmodel_instance
+        self.kwargs = kwargs_lens_fit
+        self.fluxes_modeled = fluxes_modeled
+        self.statistic = statistic
+        self.params = params
