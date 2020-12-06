@@ -186,6 +186,8 @@ class RayShootingGrid(object):
 
         N = int(2*side_length*grid_res**-1)
 
+        self.N = N
+
         if N==0:
             raise Exception('cannot raytracing with no pixels!')
 
@@ -253,7 +255,86 @@ class AdaptiveGrid(object):
     def image(self):
         return self.flux_values.reshape(self._pixels_per_axis, self._pixels_per_axis)
 
+class AdaptiveGrid2(AdaptiveGrid):
 
+    def __init__(self, end_rmax, grid_resolution, theta, x_center, y_center):
 
+        super(AdaptiveGrid2, self).__init__(end_rmax, grid_resolution, theta, x_center, y_center)
 
+        self._flux_values = -1 * np.ones_like(self.flux_values.ravel())
 
+        self._one_D_inds = np.arange(0, int(self._pixels_per_axis ** 2))
+        self._two_D_inds = self._one_D_inds.reshape(self._pixels_per_axis, self._pixels_per_axis)
+
+    def get_brightest_inds(self, points_computed_last, n_points):
+
+        flux_array = self.flux_values.ravel()
+
+        flux_computed_last = flux_array[points_computed_last]
+
+        inds_sorted = np.argsort(flux_computed_last)[::-1]
+
+        inds = inds_sorted[0:n_points]
+
+        points_computed_last = np.array(points_computed_last)[inds]
+
+        return points_computed_last
+
+    def get_points_to_compute(self, n_points, points_computed_last):
+
+        brightest_inds = self.get_brightest_inds(points_computed_last, n_points)
+
+        neighbor_inds = self.get_neighbors(brightest_inds)
+
+        flux_in_neighbor_inds = self._flux_values[neighbor_inds]
+
+        flux_not_computed_inds = np.where(flux_in_neighbor_inds < 0)[0]
+
+        neighbor_inds = np.array(neighbor_inds)
+
+        inds = np.array(neighbor_inds[flux_not_computed_inds])
+
+        return self.xgrid[inds], self.ygrid[inds], inds
+
+    def get_neighbors(self, brightest_inds):
+
+        n = self._pixels_per_axis
+        two_d_inds = np.arange(0, n**2).reshape(n, n)
+
+        neighbors = []
+
+        for ind in brightest_inds:
+
+            ind_array = np.where(two_d_inds == ind)
+            ind_0, ind_1 = ind_array[0], ind_array[1]
+            if ind_0 > 0:
+                top = two_d_inds[ind_0-1, ind_1]
+                neighbors.append(int(top))
+                if ind_1 < n-1:
+                    top_right = two_d_inds[ind_0-1, ind_1+1]
+                    neighbors.append(int(top_right))
+            if ind_1 < n-1:
+                right = two_d_inds[ind_0, ind_1+1]
+                neighbors.append(int(right))
+                if ind_0 < n-1:
+                    bottom_right = two_d_inds[ind_0+1, ind_1+1]
+                    neighbors.append(int(bottom_right))
+            if ind_0 < n - 1:
+                bottom = two_d_inds[ind_0 + 1, ind_1]
+                neighbors.append(int(bottom))
+                if ind_1 > 0:
+                    bottom_left = two_d_inds[ind_0 + 1, ind_1 - 1]
+                    neighbors.append(int(bottom_left))
+            if ind_1 > 0:
+                left = two_d_inds[ind_0, ind_1 - 1]
+                neighbors.append(int(left))
+                if ind_0 < n - 1:
+                    top_left = two_d_inds[ind_0 + 1, ind_1 - 1]
+                    neighbors.append(int(top_left))
+
+        return neighbors
+
+    def set_flux_in_pixels(self, pixel_indicies, flux_in_pixels):
+
+        self.flux_values[pixel_indicies] = flux_in_pixels
+        self._flux_values[pixel_indicies] = flux_in_pixels

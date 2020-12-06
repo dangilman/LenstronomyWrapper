@@ -2,20 +2,23 @@ import numpy as np
 from lenstronomywrapper.Utilities.data_util import image_separation_vectors_quad
 from copy import deepcopy
 import matplotlib.pyplot as plt
-from lenstronomywrapper.Utilities.lensing_util import RayShootingGrid, AdaptiveGrid
+from lenstronomywrapper.Utilities.lensing_util import RayShootingGrid, AdaptiveGrid, AdaptiveGrid2
 from lenstronomy.LightModel.light_model import LightModel
 from lenstronomywrapper.LensSystem.BackgroundSource.source_base import SourceBase
 from lenstronomywrapper.Utilities.lensing_util import flux_at_edge
 
+
 class Quasar(SourceBase):
 
     def __init__(self, kwargs_quasars,
-                 grid_resolution=None, grid_rmax=None, grid_rmax_scale=1.):
+                 grid_resolution=None, grid_rmax=None, grid_rmax_scale=1.,
+                 grid_resolution_scale=1.):
 
         self._kwargs_init = kwargs_quasars
         self._grid_resolution = grid_resolution
         self._grid_rmax = grid_rmax
         self._grid_rmax_scale = grid_rmax_scale
+        self._grid_resolution_scale = grid_resolution_scale
         self._initialized = False
 
         super(Quasar, self).__init__(False, [], None, None, None)
@@ -62,6 +65,7 @@ class Quasar(SourceBase):
                 self.grid_rmax = self._auto_grid_size(source_size_pc)
 
         if self._grid_resolution is None:
+
             grid_resolution = self._auto_grid_resolution(source_size_pc)
             self.grid_resolution = grid_resolution
         else:
@@ -148,7 +152,7 @@ class Quasar(SourceBase):
 
             end_rmax = min(grid_rmax, 0.5 * sep)
             theta = 0.
-            new_grid = AdaptiveGrid(end_rmax, self.grid_resolution, theta,
+            new_grid = AdaptiveGrid2(end_rmax, self.grid_resolution, theta,
                                     xi, yi)
             grids.append(new_grid)
 
@@ -162,7 +166,7 @@ class Quasar(SourceBase):
         grid.set_flux_in_pixels(inds, flux_in_pixels)
         magnification_current = np.sum(grid.flux_values) * grid.grid_res ** 2
 
-        return magnification_current
+        return magnification_current, inds
 
     def magnification_adaptive(self, xpos, ypos, lensModel, kwargs_lens, normed, tol=0.005,
                                verbose=False, enforce_unblended=False):
@@ -191,10 +195,10 @@ class Quasar(SourceBase):
             step_size = step_factor * grid.rmax
 
             if isinstance(lensModel, list):
-                magnification_last = self._iterate_adaptive(
+                magnification_last, _ = self._iterate_adaptive(
                     grid, 0., r_start, lensModel[i], kwargs_lens[i])
             else:
-                magnification_last = self._iterate_adaptive(
+                magnification_last, _ = self._iterate_adaptive(
                     grid, 0., r_start, lensModel, kwargs_lens)
 
             converged = False
@@ -207,10 +211,10 @@ class Quasar(SourceBase):
             while converged is False:
 
                 if isinstance(lensModel, list):
-                    magnification_new = self._iterate_adaptive(
+                    magnification_new, _ = self._iterate_adaptive(
                             grid, r_min, r_max, lensModel[i], kwargs_lens[i])
                 else:
-                    magnification_new = self._iterate_adaptive(
+                    magnification_new, _ = self._iterate_adaptive(
                         grid, r_min, r_max, lensModel, kwargs_lens)
 
                 delta = 1 - magnification_last / magnification_new
@@ -314,7 +318,7 @@ class Quasar(SourceBase):
 
         if adaptive:
 
-            return self.magnification_adaptive(xpos, ypos, lensModel, kwargs_lens, normed,
+            return self.magnification_adaptive_2(xpos, ypos, lensModel, kwargs_lens, normed,
                                                verbose=verbose, enforce_unblended=enforce_unblended)
 
         if enforce_unblended:
@@ -395,7 +399,7 @@ class Quasar(SourceBase):
         power = 1
         grid_res = grid_res_0 * (min_source_size_parsec / size_0) ** power
 
-        return grid_res
+        return grid_res * self._grid_resolution_scale
 
     def _auto_grid_size(self, max_source_size_parsec):
 
@@ -415,10 +419,97 @@ class Quasar(SourceBase):
         else:
 
             power = 1.2
-            grid_size_0 = 0.0002 / 5
+            grid_size_0 = 0.0006 / 5
             size_0 = 0.1 / 5
 
             grid_size = grid_size_0 * (max_source_size_parsec / size_0) ** power
 
         return grid_size
+
+    def _iterate_adaptive_2(self, grid, n_points,
+                          lensModel, kwargs_lens, points_computed_last):
+
+        xcoords, ycoords, inds = grid.get_points_to_compute(n_points, points_computed_last)
+        flux_in_pixels = self.surface_brightness(xcoords, ycoords, lensModel, kwargs_lens)
+        grid.set_flux_in_pixels(inds, flux_in_pixels)
+        magnification_current = np.sum(grid.flux_values) * grid.grid_res ** 2
+        N_computed = len(inds)
+        return magnification_current, N_computed, inds
+
+    def magnification_adaptive_2(self, xpos, ypos, lensModel, kwargs_lens, normed,
+                               verbose=False, enforce_unblended=False, n_points=10):
+
+        grids = self._ray_shooting_setup_adaptive(xpos, ypos)
+        self._adaptive_grids = grids
+
+        mags = []
+
+        for i, grid in enumerate(grids):
+
+            r_start = 0.1 * grid.rmax
+            # begin by computing the flux in a circular aperture center at the origin
+            if isinstance(lensModel, list):
+                magnification_last, points_computed_last = self._iterate_adaptive(
+                    grid, 0, r_start,
+                    lensModel[i], kwargs_lens[i])
+            else:
+                magnification_last, points_computed_last = self._iterate_adaptive(
+                    grid, 0, r_start,
+                    lensModel, kwargs_lens)
+
+            points_computed_last = np.squeeze(points_computed_last)
+            converged = False
+            n_computed_last = np.sum(grid.flux_values != 0)
+            dmag_dnpix = magnification_last / n_computed_last
+
+            if verbose:
+                print('magnification: ', magnification_last)
+
+            init = True
+            count = 0
+            print_step = 100
+            # now continue to compute the flux around the brightest pixels
+            while converged is False:
+
+                if init:
+                    N_points = len(points_computed_last)
+                    init = False
+                else:
+                    N_points = n_points
+
+                if isinstance(lensModel, list):
+                    magnification_new, n_computed_new, points_computed_last = self._iterate_adaptive_2(
+                    grid, N_points, lensModel[i], kwargs_lens[i], points_computed_last)
+                else:
+                    magnification_new, n_computed_new, points_computed_last = self._iterate_adaptive_2(
+                    grid, N_points, lensModel, kwargs_lens, points_computed_last)
+
+                points_computed_last = np.squeeze(points_computed_last)
+
+                if n_computed_new == 0:
+                    break
+
+                dmag_dnpix_new = (magnification_new - magnification_last)/(n_computed_new)
+
+                if verbose and count%print_step==0:
+                    print('magnification: ', magnification_new)
+
+                if dmag_dnpix_new/dmag_dnpix < 0.01:
+                    break
+
+                magnification_last = magnification_new
+                dmag_dnpix = dmag_dnpix_new
+                count += 1
+
+            if flux_at_edge(grid.image) and enforce_unblended:
+                return None, True
+
+            mags.append(magnification_new)
+
+        fluxes = np.array(mags)
+
+        if normed:
+            fluxes *= np.max(fluxes) ** -1
+
+        return fluxes, False
 
