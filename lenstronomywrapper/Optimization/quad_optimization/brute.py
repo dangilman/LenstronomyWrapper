@@ -50,6 +50,12 @@ class BruteOptimization(OptimizationBase):
 
         if param_class_name == 'free_shear_powerlaw':
             return PowerLawFreeShear, None
+        elif param_class_name == 'free_shear_powerlaw_constrain_q':
+            from lenstronomywrapper.Optimization.quad_optimization.fitting_classes import PowerLawFreeShearAxisRatioPen
+            return PowerLawFreeShearAxisRatioPen, None
+        elif param_class_name == 'fixed_shear_powerlaw_constrain_q':
+            from lenstronomywrapper.Optimization.quad_optimization.fitting_classes import PowerLawFixedShearAxisRatioPen
+            return PowerLawFixedShearAxisRatioPen
         elif param_class_name == 'fixed_shear_powerlaw':
             return PowerLawFixedShear, [constrain_params['shear']]
         elif param_class_name == 'free_shear_powerlaw_multipole':

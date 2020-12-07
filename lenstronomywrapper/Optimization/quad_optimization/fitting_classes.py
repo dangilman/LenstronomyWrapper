@@ -1,5 +1,36 @@
 import numpy as np
 from lenstronomy.Util.param_util import ellipticity2phi_q, phi_q2_ellipticity
+from lenstronomy.LensModel.QuadOptimizer.param_manager import PowerLawFixedShear, PowerLawFreeShear
+
+class PowerLawFreeShearAxisRatioPen(PowerLawFreeShear):
+
+    """
+    This class implements a fit of EPL + external shear with every parameter except the power law slope allowed to vary
+    """
+
+    def param_chi_square_penalty(self, args):
+
+        e1, e2 = args[3], args[4]
+        q = 1 - np.sqrt(e1**2 + e2**2)
+        if q < 0.6:
+            return np.inf
+        else:
+            return 0.
+
+class PowerLawFixedShearAxisRatioPen(PowerLawFixedShear):
+
+    """
+    This class implements a fit of EPL + external shear with every parameter except the power law slope allowed to vary
+    """
+
+    def param_chi_square_penalty(self, args):
+
+        e1, e2 = args[3], args[4]
+        q = 1 - np.sqrt(e1**2 + e2**2)
+        if q < 0.6:
+            return np.inf
+        else:
+            return 0.
 
 class FixedNFWShearBulgeDisk(object):
 

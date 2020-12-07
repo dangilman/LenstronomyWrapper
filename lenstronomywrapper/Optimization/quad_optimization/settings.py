@@ -137,7 +137,6 @@ class HierarchicalSettingsDefault(object):
 
 class HierarchicalSettingsDefault2(object):
 
-
     @property
     def log_mass_cut_global(self):
         return 7.5
