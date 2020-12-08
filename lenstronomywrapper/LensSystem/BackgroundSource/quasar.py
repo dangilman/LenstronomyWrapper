@@ -131,15 +131,15 @@ class Quasar(SourceBase):
         grid_rmax = grid_rmax_scale * self.grid_rmax
         for sep, theta in zip(image_separations, relative_angles):
             grids.append(RayShootingGrid(min(grid_rmax, 0.5 * sep),
-                                         self.grid_resolution, rot=0.))
+                                         self.grid_resolution))
 
         xgrids, ygrids = self._get_grids(xpos, ypos, grids)
 
         return xgrids, ygrids
 
-    def _ray_shooting_setup_adaptive(self, xpos, ypos):
+    def _ray_shooting_setup_adaptive(self, xpos, ypos, grid_axis_ratio, relative_angles):
 
-        (image_separations, relative_angles) = image_separation_vectors_quad(xpos, ypos)
+        (image_separations, _) = image_separation_vectors_quad(xpos, ypos)
 
         grids = []
         grid_rmax = 2.5 * self.grid_rmax
@@ -147,9 +147,9 @@ class Quasar(SourceBase):
         for sep, theta, xi, yi in zip(image_separations, relative_angles, xpos, ypos):
 
             end_rmax = min(grid_rmax, 0.5 * sep)
-            theta = 0.
+
             new_grid = AdaptiveGrid(end_rmax, self.grid_resolution, theta,
-                                    xi, yi)
+                                    xi, yi, grid_axis_ratio)
             grids.append(new_grid)
 
         return grids
@@ -165,7 +165,8 @@ class Quasar(SourceBase):
         return magnification_current
 
     def magnification_adaptive(self, xpos, ypos, lensModel, kwargs_lens, normed, tol=0.005,
-                               verbose=False, enforce_unblended=False):
+                               verbose=False, enforce_unblended=False, grid_axis_ratio=1,
+                               relative_angles=None):
 
         def _converged(dm, mnew):
 
@@ -177,7 +178,11 @@ class Quasar(SourceBase):
             else:
                 return False
 
-        grids = self._ray_shooting_setup_adaptive(xpos, ypos)
+        if relative_angles is None:
+            # can compute these from image positions:
+            # angles = [np.arctan2(-x[i], y[i]) for i in range(0, len(xpos)]
+            relative_angles = [0.] * len(xpos)
+        grids = self._ray_shooting_setup_adaptive(xpos, ypos, grid_axis_ratio, relative_angles)
 
         self._adaptive_grids = grids
 
@@ -308,14 +313,16 @@ class Quasar(SourceBase):
 
     def magnification(self, xpos, ypos, lensModel,
                       kwargs_lens, normed=True, retry_if_blended=0,
-                      enforce_unblended=False, adaptive=False, verbose=False):
+                      enforce_unblended=False, adaptive=False, verbose=False, grid_axis_ratio=1,
+                      relative_angles=None):
 
         self._check_initialized()
 
         if adaptive:
 
             return self.magnification_adaptive(xpos, ypos, lensModel, kwargs_lens, normed,
-                                               verbose=verbose, enforce_unblended=enforce_unblended)
+                                               verbose=verbose, enforce_unblended=enforce_unblended,
+                                               grid_axis_ratio=grid_axis_ratio, relative_angles=relative_angles)
 
         if enforce_unblended:
 

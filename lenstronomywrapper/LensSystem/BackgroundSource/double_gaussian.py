@@ -144,15 +144,15 @@ class DoubleGaussian(SourceBase):
         grids = []
         grid_rmax = grid_rmax_scale * self.grid_rmax
         for sep, theta in zip(image_separations, relative_angles):
-            grids.append(RayShootingGrid(min(grid_rmax, 0.5 * sep), self.grid_resolution, rot=theta))
+            grids.append(RayShootingGrid(min(grid_rmax, 0.5 * sep), self.grid_resolution))
 
         xgrids, ygrids = self._get_grids(xpos, ypos, grids)
 
         return xgrids, ygrids
 
-    def _ray_shooting_setup_adaptive(self, xpos, ypos):
+    def _ray_shooting_setup_adaptive(self, xpos, ypos, relative_angles):
 
-        (image_separations, relative_angles) = image_separation_vectors_quad(xpos, ypos)
+        (image_separations, _) = image_separation_vectors_quad(xpos, ypos)
 
         grids = []
         grid_rmax = 2.5 * self.grid_rmax
@@ -178,7 +178,7 @@ class DoubleGaussian(SourceBase):
         return magnification_current
 
     def magnification_adaptive(self, xpos, ypos, lensModel, kwargs_lens, normed, tol=0.005,
-                               verbose=False, enforce_unblended=False):
+                               verbose=False, enforce_unblended=False, relative_angles=None):
 
         def _converged(dm):
 
@@ -187,7 +187,10 @@ class DoubleGaussian(SourceBase):
             else:
                 return False
 
-        grids = self._ray_shooting_setup_adaptive(xpos, ypos)
+        if relative_angles is None:
+            relative_angles = [0.] * len(xpos)
+
+        grids = self._ray_shooting_setup_adaptive(xpos, ypos, relative_angles)
 
         self._adaptive_grids = grids
 

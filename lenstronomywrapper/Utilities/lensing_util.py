@@ -182,7 +182,7 @@ def solve_H0_from_Ddt(zlens, zsource, D_dt, astropy_instance_ref, interpolation_
 
 class RayShootingGrid(object):
 
-    def __init__(self, side_length, grid_res, rot):
+    def __init__(self, side_length, grid_res):
 
         N = int(2*side_length*grid_res**-1)
 
@@ -195,22 +195,18 @@ class RayShootingGrid(object):
 
         self.radius = side_length
 
-        self._rot = rot
-
     @property
     def grid_at_xy_unshifted(self):
         return self.x_grid_0, self.y_grid_0
 
-    def grid_at_xy(self, xloc, yloc):
-
-        theta = self._rot
+    def grid_at_xy(self, xloc, yloc, theta=0):
 
         cos_phi, sin_phi = np.cos(theta), np.sin(theta)
 
         gridx0, gridy0 = self.grid_at_xy_unshifted
 
         _xgrid, _ygrid = (cos_phi * gridx0 + sin_phi * gridy0), (-sin_phi * gridx0 + cos_phi * gridy0)
-        xgrid, ygrid = _xgrid + xloc, _ygrid + yloc
+        xgrid, ygrid = gridx0 + xloc, gridy0 + yloc
 
         xgrid, ygrid = xgrid.ravel(), ygrid.ravel()
 
@@ -218,19 +214,27 @@ class RayShootingGrid(object):
 
 class AdaptiveGrid(object):
 
-    def __init__(self, end_rmax, grid_resolution, theta, x_center, y_center):
+    def __init__(self, end_rmax, grid_resolution, theta, x_center, y_center, q=1.):
 
-        full_grid = RayShootingGrid(end_rmax, grid_resolution, theta)
+        full_grid = RayShootingGrid(end_rmax, grid_resolution)
 
         xgrid_0, ygrid_0 = full_grid.grid_at_xy_unshifted
-        self.r_base = np.sqrt(xgrid_0 ** 2 + ygrid_0 ** 2).ravel()
+        xgrid_0, ygrid_0 = self.rotate_grid(xgrid_0, ygrid_0, theta)
+        self.r_base = np.sqrt(xgrid_0 ** 2 + (ygrid_0/q) ** 2).ravel()
+
         self.rmax = end_rmax
         self.grid_res = grid_resolution
 
-        self.xgrid, self.ygrid = full_grid.grid_at_xy(x_center, y_center)
+        self.xgrid, self.ygrid = full_grid.grid_at_xy(x_center, y_center, theta)
 
         self._pixels_per_axis = int(len(self.xgrid) ** 0.5)
         self.flux_values = np.zeros_like(self.xgrid)
+
+    def rotate_grid(self, x, y, theta_rad):
+
+        cos, sin = np.cos(theta_rad), np.sin(theta_rad)
+
+        return x * cos + y * sin, -x * sin + y * cos
 
     def get_indicies(self, rmin, rmax):
 

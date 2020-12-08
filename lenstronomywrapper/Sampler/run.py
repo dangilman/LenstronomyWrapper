@@ -249,10 +249,22 @@ def run(job_index, chain_ID, output_path, path_to_folder,
                 data_to_fit, optimization_routine, constrain_params, keyword_arguments['verbose']
             )
 
+            if 'relative_angles' in keyword_arguments.keys():
+                assert len(keyword_arguments['relative_angles']) == 4
+                relative_angles = keyword_arguments['relative_angles']
+                assert 'grid_axis_ratio' in keyword_arguments.keys()
+                grid_axis_ratio = keyword_arguments['grid_axis_ratio']
+            else:
+                relative_angles = None
+                grid_axis_ratio = 1.
+
             magnification_function = lens_system.quasar_magnification
             magnification_function_kwargs = {'x': data_to_fit.x, 'y': data_to_fit.y,
                          'lens_model': lensModel_fit, 'kwargs_lensmodel': kwargs_lens_fit, 'normed': True,
-                             'enforce_unblended': enforce_unblended, 'adaptive': adaptive_mag, 'verbose': keyword_arguments['verbose']}
+                             'enforce_unblended': enforce_unblended, 'adaptive': adaptive_mag,
+                                             'verbose': keyword_arguments['verbose'],
+                                             'relative_angles': relative_angles,
+                                             'grid_axis_ratio': grid_axis_ratio}
 
         else:
             raise Exception('optimization routine '+ keyword_arguments['keywords_optimizer']['routine']
