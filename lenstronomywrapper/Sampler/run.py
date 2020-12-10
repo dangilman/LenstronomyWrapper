@@ -149,10 +149,6 @@ def run(job_index, chain_ID, output_path, path_to_folder,
 
         ################ Perform a fit with only a smooth model ################
         optimization_routine = keyword_arguments['optimization_routine']
-        lens_system = QuadLensSystem(macromodel, zsource, background_quasar,
-                                     None, None)
-        lens_system.initialize(data_to_fit_init, optimization_routine, constrain_params)
-        kwargs_macro_ref = lens_system.macromodel.components[0].kwargs
 
         kwargs_rendering['cone_opening_angle'] = kwargs_rendering['opening_angle_factor'] * \
                                                  theta_E_approx
@@ -225,7 +221,11 @@ def run(job_index, chain_ID, output_path, path_to_folder,
                 f = realization_samples['f_core_collapsed']
                 realization_initial = add_core_collapsed_subhalos(f, realization_initial)
 
-            lens_system = QuadLensSystem.addRealization(lens_system, realization_initial)
+            lens_system = QuadLensSystem.shift_background_auto(data_to_fit, macromodel, zsource,
+                                   background_quasar, realization_initial, None, particle_swarm_init=True,
+                                    opt_routine=optimization_routine, constrain_params=constrain_params,
+                                                               verbose=keyword_arguments['verbose'])
+            kwargs_macro_ref = lens_system.macromodel.components[0].kwargs
 
             if 'settings_class' in keyword_arguments['keywords_optimizer'].keys():
                 settings_class = keyword_arguments['keywords_optimizer']['settings_class']
@@ -365,7 +365,7 @@ def run(job_index, chain_ID, output_path, path_to_folder,
                 delta_kappa = np.vstack((delta_kappa, deltas[0]))
                 delta_gamma1 = np.vstack((delta_gamma1, deltas[1]))
                 delta_gamma2 = np.vstack((delta_gamma2, deltas[2]))
-        
+
         if fluxes_computed is not None and (counter+1) % readout_steps == 0:
             t_end = time()
             t_ellapsed = t_end - t_start
