@@ -365,8 +365,8 @@ def run(job_index, chain_ID, output_path, path_to_folder,
                 delta_kappa = np.vstack((delta_kappa, deltas[0]))
                 delta_gamma1 = np.vstack((delta_gamma1, deltas[1]))
                 delta_gamma2 = np.vstack((delta_gamma2, deltas[2]))
-
-        if (counter+1) % readout_steps == 0:
+        
+        if fluxes_computed is not None and (counter+1) % readout_steps == 0:
             t_end = time()
             t_ellapsed = t_end - t_start
             sampling_rate = fluxes_computed.shape[0] / t_ellapsed
