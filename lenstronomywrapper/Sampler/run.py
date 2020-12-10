@@ -243,11 +243,19 @@ def run(job_index, chain_ID, output_path, path_to_folder,
             if keyword_arguments['verbose']:
                 print('realization has '+str(len(realization_initial.halos))+' halos in total')
 
+            if 'check_bad_fit' in keyword_arguments.keys():
+                check_bad_fit = keyword_arguments['check_bad_fit']
+            else:
+                check_bad_fit = False
+
             hierarchical_opt = HierarchicalOptimization(lens_system, settings_class=settings_class,
                                                         kwargs_settings_class=kwargs_settings_class)
             kwargs_lens_fit, lensModel_fit, _ = hierarchical_opt.optimize(
-                data_to_fit, optimization_routine, constrain_params, keyword_arguments['verbose']
+                data_to_fit, optimization_routine, constrain_params, keyword_arguments['verbose'],
+                check_bad_fit=check_bad_fit
             )
+            if kwargs_lens_fit is None:
+                continue
 
             if 'relative_angles' in keyword_arguments.keys():
                 assert len(keyword_arguments['relative_angles']) == 4

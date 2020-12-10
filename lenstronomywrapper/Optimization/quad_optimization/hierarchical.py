@@ -1,7 +1,7 @@
 from lenstronomywrapper.Optimization.quad_optimization.brute import BruteOptimization
 from lenstronomywrapper.Optimization.quad_optimization.settings import *
 from lenstronomywrapper.Utilities.lensing_util import interpolate_ray_paths_system
-
+import numpy as np
 
 class HierarchicalOptimization(BruteOptimization):
 
@@ -30,7 +30,8 @@ class HierarchicalOptimization(BruteOptimization):
 
         super(HierarchicalOptimization, self).__init__(lens_system, n_particles, simplex_n_iter)
 
-    def optimize(self, data_to_fit, param_class_name, constrain_params, verbose=False, threadCount=1):
+    def optimize(self, data_to_fit, param_class_name, constrain_params, verbose=False,
+                 threadCount=1, check_bad_fit=False):
 
         realization = self.realization_initial
 
@@ -42,6 +43,13 @@ class HierarchicalOptimization(BruteOptimization):
         lens_model_full, kwargs_lens_final, foreground_realization_filtered, [source_x, source_y] = \
             self._fit_foreground(data_to_fit, foreground_realization, param_class_name, constrain_params,
                                  threadCount, verbose)
+
+        if check_bad_fit:
+            sx, sy = lens_model_full.ray_shooting(data_to_fit.x, data_to_fit.y, kwargs_lens_final)
+            if np.std(sx) > 0.001 or np.std(sy) > 0.001:
+                if verbose:
+                    print('was not able to fit image positions, quitting...')
+                return None, None, None
 
         lens_model_full, kwargs_lens_final, realization_filtered, \
         [source_x, source_y], reoptimized_realizations = \
