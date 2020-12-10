@@ -225,7 +225,8 @@ def load_local_image_keywords(keywords_local_image, lens_system):
            kwargs_lensmodel, keywords_sampled, kwargs_opt
 
 def load_powerlaw_ellipsoid_macromodel(zlens, prior_list_macromodel,
-                                       kwargs_macro_ref, secondary_lens_components):
+                                       kwargs_macro_ref, secondary_lens_components,
+                                       keywords):
 
     samples = {}
 
@@ -250,6 +251,9 @@ def load_powerlaw_ellipsoid_macromodel(zlens, prior_list_macromodel,
         kwargs_init[1]['gamma1'], kwargs_init[1]['gamma2'] = gamma1, gamma2
         constrain_params = {'shear': shear}
         samples['shear'] = shear
+
+    if 'q_min' in keywords.keys():
+        constrain_params['q_min'] = keywords['q_min']
 
     main_deflector = PowerLawShear(zlens, kwargs_init)
     component_list = [main_deflector]
