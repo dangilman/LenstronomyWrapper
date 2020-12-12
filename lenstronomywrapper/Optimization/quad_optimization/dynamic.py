@@ -113,7 +113,7 @@ class DynamicOptimization(OptimizationBase):
 
         return brute
 
-    def optimize(self, data_to_fit, opt_routine='fixed_powerlaw_shear',
+    def optimize(self, data_to_fit, opt_routine='free_shear_powerlaw',
                  constrain_params=None, verbose=False):
 
         """
@@ -130,6 +130,8 @@ class DynamicOptimization(OptimizationBase):
         :param verbose: print things
         :return: optimized lens model and keyword arguments
         """
+
+        brute = self._gen_brute()
 
         # Fit a smooth model (macromodel + satellites) to the image positions
 
@@ -150,7 +152,6 @@ class DynamicOptimization(OptimizationBase):
             print('n background halos: ', realization_global.number_of_halos_after_redshift(self.lens_system.zlens))
 
         # Add the large halos, fit a lens model
-        brute = self._gen_brute()
         kwargs_lens_final, lens_model_full, source = brute.fit(
             data_to_fit, opt_routine, constrain_params=constrain_params, verbose=verbose,
                  include_substructure=True, realization=realization_global, re_optimize=False,

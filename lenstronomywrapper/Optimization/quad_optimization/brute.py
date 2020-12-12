@@ -46,7 +46,8 @@ class BruteOptimization(OptimizationBase):
             self.realization_initial, None
         )
 
-    def _set_param_class(self, param_class_name, constrain_params):
+    @staticmethod
+    def set_param_class(param_class_name, constrain_params):
 
         if param_class_name == 'free_shear_powerlaw':
             return PowerLawFreeShear, None
@@ -84,7 +85,7 @@ class BruteOptimization(OptimizationBase):
         if n_particles is None:
             n_particles = self.n_particles
 
-        param_class, args_param_class = self._set_param_class(param_class, constrain_params)
+        param_class, args_param_class = self.set_param_class(param_class, constrain_params)
 
         run_kwargs = {'x_image': data_to_fit.x, 'y_image': data_to_fit.y, 'z_lens': self.lens_system.zlens,
                       'z_source': self.lens_system.zsource, 'astropy_instance': self.lens_system.astropy,
