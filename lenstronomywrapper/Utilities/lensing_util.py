@@ -18,30 +18,6 @@ def flux_at_edge(image):
     else:
         return False
 
-def interpolate_ray_path_center(x_center, y_center, source_x, source_y, lens_system,
-                                include_substructure=False, realization=None):
-
-    # load the lens model and keywords for ray tracing
-    lens_model, kwargs_lens = lens_system.get_lensmodel(include_substructure, True, realization)
-    zsource = lens_system.zsource
-
-    # ray trace through the lens model
-    x, y, redshifts, tz = lens_model.lens_model.ray_shooting_partial_steps(
-        0., 0., x_center, y_center, 0, zsource, kwargs_lens)
-
-    # compute the angular coordinate of the ray at each lens plane
-    angle_x = [x_center] + [x_comoving / tzi for x_comoving, tzi in zip(x[1:], tz[1:])]
-    angle_y = [y_center] + [y_comoving / tzi for y_comoving, tzi in zip(y[1:], tz[1:])]
-
-    # replace the final angular coordinate with the source coordinate
-    angle_x[-1] = source_x
-    angle_y[-1] = source_y
-
-    # interpolate
-    ray_angles_x = interp1d(redshifts, angle_x)
-    ray_angles_y = interp1d(redshifts, angle_y)
-
-    return [ray_angles_x], [ray_angles_y]
 
 def interpolate_ray_paths(x_image, y_image, lens_model, kwargs_lens, zsource,
                           terminate_at_source=False, source_x=None, source_y=None):
@@ -61,6 +37,7 @@ def interpolate_ray_paths(x_image, y_image, lens_model, kwargs_lens, zsource,
 
     ray_angles_x = []
     ray_angles_y = []
+
     #print('coordinate: ', (x_image, y_image))
     for (xi, yi) in zip(x_image, y_image):
 
@@ -78,6 +55,10 @@ def interpolate_ray_paths(x_image, y_image, lens_model, kwargs_lens, zsource,
 def ray_angles(alpha_x, alpha_y, lens_model, kwargs_lens, zsource):
 
     redshift_list = lens_model.redshift_list + [zsource]
+    redshift_list_finely_sampled = np.arange(0.02, zsource, 0.02)
+
+    full_redshift_list = np.unique(np.append(redshift_list, redshift_list_finely_sampled))
+    full_redshift_list_sorted = full_redshift_list[np.argsort(full_redshift_list)]
 
     x_angle_list, y_angle_list, tz = [alpha_x], [alpha_y], [0.]
 
@@ -89,11 +70,7 @@ def ray_angles(alpha_x, alpha_y, lens_model, kwargs_lens, zsource):
     x0, y0 = 0., 0.
     zstart = 0.
 
-    unique_redshifts = np.unique(redshift_list)
-    sort = np.argsort(unique_redshifts)
-    unique_sorted_redshifts = unique_redshifts[sort]
-
-    for zi in unique_sorted_redshifts:
+    for zi in full_redshift_list_sorted:
 
         assert len(lens_model.lens_model_list) == len(kwargs_lens)
 

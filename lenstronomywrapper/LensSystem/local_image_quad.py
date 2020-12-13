@@ -81,9 +81,12 @@ class LocalImageQuad(object):
 
         coord_x = [self.kwargs_lens_macro[0]['center_x']]
         coord_y = [self.kwargs_lens_macro[0]['center_y']]
-        ray_interp_x, ray_interp_y = interpolate_ray_paths(coord_x, coord_y, self.lensmodel_macro_input,
-                                                           self.kwargs_lens_macro, self.z_source, terminate_at_source=True,
-                                                           source_x=self.source_x, source_y=self.source_y)
+
+        ray_interp_x, ray_interp_y = realization.interpolate_ray_paths(coord_x, coord_y,
+                    self.lensmodel_macro_input, self.kwargs_lens_macro, self.z_source,
+                                                                       terminate_at_source=True,
+                                                                       source_x=self.source_x,
+                                                                       source_y=self.source_y)
 
         realization = realization.shift_background_to_source(ray_interp_x[0], ray_interp_y[0])
 
@@ -115,9 +118,9 @@ class LocalImageQuad(object):
         if find_kwargs_shift:
             self.kwargs_shift_list = []
 
-        self._delta_kappa = []
-        self._delta_gamma1 = []
-        self._delta_gamma2 = []
+        delta_kappa = []
+        delta_gamma1 = []
+        delta_gamma2 = []
 
         for i, local_image in enumerate(self.class_list):
 
@@ -129,10 +132,6 @@ class LocalImageQuad(object):
 
             if find_kwargs_special:
                 constraints = (hessian_constraints[0][i], hessian_constraints[1][i], hessian_constraints[2][i], hessian_constraints[3][i])
-                fxx, fxy, fyx, fyy = constraints[0], constraints[1], constraints[2], constraints[3]
-                kappa = 1./2 * (fxx + fyy)
-                gamma1 = 1./2 * (fxx - fyy)
-                gamma2 = 1./2 * (fxy + fyx)
 
                 if local_image.kwargs_arc_estimate is not None:
                     kwargs_arc_estimate = local_image.kwargs_arc_estimate
@@ -149,11 +148,16 @@ class LocalImageQuad(object):
 
                 self.kwargs_local_special.append(kwargs)
 
-                self._delta_kappa.append(kappa_model - kappa)
-                self._delta_gamma1.append(gamma1_model - gamma1)
-                self._delta_gamma2.append(gamma2_model - gamma2)
+                fxx, fxy, fyx, fyy = constraints[0], constraints[1], constraints[2], constraints[3]
+                kappa = 1. / 2 * (fxx + fyy)
+                gamma1 = 1. / 2 * (fxx - fyy)
+                gamma2 = 1. / 2 * (fxy + fyx)
 
-        return self._delta_kappa, self._delta_gamma1, self._delta_gamma2
+                delta_kappa.append(kappa_model - kappa)
+                delta_gamma1.append(gamma1_model - gamma1)
+                delta_gamma2.append(gamma2_model - gamma2)
+
+        return delta_kappa, delta_gamma1, delta_gamma2
 
     @staticmethod
     def grid_around_image(image_x, image_y, size, npix):

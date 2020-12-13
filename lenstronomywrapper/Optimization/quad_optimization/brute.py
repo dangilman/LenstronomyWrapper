@@ -80,7 +80,7 @@ class BruteOptimization(OptimizationBase):
     def fit(self, data_to_fit, param_class, constrain_params, verbose=False,
                  include_substructure=True, realization=None, re_optimize=False,
             re_optimize_scale=1., particle_swarm=True, n_particles=None, pso_convergence_mean=80000,
-            threadCount=1):
+            threadCount=1, z_mass_sheet_max=None):
 
         if n_particles is None:
             n_particles = self.n_particles
@@ -94,12 +94,13 @@ class BruteOptimization(OptimizationBase):
                       'foreground_rays': None, 'simplex_n_iterations': self.n_iterations}
 
         kwargs_lens_final, ray_shooting_class, source = self._fit(run_kwargs, param_class, args_param_class,
-                                    include_substructure, n_particles, realization, verbose, threadCount)
+                                    include_substructure, n_particles, realization, verbose, threadCount,
+                                                                  z_mass_sheet_max)
 
         return kwargs_lens_final, ray_shooting_class, source
 
     def _fit(self, run_kwargs, param_class, args_param_class, include_substructure, nparticles,
-            realization, verbose, threadCount=1):
+            realization, verbose, threadCount=1, z_mass_sheet_max=None):
 
         """
         run_kwargs: {'optimizer_routine', 'constrain_params', 'simplex_n_iter'}
@@ -107,7 +108,8 @@ class BruteOptimization(OptimizationBase):
         """
 
         lens_model_list, redshift_list, kwargs_lens, numerical_alpha_class, convention_index = \
-            self.lens_system.get_lenstronomy_args(include_substructure, realization=realization)
+            self.lens_system.get_lenstronomy_args(include_substructure, realization=realization,
+                                                  z_mass_sheet_max=z_mass_sheet_max)
 
         if args_param_class is None:
             param_class = param_class(kwargs_lens)

@@ -73,14 +73,17 @@ class HierarchicalOptimization(BruteOptimization):
         lens_model_full, kwargs_lens_final = self.lens_system.get_lensmodel(include_substructure=False)
         source_x, source_y = None, None
 
+        z_mass_sheet_max = self.lens_system.zlens
+
         for run in range(0, self.settings.n_iterations_foreground):
 
             if run == 0:
+                print('from foreground opt 0')
                 ray_x_interp, ray_y_interp = interpolate_ray_paths_system(data_to_fit.x, data_to_fit.y, self.lens_system,
                                                                    include_substructure=False)
 
             else:
-
+                print('from foreground opt '+str(run))
                 ray_x_interp, ray_y_interp = interpolate_ray_paths_system(data_to_fit.x, data_to_fit.y, self.lens_system,
                                                                    realization=realization_filtered)
 
@@ -146,7 +149,7 @@ class HierarchicalOptimization(BruteOptimization):
                 kwargs_lens_final, lens_model_full, [source_x, source_y] = self.fit(data_to_fit, param_class, constrain_params, verbose=verbose,
                  include_substructure=True, realization=realization_filtered, re_optimize=re_optimize_iteration[run],
                                               re_optimize_scale=scale[run], particle_swarm=particle_swarm_reopt[run],
-                                                                                    threadCount=threadCount)
+                                             threadCount=threadCount, z_mass_sheet_max=z_mass_sheet_max)
 
                 N_foreground_halos_last = N_foreground_halos
 
@@ -183,9 +186,11 @@ class HierarchicalOptimization(BruteOptimization):
         for run in range(0, self.settings.n_iterations_background):
 
             if run == 0:
+
                 ray_x_interp, ray_y_interp = interpolate_ray_paths_system(data_to_fit.x, data_to_fit.y, self.lens_system,
                                                                    realization=foreground_realization_filtered)
             else:
+
                 ray_x_interp, ray_y_interp = interpolate_ray_paths_system(data_to_fit.x, data_to_fit.y, self.lens_system,
                                                                    realization=realization_filtered)
 

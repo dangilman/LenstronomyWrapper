@@ -112,7 +112,7 @@ class LensBase(object):
                               observed_convention_index=convention_index, cosmo=self.astropy)
         return lensModel, kwargs
 
-    def get_lenstronomy_args(self, include_substructure=True, realization=None):
+    def get_lenstronomy_args(self, include_substructure=True, realization=None, z_mass_sheet_max=None):
 
         lens_model_names, macro_redshifts, macro_kwargs, convention_index = \
             self.macromodel.get_lenstronomy_args()
@@ -123,7 +123,7 @@ class LensBase(object):
         if realization is not None and include_substructure:
 
             halo_names, halo_redshifts, kwargs_halos, kwargs_lenstronomy = \
-                realization.lensing_quantities()
+                realization.lensing_quantities(z_mass_sheet_max=z_mass_sheet_max)
         else:
             halo_names, halo_redshifts, kwargs_halos, kwargs_lenstronomy = [], [], [], None
 
