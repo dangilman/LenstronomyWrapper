@@ -78,12 +78,12 @@ class HierarchicalOptimization(BruteOptimization):
         for run in range(0, self.settings.n_iterations_foreground):
 
             if run == 0:
-                print('from foreground opt 0')
+               
                 ray_x_interp, ray_y_interp = interpolate_ray_paths_system(data_to_fit.x, data_to_fit.y, self.lens_system,
                                                                    include_substructure=False)
 
             else:
-                print('from foreground opt '+str(run))
+
                 ray_x_interp, ray_y_interp = interpolate_ray_paths_system(data_to_fit.x, data_to_fit.y, self.lens_system,
                                                                    realization=realization_filtered)
 
