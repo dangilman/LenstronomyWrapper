@@ -98,7 +98,7 @@ class QuadLensSystem(LensBase):
 
         source_x, source_y = lens_system_init.source_centroid_x, lens_system_init.source_centroid_y
         lens_center_x, lens_center_y = lens_system_init.macromodel.centroid
-
+        
         ray_interp_x, ray_interp_y = interpolate_ray_paths_system(
             [lens_center_x], [lens_center_y], lens_system_init,
             include_substructure=False, terminate_at_source=True, source_x=source_x,
