@@ -74,14 +74,19 @@ def ray_angles(alpha_x, alpha_y, lens_model, kwargs_lens, zsource):
 
         assert len(lens_model.lens_model_list) == len(kwargs_lens)
 
-        try:
+        if hasattr(lens_model, 'lens_model'):
+
             x0, y0, alpha_x, alpha_y = lens_model.lens_model.ray_shooting_partial(x0, y0, alpha_x, alpha_y, zstart, zi,
                                                                                kwargs_lens)
             d = cosmo_calc(0., zi)
-        except:
+
+        elif hasattr(lens_model, 'ray_shooting_partial'):
             x0, y0, alpha_x, alpha_y = lens_model.ray_shooting_partial(x0, y0, alpha_x, alpha_y, zstart, zi,
                                                                                kwargs_lens)
             d = cosmo_calc(zi).value
+
+        else:
+            raise Exception('the supplied lens model class does not have a ray shooting partial method')
 
         x_angle_list.append(x0/d)
         y_angle_list.append(y0/d)
@@ -95,7 +100,7 @@ def interpolate_ray_paths_system(x_image, y_image, lens_system,
                                  include_substructure=True, realization=None, terminate_at_source=False,
                                  source_x=None, source_y=None):
 
-    lens_model, kwargs_lens = lens_system.get_lensmodel(include_substructure, True, realization)
+    lens_model, kwargs_lens = lens_system.get_lensmodel(include_substructure, realization)
 
     zsource = lens_system.zsource
 

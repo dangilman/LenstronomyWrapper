@@ -10,8 +10,6 @@ class HierarchicalOptimization(BruteOptimization):
 
         if settings_class == 'default':
             settings_class = HierarchicalSettingsDefault()
-        elif settings_class == 'default_2':
-            settings_class = HierarchicalSettingsDefault2()
         elif settings_class == 'delta_function':
             settings_class = HierarchicalSettingsDeltaFunction(**settings_kwargs)
         elif settings_class == 'default_CDM':
@@ -89,10 +87,10 @@ class HierarchicalOptimization(BruteOptimization):
 
             filter_kwargs = {'aperture_radius_front': window_sizes[run],
                              'aperture_radius_back': 0.,
-                             'mass_allowed_in_apperture_front': aperture_masses[run],
-                             'mass_allowed_in_apperture_back': 12,
-                             'mass_allowed_global_front': globalmin_masses[run],
-                             'mass_allowed_global_back': 10.,
+                             'log_mass_allowed_in_aperture_front': aperture_masses[run],
+                             'log_mass_allowed_in_aperture_back': 12,
+                             'log_mass_allowed_global_front': globalmin_masses[run],
+                             'log_mass_allowed_global_back': 10.,
                              'interpolated_x_angle': ray_x_interp,
                              'interpolated_y_angle': ray_y_interp,
                              'zmax': self.lens_system.zlens
@@ -196,10 +194,10 @@ class HierarchicalOptimization(BruteOptimization):
 
             filter_kwargs = {'aperture_radius_front': 10.,
                              'aperture_radius_back': window_sizes[run],
-                             'mass_allowed_in_apperture_front': 10.,
-                             'mass_allowed_in_apperture_back': aperture_masses[run],
-                             'mass_allowed_global_front': 10.,
-                             'mass_allowed_global_back': globalmin_masses[run],
+                             'log_mass_allowed_in_aperture_front': 10.,
+                             'log_mass_allowed_in_aperture_back': aperture_masses[run],
+                             'log_mass_allowed_global_front': 10.,
+                             'log_mass_allowed_global_back': globalmin_masses[run],
                              'interpolated_x_angle': ray_x_interp,
                              'interpolated_y_angle': ray_y_interp,
                              'zmin': self.lens_system.zlens

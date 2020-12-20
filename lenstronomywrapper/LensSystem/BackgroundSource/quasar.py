@@ -31,51 +31,35 @@ class Quasar(SourceBase):
     def _check_initialized(self, with_error=True):
 
         if self._initialized:
+            required_kwargs = ['center_x', 'center_y', 'sigma', 'amp']
+            for kw in required_kwargs:
+                if kw not in self._kwargs_quasar.keys():
+                    raise Exception('source property '+kw+' not set.')
             return True
         else:
             if with_error:
                 raise Exception('Must initialize quasar class before using it.')
             return False
 
-    def setup(self, pc_per_arcsec_zsource=None, source_size_pc=None, reset=False,
-              center_x=None, center_y=None):
-
-        if reset is False and self._check_initialized(with_error=False):
-            return
+    def setup(self, pc_per_arcsec_zsource=None):
 
         self._initialized = True
 
-        if not hasattr(self, '_pc_per_arcsec_zsource'):
-            assert pc_per_arcsec_zsource is not None
-            self._pc_per_arcsec_zsource = pc_per_arcsec_zsource
-
-        if source_size_pc is None:
-            source_size_pc = self._kwargs_init['source_fwhm_pc']
+        source_size_pc = self._kwargs_init['source_fwhm_pc']
 
         if self._grid_rmax is None:
             grid_rmax = self._auto_grid_size(source_size_pc)
             self.grid_rmax = grid_rmax
         else:
-            if reset is False:
-                self.grid_rmax = self._grid_rmax
-            else:
-                self.grid_rmax = self._auto_grid_size(source_size_pc)
+            self.grid_rmax = self._auto_grid_size(source_size_pc)
 
         if self._grid_resolution is None:
             grid_resolution = self._auto_grid_resolution(source_size_pc)
             self.grid_resolution = grid_resolution
         else:
-            if reset is False:
-                self.grid_resolution = self._grid_resolution
-            else:
-                self.grid_resolution = self._auto_grid_resolution(source_size_pc)
+            self.grid_resolution = self._grid_resolution
 
-        self._kwargs_quasar = self._kwargs_transform(self._kwargs_init, self._pc_per_arcsec_zsource)
-
-        if center_x is not None:
-            self._kwargs_quasar['center_x'] = center_x
-        if center_y is not None:
-            self._kwargs_quasar['center_y'] = center_y
+        self._kwargs_quasar = self._kwargs_transform(self._kwargs_init, pc_per_arcsec_zsource)
 
         self._sourcelight = LightModel(light_model_list=['GAUSSIAN'])
 
