@@ -4,7 +4,6 @@ from lenstronomywrapper.LensSystem.LensComponents.powerlawshear import PowerLawS
 from lenstronomywrapper.LensSystem.LensComponents.SIS import SISsatellite
 from lenstronomywrapper.LensSystem.LensComponents.multipole import Multipole
 
-from lenstronomy.LensModel.lens_model import LensModel
 from lenstronomywrapper.LensData.lensed_quasar import LensedQuasar
 from lenstronomywrapper.LensSystem.BackgroundSource.quasar import Quasar
 
@@ -117,8 +116,10 @@ def build_priors(params_to_vary):
             prior_list_macromodel[param_name] = new
         elif prior_group == 'source':
             prior_list_source[param_name] = new
-        if prior_group == 'cosmo':
+        elif prior_group == 'cosmo':
             prior_list_cosmo[param_name] = new
+        else:
+            raise Exception('prior group '+str(prior_group)+' not recognized')
 
     return prior_list_realization, prior_list_macromodel, prior_list_source, prior_list_cosmo
 
@@ -206,23 +207,6 @@ def load_double_background_quasar(prior_list_source, keywords):
 
     else:
         raise Exception('only single sources implemented, not '+str(n_sources))
-
-def load_local_image_keywords(keywords_local_image, lens_system):
-
-    keywords_sampled = {}
-
-    macro_indicies_fixed = keywords_local_image['macro_indicies_fixed']
-    lensmodel, kwargs_lensmodel = lens_system.get_lensmodel(include_substructure=False)
-    kwargs_opt = keywords_local_image['keywords_optimization']
-
-    hessian_samples = keywords_local_image['hessian_samples']
-    assert len(hessian_samples) == 4, 'Need hessian samples for all four images'
-    for hi in hessian_samples:
-        assert hi[0].shape[0] == 3
-        assert hi[0].shape[1] >= 100, "Should have at least 100 samples in hessian_pdf"
-
-    return macro_indicies_fixed, hessian_samples, lensmodel, \
-           kwargs_lensmodel, keywords_sampled, kwargs_opt
 
 def load_powerlaw_ellipsoid_macromodel(zlens, prior_list_macromodel,
                                        kwargs_macro_ref, secondary_lens_components,
@@ -379,10 +363,7 @@ def load_data_to_fit(keywords):
     x_image_sigma = np.random.normal(0, sigma)
     y_image_sigma = np.random.normal(0, sigma)
 
-    x_image += x_image_sigma
-    y_image += y_image_sigma
-
-    data_to_fit = LensedQuasar(x_image, y_image, flux_ratios)
+    data_to_fit = LensedQuasar(x_image + x_image_sigma, y_image + y_image_sigma, flux_ratios)
 
     return data_to_fit
 
