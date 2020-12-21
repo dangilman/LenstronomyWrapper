@@ -14,7 +14,7 @@ from lenstronomywrapper.Sampler.prior_sample import PriorDistribution
 from copy import deepcopy
 
 def readout(readout_path, kwargs_macro, fluxes, parameters, header, write_header, write_mode,
-            sampling_rate, readout_macro, delta_hessian,
+            sampling_rate, readout_macro,
             readout_flux_only=False, flux_file_extension=''):
 
     if readout_flux_only:
@@ -27,10 +27,6 @@ def readout(readout_path, kwargs_macro, fluxes, parameters, header, write_header
         if readout_macro:
             write_macro(readout_path + 'macro.txt', kwargs_macro, mode=write_mode, write_header=write_header)
         write_sampling_rate(readout_path + 'sampling_rate.txt', sampling_rate)
-
-        if delta_hessian is not None:
-            write_delta_hessian(readout_path + 'delta_hessian.txt', delta_hessian, write_mode,
-                                write_header)
 
 def load_keywords(path_to_folder, job_index):
 
@@ -366,5 +362,45 @@ def load_data_to_fit(keywords):
     data_to_fit = LensedQuasar(x_image + x_image_sigma, y_image + y_image_sigma, flux_ratios)
 
     return data_to_fit
+
+def simulation_setup(keyword_arguments, prior_list_realization, prior_list_cosmo, prior_list_macromodel,
+                     prior_list_source, kwargs_macro_ref=None):
+
+    params_sampled = {}
+
+    ######## Sample keyword arguments for the substructure realization ##########
+
+    kwargs_rendering, realization_samples = realization_keywords(keyword_arguments, prior_list_realization)
+    params_sampled.update(realization_samples)
+
+    ######## Sample keyword arguments for the lensing volume ##########
+    zlens, zsource, lens_source_sampled = load_lens_source(prior_list_cosmo, keyword_arguments)
+    params_sampled.update(lens_source_sampled)
+
+    ######## Sample keyword arguments for the macromodel ##########
+
+    macromodel, macro_samples, constrain_params = \
+        load_powerlaw_ellipsoid_macromodel(zlens, prior_list_macromodel, kwargs_macro_ref,
+                                           keyword_arguments['secondary_lens_components'], keyword_arguments)
+    params_sampled.update(macro_samples)
+
+    ######## Sample keyword arguments for the background source ##########
+    background_quasar, source_samples = load_background_quasar(prior_list_source,
+                                                               keyword_arguments)
+    params_sampled.update(source_samples)
+
+    ################## Set up the data to fit ####################
+    data_to_fit = load_data_to_fit(keyword_arguments)
+
+    ################ Get the optimization settings ################
+    optimization_settings = load_optimization_settings(keyword_arguments)
+
+    ################ Perform a fit with only a smooth model ################
+    optimization_routine = keyword_arguments['optimization_routine']
+
+    return kwargs_rendering, realization_samples, zlens, zsource, lens_source_sampled, \
+           macromodel, macro_samples, constrain_params, background_quasar, source_samples, data_to_fit, \
+           optimization_settings, optimization_routine, params_sampled
+
 
 

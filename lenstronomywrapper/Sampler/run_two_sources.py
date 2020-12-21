@@ -7,7 +7,6 @@ from lenstronomywrapper.Utilities.data_util import approx_theta_E
 
 from lenstronomywrapper.Utilities.parameter_util import kwargs_e1e2_to_polar, kwargs_gamma1gamma2_to_polar
 
-from lenstronomywrapper.LensSystem.local_image_quad import LocalImageQuad
 from pyHalo.pyhalo import pyHalo
 
 from time import time

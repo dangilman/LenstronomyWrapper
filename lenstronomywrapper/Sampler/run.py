@@ -10,6 +10,7 @@ from pyHalo.pyhalo import pyHalo
 from time import time
 from lenstronomywrapper.Optimization.quad_optimization.hierarchical import HierarchicalOptimization
 from lenstronomywrapper.Utilities.misc import write_lensdata
+from pyHalo.preset_models import WDMLovell2020
 
 def run(job_index, chain_ID, output_path, path_to_folder,
         test_mode=False):
@@ -26,25 +27,26 @@ def run(job_index, chain_ID, output_path, path_to_folder,
     if not os.path.exists(output_path):
         create_directory(output_path)
 
-    keyword_arguments = load_keywords(path_to_folder, job_index)
-    Nsamples = keyword_arguments['Nsamples']
+    keywords_master = load_keywords(path_to_folder, job_index)
+    if test_mode:
+        keywords_master['verbose'] = True
 
-    readout_steps = keyword_arguments['readout_steps']
-    N_computed = 0
     readout_path = output_path + 'chain_' + str(job_index) + '/'
-
     if not os.path.exists(readout_path):
         create_directory(readout_path)
 
-    fname_fluxes = readout_path + 'fluxes.txt'
+    readout_steps = keywords_master['readout_steps']
+    N_computed = 0
 
     write_header = True
     write_mode = 'w'
-    if os.path.exists(fname_fluxes):
-        fluxes_computed = np.loadtxt(fname_fluxes)
+    if os.path.exists(readout_path + 'fluxes.txt'):
+        fluxes_computed = np.loadtxt(readout_path + 'fluxes.txt')
         N_computed = int(fluxes_computed.shape[0])
         write_header = False
         write_mode = 'a'
+
+    Nsamples = keywords_master['Nsamples']
     n_run = Nsamples - N_computed
 
     if n_run <= 0:
@@ -58,10 +60,10 @@ def run(job_index, chain_ID, output_path, path_to_folder,
     prior_list_macromodel, \
     prior_list_source, \
     prior_list_cosmo = \
-        build_priors(keyword_arguments['params_to_vary'])
+        build_priors(keywords_master['params_to_vary'])
 
-    data_to_fit_init = load_data_to_fit(keyword_arguments)
-
+    data_to_fit_init = LensedQuasar(keywords_master['x_image'], keywords_master['y_image'],
+                                    keywords_master['fluxes'])
     write_lensdata(readout_path + 'lensdata.txt', data_to_fit_init.x,
                    data_to_fit_init.y, data_to_fit_init.m,
                    [0.] * 4)
@@ -72,16 +74,16 @@ def run(job_index, chain_ID, output_path, path_to_folder,
 
     pyhalo = None
     kwargs_macro = []
-    initialize = True
+    initial_pso = True
     kwargs_macro_ref = None
     fluxes_computed = None
     parameters_sampled = None
 
-    adaptive_mag = keyword_arguments['adaptive_mag']
+    adaptive_mag = keywords_master['adaptive_mag']
 
-    if 'save_best_realization' in keyword_arguments.keys():
-        assert 'fluxes' in keyword_arguments.keys(), "must specify target fluxes if saving best realizations"
-        save_best_realization = keyword_arguments['save_best_realization']
+    if 'save_best_realization' in keywords_master.keys():
+        assert 'fluxes' in keywords_master.keys(), "must specify target fluxes if saving best realizations"
+        save_best_realization = keywords_master['save_best_realization']
         if os.path.exists(readout_path + 'best_realization'):
             f = open(readout_path + 'best_realization', 'rb')
             best_realization = dill.load(f)
@@ -95,58 +97,37 @@ def run(job_index, chain_ID, output_path, path_to_folder,
     else:
         save_best_realization = False
     readout_best = False
-
-    if 'enforce_unblended' in keyword_arguments.keys():
-        enforce_unblended = keyword_arguments['enforce_unblended']
-    else:
-        enforce_unblended = True
+    enforce_unblended = keywords_master['enforce_unblended']
 
     counter = 0
     while counter < n_run:
 
-        params_sampled = {}
-        parameters = []
+        setup = simulation_setup(keywords_master, prior_list_realization, prior_list_cosmo,
+                                 prior_list_macromodel, prior_list_source, kwargs_macro_ref)
 
-        ######## Sample keyword arguments for the substructure realization ##########
-
-        kwargs_rendering, realization_samples = realization_keywords(keyword_arguments, prior_list_realization)
-        params_sampled.update(realization_samples)
-
-        ######## Sample keyword arguments for the lensing volume ##########
-        zlens, zsource, lens_source_sampled = load_lens_source(prior_list_cosmo, keyword_arguments)
-        params_sampled.update(lens_source_sampled)
-
-        ######## Sample keyword arguments for the macromodel ##########
-
-        macromodel, macro_samples, constrain_params = \
-            load_powerlaw_ellipsoid_macromodel(zlens, prior_list_macromodel, kwargs_macro_ref,
-                                               keyword_arguments['secondary_lens_components'], keyword_arguments)
-        params_sampled.update(macro_samples)
-
-        ######## Sample keyword arguments for the background source ##########
-        background_quasar, source_samples = load_background_quasar(prior_list_source,
-                                                                   keyword_arguments)
-        params_sampled.update(source_samples)
-
-        ################## Set up the data to fit ####################
-        data_to_fit = load_data_to_fit(keyword_arguments)
-
-        ################ Get the optimization settings ################
-        optimization_settings = load_optimization_settings(keyword_arguments)
-
-        ################ Perform a fit with only a smooth model ################
-        optimization_routine = keyword_arguments['optimization_routine']
+        (kwargs_rendering,
+         realization_samples,
+         zlens,
+         zsource,
+         lens_source_sampled, \
+        macromodel,
+         macro_samples,
+         constrain_params,
+         background_quasar,
+         source_samples,
+         data_to_fit, \
+        optimization_settings,
+         optimization_routine,
+         params_sampled) = setup
 
         kwargs_rendering['cone_opening_angle'] = kwargs_rendering['opening_angle_factor'] * \
                                                  theta_E_approx
 
-        optimization_settings['initial_pso'] = initialize
+        optimization_settings['initial_pso'] = initial_pso
 
-        assert 'routine' in keyword_arguments['keywords_optimizer'].keys()
-        if test_mode:
-            keyword_arguments['verbose'] = True
+        assert 'routine' in keywords_master['keywords_optimizer'].keys()
 
-        if keyword_arguments['verbose']:
+        if keywords_master['verbose']:
             for key in params_sampled.keys():
                 print(key + ': ' + str(params_sampled[key]))
             print('zlens', zlens)
@@ -154,54 +135,57 @@ def run(job_index, chain_ID, output_path, path_to_folder,
             print('Einstein radius', theta_E_approx)
 
         if 'zlens' in params_sampled.keys():
-            kwargs_hmf = keyword_arguments['realization_kwargs']['kwargs_halo_mass_function']
+            kwargs_hmf = keywords_master['realization_kwargs']['kwargs_halo_mass_function']
             pyhalo = pyHalo(zlens, zsource, kwargs_halo_mass_function=kwargs_hmf)
         else:
-            kwargs_hmf = keyword_arguments['realization_kwargs']['kwargs_halo_mass_function']
+            kwargs_hmf = keywords_master['realization_kwargs']['kwargs_halo_mass_function']
             if pyhalo is None:
                 pyhalo = pyHalo(zlens, zsource, kwargs_halo_mass_function=kwargs_hmf)
 
         readout_macro = True
 
-        realization_initial = pyhalo.render(keyword_arguments['realization_type'],
-                                    kwargs_rendering)[0]
+        if 'preset_model' in keywords_master.keys():
+            if keywords_master['preset_model'] == 'WDMLovell2020':
+                realization_initial = WDMLovell2020(zlens, zsource, **kwargs_rendering)
+            else:
+                raise Exception('no other preset model recognized')
+        else:
+            raise Exception('must specify preset model')
 
         lens_system = QuadLensSystem.shift_background_auto(data_to_fit, macromodel, zsource,
                                realization_initial, None, particle_swarm_init=True,
                                 opt_routine=optimization_routine, constrain_params=constrain_params,
-                                                           verbose=keyword_arguments['verbose'])
+                                                           verbose=keywords_master['verbose'])
 
         kwargs_macro_ref = lens_system.macromodel.components[0].kwargs
 
-        settings_class = keyword_arguments['keywords_optimizer']['settings_class']
+        settings_class = keywords_master['keywords_optimizer']['settings_class']
 
-        if keyword_arguments['verbose']:
+        if keywords_master['verbose']:
             print('realization has '+str(len(realization_initial.halos))+' halos in total')
-        if 'check_bad_fit' in keyword_arguments.keys():
-            check_bad_fit = keyword_arguments['check_bad_fit']
+        if 'check_bad_fit' in keywords_master.keys():
+            check_bad_fit = keywords_master['check_bad_fit']
         else:
             check_bad_fit = False
 
         hierarchical_opt = HierarchicalOptimization(lens_system, settings_class=settings_class)
         kwargs_lens_fit, lensModel_fit, _ = hierarchical_opt.optimize(
-            data_to_fit, optimization_routine, constrain_params, keyword_arguments['verbose'],
+            data_to_fit, optimization_routine, constrain_params, keywords_master['verbose'],
             check_bad_fit=check_bad_fit)
 
         if kwargs_lens_fit is None:
             continue
 
-        if 'grid_axis_ratio' in keyword_arguments.keys():
-            grid_axis_ratio = keyword_arguments['grid_axis_ratio']
+        if 'grid_axis_ratio' in keywords_master.keys():
+            grid_axis_ratio = keywords_master['grid_axis_ratio']
         else:
             grid_axis_ratio = 1.
 
         magnification_function = lens_system.quasar_magnification
-
         magnification_function_kwargs = {'x': data_to_fit.x, 'y': data_to_fit.y,
                       'background_source': background_quasar,
                      'lens_model': lensModel_fit, 'kwargs_lensmodel': kwargs_lens_fit, 'normed': True,
-                         'enforce_unblended': enforce_unblended, 'adaptive': adaptive_mag,
-                                         'verbose': keyword_arguments['verbose'],
+                         'adaptive': adaptive_mag, 'verbose': keywords_master['verbose'],
                                          'grid_axis_ratio': grid_axis_ratio}
 
         flux_ratios_fit, blended = magnification_function(**magnification_function_kwargs)
@@ -216,7 +200,8 @@ def run(job_index, chain_ID, output_path, path_to_folder,
             ax.set_aspect('equal')
             plt.show()
 
-            lens_system.plot_images(data_to_fit.x, data_to_fit.y, adaptive=adaptive_mag)
+            lens_system.plot_images(data_to_fit.x, data_to_fit.y, background_quasar,
+                                    adaptive=adaptive_mag)
             plt.show()
 
             _x = _y = np.linspace(-1.5, 1.5, 100)
@@ -237,20 +222,6 @@ def run(job_index, chain_ID, output_path, path_to_folder,
 
         flux_ratios_fit = np.round(flux_ratios_fit, 5)
 
-        if save_best_realization:
-            fluxes_measured = np.array(keyword_arguments['fluxes'])
-            df = flux_ratios_fit[1:]/flux_ratios_fit[0] - fluxes_measured[1:]/fluxes_measured[0]
-            new_statistic = np.sum(np.sqrt(df ** 2))
-            if test_mode or keyword_arguments['verbose']:
-                print('new statistic: ', new_statistic)
-                print('current best statistic: ', current_best_statistic)
-            if new_statistic < current_best_statistic:
-                readout_best = True
-                print('storing new realization...')
-                current_best_statistic = new_statistic
-                best_realization = SavedRealization(lensModel_fit, kwargs_lens_fit, flux_ratios_fit,
-                                                    new_statistic, parameters)
-
         if readout_macro:
             comp1 = kwargs_e1e2_to_polar(lens_system.macromodel.components[0].kwargs[0])
             comp2 = kwargs_gamma1gamma2_to_polar(lens_system.macromodel.components[0].kwargs[1])
@@ -261,15 +232,31 @@ def run(job_index, chain_ID, output_path, path_to_folder,
                 kwargs_macro_new[key] = comp2[key]
             kwargs_macro.append(kwargs_macro_new)
 
-        if keyword_arguments['verbose']:
+        if keywords_master['verbose']:
             print('flux_ratios_fit:', flux_ratios_fit)
-            print('n remaining: ', keyword_arguments['Nsamples'] - (counter + 1))
+            print('n remaining: ', keywords_master['Nsamples'] - (counter + 1))
 
         header = ''
+        parameters = []
         for name in params_sampled.keys():
             header += name + ' '
             parameters.append(params_sampled[name])
+
         parameters = np.array(parameters)
+
+        if save_best_realization:
+            fluxes_measured = np.array(keywords_master['fluxes'])
+            df = flux_ratios_fit[1:]/flux_ratios_fit[0] - fluxes_measured[1:]/fluxes_measured[0]
+            new_statistic = np.sum(np.sqrt(df ** 2))
+            if test_mode or keywords_master['verbose']:
+                print('new statistic: ', new_statistic)
+                print('current best statistic: ', current_best_statistic)
+            if new_statistic < current_best_statistic:
+                readout_best = True
+                print('storing new realization...')
+                current_best_statistic = new_statistic
+                best_realization = SavedRealization(lensModel_fit, kwargs_lens_fit, flux_ratios_fit,
+                                                    new_statistic, parameters)
 
         if fluxes_computed is None and parameters_sampled is None:
             fluxes_computed = flux_ratios_fit
@@ -284,15 +271,9 @@ def run(job_index, chain_ID, output_path, path_to_folder,
             t_ellapsed = t_end - t_start
             sampling_rate = fluxes_computed.shape[0] / t_ellapsed
 
-            if delta_kappa is not None:
-                delta_hessian = (delta_kappa, delta_gamma1, delta_gamma2)
-            else:
-                delta_hessian = None
-
             readout(readout_path, kwargs_macro, fluxes_computed, parameters_sampled,
-                    header, write_header, write_mode, sampling_rate, readout_macro, delta_hessian)
+                    header, write_header, write_mode, sampling_rate, readout_macro)
             fluxes_computed, parameters_sampled = None, None
-            delta_kappa, delta_gamma1, delta_gamma2 = None, None, None
             kwargs_macro = []
             write_mode = 'a'
             write_header = False
