@@ -150,7 +150,7 @@ class DoubleGaussian(SourceBase):
 
         return xgrids, ygrids
 
-    def _ray_shooting_setup_adaptive(self, xpos, ypos, relative_angles):
+    def _ray_shooting_setup_adaptive(self, xpos, ypos, grid_axis_ratio, relative_angles):
 
         (image_separations, _) = image_separation_vectors_quad(xpos, ypos)
 
@@ -162,7 +162,7 @@ class DoubleGaussian(SourceBase):
             end_rmax = min(grid_rmax, 0.5 * sep)
 
             new_grid = AdaptiveGrid(end_rmax, self.grid_resolution, theta,
-                                    xi, yi)
+                                    xi, yi, grid_axis_ratio)
             grids.append(new_grid)
 
         return grids
@@ -178,7 +178,8 @@ class DoubleGaussian(SourceBase):
         return magnification_current
 
     def magnification_adaptive(self, xpos, ypos, lensModel, kwargs_lens, normed, tol=0.005,
-                               verbose=False, enforce_unblended=False, relative_angles=None):
+                               verbose=False, enforce_unblended=False, grid_axis_ratio=1,
+                               relative_angles=None):
 
         def _converged(dm):
 
@@ -190,7 +191,7 @@ class DoubleGaussian(SourceBase):
         if relative_angles is None:
             relative_angles = [0.] * len(xpos)
 
-        grids = self._ray_shooting_setup_adaptive(xpos, ypos, relative_angles)
+        grids = self._ray_shooting_setup_adaptive(xpos, ypos, grid_axis_ratio, relative_angles)
 
         self._adaptive_grids = grids
 
@@ -309,14 +310,15 @@ class DoubleGaussian(SourceBase):
 
     def magnification(self, xpos, ypos, lensModel,
                       kwargs_lens, normed=True, retry_if_blended=0,
-                      enforce_unblended=False, adaptive=False, verbose=False):
+                      enforce_unblended=False, adaptive=False, verbose=False, grid_axis_ratio=1,
+                      relative_angles=None):
 
         self._check_initialized()
 
         if adaptive:
-
             return self.magnification_adaptive(xpos, ypos, lensModel, kwargs_lens, normed,
-                                               verbose=verbose, enforce_unblended=enforce_unblended)
+                                               verbose=verbose, enforce_unblended=enforce_unblended,
+                                               grid_axis_ratio=grid_axis_ratio, relative_angles=relative_angles)
 
         if enforce_unblended:
 

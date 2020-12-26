@@ -134,14 +134,6 @@ def run(job_index, chain_ID, output_path, path_to_folder,
             print('zsource', zsource)
             print('Einstein radius', theta_E_approx)
 
-        if 'zlens' in params_sampled.keys():
-            kwargs_hmf = keywords_master['realization_kwargs']['kwargs_halo_mass_function']
-            pyhalo = pyHalo(zlens, zsource, kwargs_halo_mass_function=kwargs_hmf)
-        else:
-            kwargs_hmf = keywords_master['realization_kwargs']['kwargs_halo_mass_function']
-            if pyhalo is None:
-                pyhalo = pyHalo(zlens, zsource, kwargs_halo_mass_function=kwargs_hmf)
-
         readout_macro = True
 
         if 'preset_model' in keywords_master.keys():
@@ -157,7 +149,7 @@ def run(job_index, chain_ID, output_path, path_to_folder,
                                 opt_routine=optimization_routine, constrain_params=constrain_params,
                                                            verbose=keywords_master['verbose'])
 
-        kwargs_macro_ref = lens_system.macromodel.components[0].kwargs
+        #kwargs_macro_ref = lens_system.macromodel.components[0].kwargs
 
         settings_class = keywords_master['keywords_optimizer']['settings_class']
 
