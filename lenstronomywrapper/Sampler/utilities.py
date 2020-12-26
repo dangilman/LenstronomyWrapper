@@ -6,6 +6,7 @@ from lenstronomywrapper.LensSystem.LensComponents.multipole import Multipole
 
 from lenstronomywrapper.LensData.lensed_quasar import LensedQuasar
 from lenstronomywrapper.LensSystem.BackgroundSource.quasar import Quasar
+from lenstronomywrapper.LensSystem.BackgroundSource.double_gaussian import DoubleGaussian
 
 from lenstronomywrapper.Utilities.misc import write_fluxes, write_params, write_macro, write_sampling_rate, write_delta_hessian
 
@@ -156,13 +157,9 @@ def build_kwargs_macro_powerlaw_ellipsoid(prior_list_macromodel):
 
     return kwargs_init, constrain_params, samples
 
-def load_background_quasar(prior_list_source, keywords):
+def load_background_source(prior_list_source, keywords):
 
     samples = {}
-
-    kwargs_quasar = {'center_x': 0., 'center_y': 0., 'source_fwhm_pc': None}
-
-    kwargs_quasar['source_fwhm_pc'] = prior_list_source['source_fwhm_pc']()
 
     if 'grid_rmax' in keywords.keys():
         grid_rmax = keywords['grid_rmax']
@@ -174,17 +171,35 @@ def load_background_quasar(prior_list_source, keywords):
     else:
         grid_rmax_scale = keywords['grid_rmax_scale']
 
-    quasar = Quasar(kwargs_quasar, grid_rmax=grid_rmax, grid_rmax_scale=grid_rmax_scale)
-    samples['source_fwhm_pc'] = kwargs_quasar['source_fwhm_pc']
+    assert 'source_model' in keywords.keys()
 
-    if 'dx_source_2' in prior_list_source.keys():
+    if keywords['source_model'] == 'GAUSSIAN':
+        assert 'source_fwhm_pc' in prior_list_source.keys()
+        kwargs_quasar = {'center_x': 0., 'center_y': 0.}
+        source_fwhm_pc = prior_list_source['source_fwhm_pc']()
+        kwargs_quasar['source_fwhm_pc'] = source_fwhm_pc
+        source_model = Quasar(kwargs_quasar, grid_rmax=grid_rmax, grid_rmax_scale=grid_rmax_scale)
+        samples['source_fwhm_pc'] = source_fwhm_pc
+
+    elif keywords['source_model'] == 'DOUBLE_GAUSSIAN':
+        assert 'source_fwhm_pc' in prior_list_source.keys()
+        assert 'dx_source_2' in prior_list_source.keys()
         assert 'dy_source_2' in prior_list_source.keys()
         assert 'size_scale_2' in prior_list_source.keys()
         assert 'amp_scale_2' in prior_list_source.keys()
-        for name in ['dx_source_2', 'dy_source_2', 'size_scale_2', 'amp_scale_2']:
-            samples[name] = prior_list_source[name]()
 
-    return quasar, samples
+        kwargs_quasar = {'center_x': 0., 'center_y': 0.}
+        name_out = ['source_fwhm_pc', 'dx', 'dy', 'size_scale', 'amp_scale']
+        for name, pname in zip(['source_fwhm_pc', 'dx_source_2', 'dy_source_2', 'size_scale_2', 'amp_scale_2'], name_out):
+            samples[name] = prior_list_source[name]()
+            kwargs_quasar[pname] = samples[name]
+
+        source_model = DoubleGaussian(kwargs_quasar, grid_rmax=grid_rmax)
+
+    else:
+        raise Exception('source model must be specifed and be either GAUSSIAN OR DOUBLE_GAUSSIAN')
+
+    return source_model, samples
 
 def load_double_background_quasar(prior_list_source, keywords):
 
@@ -385,7 +400,7 @@ def simulation_setup(keyword_arguments, prior_list_realization, prior_list_cosmo
     params_sampled.update(macro_samples)
 
     ######## Sample keyword arguments for the background source ##########
-    background_quasar, source_samples = load_background_quasar(prior_list_source,
+    background_quasar, source_samples = load_background_source(prior_list_source,
                                                                keyword_arguments)
     params_sampled.update(source_samples)
 

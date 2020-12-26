@@ -113,7 +113,7 @@ def run(job_index, chain_ID, output_path, path_to_folder,
         macromodel,
          macro_samples,
          constrain_params,
-         background_quasar,
+         background_source,
          source_samples,
          data_to_fit, \
         optimization_settings,
@@ -183,7 +183,7 @@ def run(job_index, chain_ID, output_path, path_to_folder,
 
         magnification_function = lens_system.quasar_magnification
         magnification_function_kwargs = {'x': data_to_fit.x, 'y': data_to_fit.y,
-                      'background_source': background_quasar,
+                      'background_source': background_source,
                      'lens_model': lensModel_fit, 'kwargs_lensmodel': kwargs_lens_fit, 'normed': True,
                          'adaptive': adaptive_mag, 'verbose': keywords_master['verbose'],
                                          'grid_axis_ratio': grid_axis_ratio}
@@ -200,7 +200,7 @@ def run(job_index, chain_ID, output_path, path_to_folder,
             ax.set_aspect('equal')
             plt.show()
 
-            lens_system.plot_images(data_to_fit.x, data_to_fit.y, background_quasar,
+            lens_system.plot_images(data_to_fit.x, data_to_fit.y, background_source,
                                     adaptive=adaptive_mag)
             plt.show()
 

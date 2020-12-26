@@ -159,7 +159,6 @@ def solve_H0_from_Ddt(zlens, zsource, D_dt, astropy_instance_ref, interpolation_
                 out = minimize(_func_to_min, x0=73.3,
                           method='Nelder-Mead', args=D_dt)['x'][0]
 
-
     return out
 
 class RayShootingGrid(object):

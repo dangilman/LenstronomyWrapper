@@ -2,19 +2,18 @@ from lenstronomywrapper.Optimization.quad_optimization.optimization_base import 
 from lenstronomywrapper.Optimization.quad_optimization.brute import BruteOptimization
 from lenstronomy.LensModel.lens_model import LensModel
 from lenstronomywrapper.Utilities.lensing_util import interpolate_ray_paths
-import numpy as np
+from pyHalo.pyhalo_dynamic import pyHaloDynamic
 from copy import deepcopy
 
 class DynamicOptimization(OptimizationBase):
 
-    def __init__(self, lens_system, pyhalo_dynamic, kwargs_rendering, global_log_mlow,
+    def __init__(self, lens_system, kwargs_rendering, global_log_mlow,
                  log_mass_cuts, aperture_sizes, refit,
                  particle_swarm, re_optimize, realization_type,
                  n_particles=35, simplex_n_iter=300, initial_pso=True):
 
         """
-        :param lens_system: an instance of QuadLensSystem (see documentation in LensSystem.quad_lens
-        :param pyhalo_dynamic: an instance of pyhalo_dynamic
+        :param lens_system: an instance of QuadLensSystem (see documentation in LensSystem.quad_lens)
         :param kwargs_rendering: key word arguments for the realization, see documentation in pyHalo
         :param global_log_mlow: the lowest-mass halos to render everywhere in the lens system
         Everything with mass below 10**global_log_mlow will be rendered iteratively around images in
@@ -74,7 +73,9 @@ class DynamicOptimization(OptimizationBase):
         """
         assert len(log_mass_cuts) == len(aperture_sizes)
         assert len(refit) == len(log_mass_cuts)
-        assert pyhalo_dynamic.zsource == lens_system.zsource
+
+        # instantiate pyhaloDynamic
+        self.pyhalo_dynamic = pyHaloDynamic(lens_system.zlens, lens_system.zsource)
 
         if len(log_mass_cuts) > 0:
             assert global_log_mlow > log_mass_cuts[0]
@@ -101,17 +102,9 @@ class DynamicOptimization(OptimizationBase):
 
         self._global_log_mlow = global_log_mlow
 
-        self.pyhalo_dynamic = pyhalo_dynamic
-
         self.simplex_n_iter = simplex_n_iter
 
         super(DynamicOptimization, self).__init__(lens_system)
-
-    def _gen_brute(self):
-
-        brute = BruteOptimization(self.lens_system, self.n_particles, self.simplex_n_iter)
-
-        return brute
 
     def optimize(self, data_to_fit, opt_routine='free_shear_powerlaw',
                  constrain_params=None, verbose=False):
@@ -131,7 +124,7 @@ class DynamicOptimization(OptimizationBase):
         :return: optimized lens model and keyword arguments
         """
 
-        brute = self._gen_brute()
+        brute = BruteOptimization(self.lens_system, self.n_particles, self.simplex_n_iter)
 
         # Fit a smooth model (macromodel + satellites) to the image positions
 
@@ -141,7 +134,7 @@ class DynamicOptimization(OptimizationBase):
                                     verbose=verbose)
 
         # set up initial realization with large halos generated everywhere
-        realization_global, log_mhigh = self._initialize(verbose)
+        realization_global, log_mhigh = self._initialize(verbose, data_to_fit)
 
         if verbose:
             print('fitting with log(mlow) = ' + str(self._global_log_mlow) + '.... ')
@@ -200,7 +193,7 @@ class DynamicOptimization(OptimizationBase):
 
             if fit:
 
-                brute = self._gen_brute()
+                brute = BruteOptimization(self.lens_system, self.n_particles, self.simplex_n_iter)
                 kwargs_lens_final, lens_model_full, source = brute.fit(
                     data_to_fit, opt_routine, constrain_params=constrain_params, verbose=verbose,
                     include_substructure=True, realization=realization_global, re_optimize=re_optimize,
@@ -221,19 +214,17 @@ class DynamicOptimization(OptimizationBase):
         return self.return_results(source, kwargs_lens_final, lens_model_full, realization_global,
                                    {'realization_final': realization_global})
 
-    def _initialize(self, verbose):
+    def _initialize(self, verbose, data_to_fit):
 
         if verbose: print('initializing with log(mlow) = ' + str(self._global_log_mlow) + '.... ')
 
-        macro_lens_model, _ = self.lens_system.get_lensmodel(include_substructure=False)
+        macro_lens_model, kwargs_macro = self.lens_system.get_lensmodel(include_substructure=False)
 
-        lens_centroid_x, lens_centroid_y = self.lens_system.macromodel.centroid
-
-        lens_model_macro, macro_model_z, _ = self.lenstronomy_args_from_lensmodel(macro_lens_model)
-
-        x_interp_list, y_interp_list = self._get_interp([lens_centroid_x], [lens_centroid_y],
-                                                        macro_model_z,
-                                                        terminate_at_source=True)
+        source_x, source_y = self.lens_system.source_centroid_x, self.lens_system.source_centroid_y
+        x_interp_list, y_interp_list = self.pyhalo_dynamic.interpolate_ray_paths(data_to_fit.x, data_to_fit.y,
+                                    lens_model=macro_lens_model, kwargs_lens=kwargs_macro, zsource=self.lens_system.zsource,
+                                             terminate_at_source=True, source_x=source_x, source_y=source_y,
+                                                                                 evaluate_at_mean=True)
 
         if isinstance(self.kwargs_rendering, list):
             print('generating global realization with first set of keywords in kwargs_rendering...')

@@ -98,14 +98,16 @@ class QuadLensSystem(LensBase):
             source_y=source_y)
 
         if centroid_convention == 'IMAGES':
+            mass_centroid_x, mass_centroid_y = lens_system_init.light_centroid_x, lens_system_init.light_centroid_y
+
             ### Now compute the centroid of the light cone as the coordinate centroid of the individual images
             z_range = np.linspace(0, lens_system_init.zsource, 100)
             distances = [lens_system_init.pyhalo_cosmology.D_C_transverse(zi) for zi in z_range]
             angular_coordinates_x = []
             angular_coordinates_y = []
             for di in distances:
-                x_coords = [ray_x(di) for ray_x in ray_interp_x]
-                y_coords = [ray_y(di) for ray_y in ray_interp_y]
+                x_coords = [ray_x(di) for i, ray_x in enumerate(ray_interp_x)]
+                y_coords = [ray_y(di) for i, ray_y in enumerate(ray_interp_y)]
                 x_center = np.mean(x_coords)
                 y_center = np.mean(y_coords)
                 angular_coordinates_x.append(x_center)

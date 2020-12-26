@@ -12,6 +12,7 @@ class DoubleGaussian(SourceBase):
 
     def __init__(self, kwargs_quasar,
                  grid_resolution=None, grid_rmax=None):
+
         """
         kwargs_quasar contains the keyword arguments: center_x, center_y, source_fwhm_pc, dx, dy, size_scale, amp_scale
 
@@ -52,7 +53,7 @@ class DoubleGaussian(SourceBase):
         self._comp1._check_initialized(with_error)
         self._comp2._check_initialized(with_error)
 
-    def setup(self, pc_per_arcsec_zsource=None, source_size_pc=None):
+    def setup(self, pc_per_arcsec_zsource=None):
 
         if self._check_initialized(with_error=False):
             return
@@ -63,8 +64,7 @@ class DoubleGaussian(SourceBase):
             assert pc_per_arcsec_zsource is not None
             self._pc_per_arcsec_zsource = pc_per_arcsec_zsource
 
-        if source_size_pc is None:
-            source_size_pc = self._kwargs_init['source_fwhm_pc']
+        source_size_pc = self._kwargs_init['source_fwhm_pc']
 
         if self._grid_rmax is None:
             grid_rmax = self._auto_grid_size(source_size_pc)
@@ -78,9 +78,9 @@ class DoubleGaussian(SourceBase):
         else:
             self.grid_resolution = self._grid_resolution
 
-        self._comp1.setup(pc_per_arcsec_zsource, source_size_pc)
+        self._comp1.setup(pc_per_arcsec_zsource)
 
-        self._comp2.setup(pc_per_arcsec_zsource, source_size_pc)
+        self._comp2.setup(pc_per_arcsec_zsource)
 
         self._kwargs_quasar_1 = self._comp1._kwargs_quasar
 
@@ -95,14 +95,14 @@ class DoubleGaussian(SourceBase):
         self._comp2.update_position(x + self._kwargs_init['dx'],
                                     y + self._kwargs_init['dy'])
 
-    def surface_birghtness_from_coords(self, beta_x, beta_y):
+    def surface_brightness_from_coords(self, beta_x, beta_y):
 
         self._check_initialized()
 
         shape0 = beta_x.shape
 
-        surf_bright_1 = self._comp1.surface_birghtness_from_coords(beta_x, beta_y)
-        surf_bright_2 = self._comp2.surface_birghtness_from_coords(beta_x, beta_y)
+        surf_bright_1 = self._comp1.surface_brightness_from_coords(beta_x, beta_y)
+        surf_bright_2 = self._comp2.surface_brightness_from_coords(beta_x, beta_y)
 
         return (surf_bright_1 + self._kwargs_init['amp_scale']*surf_bright_2).reshape(shape0)
 
@@ -112,14 +112,14 @@ class DoubleGaussian(SourceBase):
 
         try:
             beta_x, beta_y = lensmodel.ray_shooting(xgrid, ygrid, lensmodel_kwargs)
-            surf_bright_1 = self._comp1.surface_birghtness_from_coords(beta_x, beta_y)
-            surf_bright_2 = self._comp2.surface_birghtness_from_coords(beta_x, beta_y)
+            surf_bright_1 = self._comp1.surface_brightness_from_coords(beta_x, beta_y)
+            surf_bright_2 = self._comp2.surface_brightness_from_coords(beta_x, beta_y)
             surf_bright = surf_bright_1 + self._kwargs_init['amp_scale']*surf_bright_2
         except:
             shape0 = xgrid.shape
             beta_x, beta_y = lensmodel.ray_shooting(xgrid.ravel(), ygrid.ravel(), lensmodel_kwargs)
-            surf_bright_1 = self._comp1.surface_birghtness_from_coords(beta_x, beta_y)
-            surf_bright_2 = self._comp2.surface_birghtness_from_coords(beta_x, beta_y)
+            surf_bright_1 = self._comp1.surface_brightness_from_coords(beta_x, beta_y)
+            surf_bright_2 = self._comp2.surface_brightness_from_coords(beta_x, beta_y)
             surf_bright = surf_bright_1 + self._kwargs_init['amp_scale'] * surf_bright_2
             surf_bright = surf_bright.reshape(shape0, shape0)
 

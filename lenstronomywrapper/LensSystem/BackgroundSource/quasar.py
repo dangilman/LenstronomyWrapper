@@ -68,7 +68,7 @@ class Quasar(SourceBase):
         self._kwargs_quasar['center_x'] = x
         self._kwargs_quasar['center_y'] = y
 
-    def surface_birghtness_from_coords(self, beta_x, beta_y):
+    def surface_brightness_from_coords(self, beta_x, beta_y):
 
         self._check_initialized()
 
