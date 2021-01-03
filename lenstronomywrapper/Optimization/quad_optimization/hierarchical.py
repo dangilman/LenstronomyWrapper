@@ -14,6 +14,8 @@ class HierarchicalOptimization(BruteOptimization):
             settings_class = HierarchicalSettingsDeltaFunction(**settings_kwargs)
         elif settings_class == 'default_CDM':
             settings_class = HierarchicalSettingsCDM()
+        elif settings_class == 'default_CDM_MPC':
+            settings_class = HierarchicalSettingsCDM_Mpc()
         elif settings_class == 'custom':
             settings_class = SettingsClass(**kwargs_settings_class)
         else:
@@ -64,7 +66,7 @@ class HierarchicalOptimization(BruteOptimization):
     def _fit_foreground(self, data_to_fit, realization_foreground, param_class, constrain_params, threadCount, verbose=False):
 
         aperture_masses, globalmin_masses, window_sizes, scale, optimize_iteration, particle_swarm_reopt, \
-        re_optimize_iteration = self.settings.foreground_settings
+        re_optimize_iteration, aperture_units = self.settings.foreground_settings
 
         N_foreground_halos_last = 0
 
@@ -93,7 +95,8 @@ class HierarchicalOptimization(BruteOptimization):
                              'log_mass_allowed_global_back': 10.,
                              'interpolated_x_angle': ray_x_interp,
                              'interpolated_y_angle': ray_y_interp,
-                             'zmax': self.lens_system.zlens
+                             'zmax': self.lens_system.zlens,
+                             'aperture_units': aperture_units
                              }
 
             if run == 0:
@@ -173,7 +176,7 @@ class HierarchicalOptimization(BruteOptimization):
                                  threadCount, verbose):
 
         aperture_masses, globalmin_masses, window_sizes, scale, optimize_iteration, particle_swarm_reopt, \
-        re_optimize_iteration = self.settings.background_settings
+        re_optimize_iteration, aperture_units = self.settings.background_settings
 
         N_background_halos_last = 0
 
@@ -200,7 +203,8 @@ class HierarchicalOptimization(BruteOptimization):
                              'log_mass_allowed_global_back': globalmin_masses[run],
                              'interpolated_x_angle': ray_x_interp,
                              'interpolated_y_angle': ray_y_interp,
-                             'zmin': self.lens_system.zlens
+                             'zmin': self.lens_system.zlens,
+                             'aperture_units': aperture_units
                              }
 
             if run == 0:

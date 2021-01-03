@@ -1,4 +1,5 @@
 from lenstronomy.LensModel.lens_model import LensModel
+import numpy as np
 from lenstronomywrapper.LensSystem.lens_base import LensBase
 from lenstronomywrapper.Optimization.quad_optimization.brute import BruteOptimization
 from lenstronomywrapper.Optimization.extended_optimization.source_reconstruction import SourceReconstruction
@@ -6,24 +7,23 @@ from pyHalo.Cosmology.cosmology import Cosmology
 
 class ArcQuadLensSystem(LensBase):
 
-    def __init__(self, macromodel, z_source, background_quasar_class, lens_light_model, source_light_model,
+    def __init__(self, macromodel, z_source, lens_light_model, source_light_model,
                  substructure_realization=None, pyhalo_cosmology=None):
 
         self.lens_light_model = lens_light_model
         self.source_light_model = source_light_model
-        self.background_quasar = background_quasar_class
+
         if pyhalo_cosmology is None:
             # the default cosmology in pyHalo, currently WMAP9
             pyhalo_cosmology = Cosmology()
 
-        pc_per_arcsec_zsource = 1000 / pyhalo_cosmology.astropy.arcsec_per_kpc_proper(z_source).value
-        self.background_quasar.setup(pc_per_arcsec_zsource)
+        self.pc_per_arcsec_zsource = 1000 / pyhalo_cosmology.astropy.arcsec_per_kpc_proper(z_source).value
 
         super(ArcQuadLensSystem, self).__init__(macromodel, z_source, substructure_realization, pyhalo_cosmology)
 
     def get_smooth_lens_system(self):
 
-        arclens_smooth_component = ArcQuadLensSystem(self.macromodel, self.zsource, self.background_quasar,
+        arclens_smooth_component = ArcQuadLensSystem(self.macromodel, self.zsource,
                                                      self.lens_light_model, self.source_light_model,
                                                      None, self.pyhalo_cosmology)
 
@@ -61,7 +61,7 @@ class ArcQuadLensSystem(LensBase):
         else:
             pass_realization = None
 
-        arcquadlens = ArcQuadLensSystem(quad_lens_system.macromodel, quad_lens_system.zsource, quad_lens_system.background_quasar, lens_light_model,
+        arcquadlens = ArcQuadLensSystem(quad_lens_system.macromodel, quad_lens_system.zsource, lens_light_model,
                                         source_light_model, pass_realization, quad_lens_system.pyhalo_cosmology)
 
         source_x, source_y = quad_lens_system.source_centroid_x, quad_lens_system.source_centroid_y
@@ -125,7 +125,6 @@ class ArcQuadLensSystem(LensBase):
 
         self.source_centroid_x = source_x
         self.source_centroid_y = source_y
-        self.background_quasar.update_position(source_x, source_y)
 
     def update_light_centroid(self, light_x, light_y):
 
@@ -162,11 +161,27 @@ class ArcQuadLensSystem(LensBase):
         instance, kwargs = self.source_light_model.sourceLight, self.source_light_model.kwargs_light
         return instance, kwargs
 
-    def quasar_magnification(self, x, y, lens_model=None, kwargs_lensmodel=None, normed=True,
-                             point_source=False):
+    def quasar_magnification(self, x, y, background_source,
+                             lens_model,
+                             kwargs_lensmodel, normed=True,
+                             retry_if_blended=0,
+                             enforce_unblended=False,
+                             adaptive=False, verbose=False, point_source=False,
+                             grid_axis_ratio=1):
 
-        if lens_model is None or kwargs_lensmodel is None:
-            lens_model, kwargs_lensmodel = self.get_lensmodel()
+        """
+        Computes the magnifications (or flux ratios if normed=True)
+
+        :param x: x image position
+        :param y: y image position
+        :param background_quasar: an instance of the background source light profile
+        :param lens_model: an instance of LensModel (see lenstronomy.lens_model)
+        :param kwargs_lensmodel: key word arguments for the lens_model
+        :param normed: if True returns flux ratios
+        :param retry_if_blended: a integer that specifies how many times to try
+        increasing the size of the ray tracing window if an image comes out blended together
+        :param point_source: if True, computes the magnification of a point source
+        """
 
         if point_source:
             mags = lens_model.magnification(x, y, kwargs_lensmodel)
@@ -175,7 +190,19 @@ class ArcQuadLensSystem(LensBase):
                 mags *= max(mags) ** -1
             return mags, False
 
-        return self.background_quasar.magnification(x, y, lens_model, kwargs_lensmodel, normed)
+        background_source.setup(self.pc_per_arcsec_zsource)
+        if not hasattr(self, 'source_centroid_x') or self.source_centroid_x is None:
+            raise Exception('lens system must have a specified source coordinate in order to compute the magnification'
+                            'from an extended source.')
+        background_source.update_position(self.source_centroid_x, self.source_centroid_y)
+        relative_angles = [np.arctan2(-xi, yi) for (xi, yi) in zip(x, y)]
+
+        return background_source.magnification(x, y, lens_model,
+                                               kwargs_lensmodel,
+                                               normed, retry_if_blended,
+                                               enforce_unblended, adaptive, verbose,
+                                               grid_axis_ratio,
+                                               relative_angles)
 
     def plot_images(self, x, y, lens_model=None, kwargs_lensmodel=None):
 

@@ -10,7 +10,7 @@ from pyHalo.pyhalo import pyHalo
 from time import time
 from lenstronomywrapper.Optimization.quad_optimization.hierarchical import HierarchicalOptimization
 from lenstronomywrapper.Utilities.misc import write_lensdata
-from pyHalo.preset_models import WDMLovell2020
+from pyHalo.preset_models import WDMLovell2020, CDM
 
 def run(job_index, chain_ID, output_path, path_to_folder,
         test_mode=False):
@@ -139,6 +139,8 @@ def run(job_index, chain_ID, output_path, path_to_folder,
         if 'preset_model' in keywords_master.keys():
             if keywords_master['preset_model'] == 'WDMLovell2020':
                 realization_initial = WDMLovell2020(zlens, zsource, **kwargs_rendering)
+            elif keywords_master['preset_model'] == 'CDM':
+                realization_initial = CDM(zlens, zsource, **kwargs_rendering)
             else:
                 raise Exception('no other preset model recognized')
         else:
@@ -148,8 +150,6 @@ def run(job_index, chain_ID, output_path, path_to_folder,
                                realization_initial, None, particle_swarm_init=True,
                                 opt_routine=optimization_routine, constrain_params=constrain_params,
                                                            verbose=keywords_master['verbose'])
-
-        #kwargs_macro_ref = lens_system.macromodel.components[0].kwargs
 
         settings_class = keywords_master['keywords_optimizer']['settings_class']
 

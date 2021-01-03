@@ -2,7 +2,6 @@ from lenstronomywrapper.Optimization.quad_optimization.optimization_base import 
 from lenstronomywrapper.Optimization.quad_optimization.brute import BruteOptimization
 from lenstronomy.LensModel.lens_model import LensModel
 from lenstronomywrapper.Utilities.lensing_util import interpolate_ray_paths
-from pyHalo.pyhalo_dynamic import pyHaloDynamic
 from copy import deepcopy
 
 class DynamicOptimization(OptimizationBase):
