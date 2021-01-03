@@ -126,6 +126,7 @@ def load_lens_source(prior_list_cosmo, keywords):
 
     if 'zlens' in prior_list_cosmo.keys():
         zlens = prior_list_cosmo['zlens']()
+        zlens = np.round(zlens, 2)
         samples['zlens'] = zlens
     else:
         zlens = keywords['zlens']

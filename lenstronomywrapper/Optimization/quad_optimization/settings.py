@@ -204,7 +204,7 @@ class HierarchicalSettingsCDM_Mpc(object):
         # add this everywhere
         globalmin_masses = [self.log_mass_cut_global] * 3
         # window size
-        window_sizes = [100, 0.3, 0.15]
+        window_sizes = [100, 0.35, 0.2]
         # controls starting points for re-optimizations
         scale = [1, 0.1, 0.1]
         # determines whether to use PSO for re-optimizations
@@ -224,7 +224,7 @@ class HierarchicalSettingsCDM_Mpc(object):
         # add this everywhere
         globalmin_masses = [self.log_mass_cut_global, self.log_mass_cut_global, self.log_mass_cut_global]
         # window size
-        window_sizes = [100, 0.3, 0.15]
+        window_sizes = [100, 0.35, 0.2]
         # controls starting points for re-optimizations
         scale = [1, 0.5, 0.25]
         # determines whether to use PSO for re-optimizations
