@@ -98,7 +98,6 @@ class QuadLensSystem(LensBase):
             source_y=source_y)
 
         if centroid_convention == 'IMAGES':
-            mass_centroid_x, mass_centroid_y = lens_system_init.light_centroid_x, lens_system_init.light_centroid_y
 
             ### Now compute the centroid of the light cone as the coordinate centroid of the individual images
             z_range = np.linspace(0, lens_system_init.zsource, 100)
@@ -122,6 +121,8 @@ class QuadLensSystem(LensBase):
 
         lens_system = QuadLensSystem(macromodel, zsource,
                                           realization, lens_system_init.pyhalo_cosmology)
+
+        lens_system.update_source_centroid(source_x, source_y)
 
         return lens_system
 
