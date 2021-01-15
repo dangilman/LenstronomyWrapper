@@ -2,7 +2,7 @@ import numpy as np
 from lenstronomywrapper.Utilities.data_util import image_separation_vectors_quad
 from copy import deepcopy
 import matplotlib.pyplot as plt
-from lenstronomywrapper.Utilities.lensing_util import RayShootingGrid, AdaptiveGrid, AdaptiveGrid2
+from lenstronomywrapper.Utilities.lensing_util import RayShootingGrid, AdaptiveGrid
 from lenstronomy.LightModel.light_model import LightModel
 from lenstronomywrapper.LensSystem.BackgroundSource.source_base import SourceBase
 from lenstronomywrapper.Utilities.lensing_util import flux_at_edge
