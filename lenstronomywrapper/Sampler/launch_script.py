@@ -1,6 +1,4 @@
 from lenstronomywrapper.Sampler.run import run
-from lenstronomywrapper.Sampler.run_two_sources import run_two_sources
-from lenstronomywrapper.Sampler.run_1131 import run_1131
 import sys
 import os
 from time import time
@@ -9,7 +7,7 @@ from time import time
 job_index = 1
 # the name of the folder containing paramdictionary files
 
-chain_ID = 'PSJ1606_varygamma_shiftbackground'
+chain_ID = 'B1422'
 
 # where to generate output files
 #out_path = '/scratch/abenson/'
