@@ -29,14 +29,6 @@ class LensBase(object):
 
         self.pc_per_arcsec_zsource = 1000 * pyhalo_cosmology.astropy.arcsec_per_kpc_proper(z_source).value ** -1
 
-    def fit(self, data_to_fit, optimization_class, verbose=False, **kwargs_optimizer):
-
-        optimizer = optimization_class(self)
-        kwargs_lens_final, lens_model_full, return_kwargs = optimizer.\
-            optimize(data_to_fit, verbose=verbose, **kwargs_optimizer)
-
-        return kwargs_lens_final, lens_model_full, return_kwargs
-
     def update_light_centroid(self, light_x, light_y):
 
         self.light_centroid_x = light_x
@@ -73,8 +65,7 @@ class LensBase(object):
         self._lensmodel_static = None
         self._kwargs_static = None
 
-    def get_lensmodel(self, include_substructure=True, set_multiplane=True,
-                      substructure_realization=None, include_macromodel=True):
+    def get_lensmodel(self, include_substructure=True, substructure_realization=None, include_macromodel=True):
 
         if self._static_lensmodel and include_substructure is True:
 
@@ -108,11 +99,11 @@ class LensBase(object):
             convention_index += self.position_convention_halo
 
         lensModel = LensModel(names, lens_redshift_list=redshifts, z_lens=self.zlens, z_source=self.zsource,
-                              multi_plane=set_multiplane, numerical_alpha_class=numercial_alpha_class,
+                              multi_plane=True, numerical_alpha_class=numercial_alpha_class,
                               observed_convention_index=convention_index, cosmo=self.astropy)
         return lensModel, kwargs
 
-    def get_lenstronomy_args(self, include_substructure=True, realization=None):
+    def get_lenstronomy_args(self, include_substructure=True, realization=None, z_mass_sheet_max=None):
 
         lens_model_names, macro_redshifts, macro_kwargs, convention_index = \
             self.macromodel.get_lenstronomy_args()
@@ -123,7 +114,7 @@ class LensBase(object):
         if realization is not None and include_substructure:
 
             halo_names, halo_redshifts, kwargs_halos, kwargs_lenstronomy = \
-                realization.lensing_quantities()
+                realization.lensing_quantities(z_mass_sheet_max=z_mass_sheet_max)
         else:
             halo_names, halo_redshifts, kwargs_halos, kwargs_lenstronomy = [], [], [], None
 

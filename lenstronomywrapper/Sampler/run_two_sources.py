@@ -7,7 +7,6 @@ from lenstronomywrapper.Utilities.data_util import approx_theta_E
 
 from lenstronomywrapper.Utilities.parameter_util import kwargs_e1e2_to_polar, kwargs_gamma1gamma2_to_polar
 
-from lenstronomywrapper.LensSystem.local_image_quad import LocalImageQuad
 from pyHalo.pyhalo import pyHalo
 
 from time import time
@@ -88,7 +87,6 @@ def run_two_sources(job_index, chain_ID, output_path, path_to_folder,
     delta_kappa = None
     delta_gamma1 = None
     delta_gamma2 = None
-    hessian_kde = None
 
     adaptive_mag = keyword_arguments['adaptive_mag']
 
@@ -111,7 +109,7 @@ def run_two_sources(job_index, chain_ID, output_path, path_to_folder,
 
         macromodel, macro_samples, constrain_params, opt_routine = \
             load_powerlaw_ellipsoid_macromodel(zlens, prior_list_macromodel, kwargs_macro_ref,
-                                               keyword_arguments['secondary_lens_components'])
+                                               keyword_arguments['secondary_lens_components'], keyword_arguments)
         params_sampled.update(macro_samples)
 
         ######## Sample keyword arguments for the background source ##########

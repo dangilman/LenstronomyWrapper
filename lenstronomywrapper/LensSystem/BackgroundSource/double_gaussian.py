@@ -12,6 +12,7 @@ class DoubleGaussian(SourceBase):
 
     def __init__(self, kwargs_quasar,
                  grid_resolution=None, grid_rmax=None):
+
         """
         kwargs_quasar contains the keyword arguments: center_x, center_y, source_fwhm_pc, dx, dy, size_scale, amp_scale
 
@@ -52,7 +53,7 @@ class DoubleGaussian(SourceBase):
         self._comp1._check_initialized(with_error)
         self._comp2._check_initialized(with_error)
 
-    def setup(self, pc_per_arcsec_zsource=None, source_size_pc=None):
+    def setup(self, pc_per_arcsec_zsource=None):
 
         if self._check_initialized(with_error=False):
             return
@@ -63,8 +64,7 @@ class DoubleGaussian(SourceBase):
             assert pc_per_arcsec_zsource is not None
             self._pc_per_arcsec_zsource = pc_per_arcsec_zsource
 
-        if source_size_pc is None:
-            source_size_pc = self._kwargs_init['source_fwhm_pc']
+        source_size_pc = self._kwargs_init['source_fwhm_pc']
 
         if self._grid_rmax is None:
             grid_rmax = self._auto_grid_size(source_size_pc)
@@ -78,9 +78,9 @@ class DoubleGaussian(SourceBase):
         else:
             self.grid_resolution = self._grid_resolution
 
-        self._comp1.setup(pc_per_arcsec_zsource, source_size_pc)
+        self._comp1.setup(pc_per_arcsec_zsource)
 
-        self._comp2.setup(pc_per_arcsec_zsource, source_size_pc)
+        self._comp2.setup(pc_per_arcsec_zsource)
 
         self._kwargs_quasar_1 = self._comp1._kwargs_quasar
 
@@ -95,14 +95,14 @@ class DoubleGaussian(SourceBase):
         self._comp2.update_position(x + self._kwargs_init['dx'],
                                     y + self._kwargs_init['dy'])
 
-    def surface_birghtness_from_coords(self, beta_x, beta_y):
+    def surface_brightness_from_coords(self, beta_x, beta_y):
 
         self._check_initialized()
 
         shape0 = beta_x.shape
 
-        surf_bright_1 = self._comp1.surface_birghtness_from_coords(beta_x, beta_y)
-        surf_bright_2 = self._comp2.surface_birghtness_from_coords(beta_x, beta_y)
+        surf_bright_1 = self._comp1.surface_brightness_from_coords(beta_x, beta_y)
+        surf_bright_2 = self._comp2.surface_brightness_from_coords(beta_x, beta_y)
 
         return (surf_bright_1 + self._kwargs_init['amp_scale']*surf_bright_2).reshape(shape0)
 
@@ -112,14 +112,14 @@ class DoubleGaussian(SourceBase):
 
         try:
             beta_x, beta_y = lensmodel.ray_shooting(xgrid, ygrid, lensmodel_kwargs)
-            surf_bright_1 = self._comp1.surface_birghtness_from_coords(beta_x, beta_y)
-            surf_bright_2 = self._comp2.surface_birghtness_from_coords(beta_x, beta_y)
+            surf_bright_1 = self._comp1.surface_brightness_from_coords(beta_x, beta_y)
+            surf_bright_2 = self._comp2.surface_brightness_from_coords(beta_x, beta_y)
             surf_bright = surf_bright_1 + self._kwargs_init['amp_scale']*surf_bright_2
         except:
             shape0 = xgrid.shape
             beta_x, beta_y = lensmodel.ray_shooting(xgrid.ravel(), ygrid.ravel(), lensmodel_kwargs)
-            surf_bright_1 = self._comp1.surface_birghtness_from_coords(beta_x, beta_y)
-            surf_bright_2 = self._comp2.surface_birghtness_from_coords(beta_x, beta_y)
+            surf_bright_1 = self._comp1.surface_brightness_from_coords(beta_x, beta_y)
+            surf_bright_2 = self._comp2.surface_brightness_from_coords(beta_x, beta_y)
             surf_bright = surf_bright_1 + self._kwargs_init['amp_scale'] * surf_bright_2
             surf_bright = surf_bright.reshape(shape0, shape0)
 
@@ -144,15 +144,15 @@ class DoubleGaussian(SourceBase):
         grids = []
         grid_rmax = grid_rmax_scale * self.grid_rmax
         for sep, theta in zip(image_separations, relative_angles):
-            grids.append(RayShootingGrid(min(grid_rmax, 0.5 * sep), self.grid_resolution, rot=theta))
+            grids.append(RayShootingGrid(min(grid_rmax, 0.5 * sep), self.grid_resolution))
 
         xgrids, ygrids = self._get_grids(xpos, ypos, grids)
 
         return xgrids, ygrids
 
-    def _ray_shooting_setup_adaptive(self, xpos, ypos):
+    def _ray_shooting_setup_adaptive(self, xpos, ypos, grid_axis_ratio, relative_angles):
 
-        (image_separations, relative_angles) = image_separation_vectors_quad(xpos, ypos)
+        (image_separations, _) = image_separation_vectors_quad(xpos, ypos)
 
         grids = []
         grid_rmax = 2.5 * self.grid_rmax
@@ -162,7 +162,7 @@ class DoubleGaussian(SourceBase):
             end_rmax = min(grid_rmax, 0.5 * sep)
 
             new_grid = AdaptiveGrid(end_rmax, self.grid_resolution, theta,
-                                    xi, yi)
+                                    xi, yi, grid_axis_ratio)
             grids.append(new_grid)
 
         return grids
@@ -178,7 +178,8 @@ class DoubleGaussian(SourceBase):
         return magnification_current
 
     def magnification_adaptive(self, xpos, ypos, lensModel, kwargs_lens, normed, tol=0.005,
-                               verbose=False, enforce_unblended=False):
+                               verbose=False, enforce_unblended=False, grid_axis_ratio=1,
+                               relative_angles=None):
 
         def _converged(dm):
 
@@ -187,7 +188,10 @@ class DoubleGaussian(SourceBase):
             else:
                 return False
 
-        grids = self._ray_shooting_setup_adaptive(xpos, ypos)
+        if relative_angles is None:
+            relative_angles = [0.] * len(xpos)
+
+        grids = self._ray_shooting_setup_adaptive(xpos, ypos, grid_axis_ratio, relative_angles)
 
         self._adaptive_grids = grids
 
@@ -306,14 +310,15 @@ class DoubleGaussian(SourceBase):
 
     def magnification(self, xpos, ypos, lensModel,
                       kwargs_lens, normed=True, retry_if_blended=0,
-                      enforce_unblended=False, adaptive=False, verbose=False):
+                      enforce_unblended=False, adaptive=False, verbose=False, grid_axis_ratio=1,
+                      relative_angles=None):
 
         self._check_initialized()
 
         if adaptive:
-
             return self.magnification_adaptive(xpos, ypos, lensModel, kwargs_lens, normed,
-                                               verbose=verbose, enforce_unblended=enforce_unblended)
+                                               verbose=verbose, enforce_unblended=enforce_unblended,
+                                               grid_axis_ratio=grid_axis_ratio, relative_angles=relative_angles)
 
         if enforce_unblended:
 

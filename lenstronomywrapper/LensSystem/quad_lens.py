@@ -4,17 +4,17 @@ from pyHalo.Cosmology.cosmology import Cosmology
 from lenstronomywrapper.LensSystem.BackgroundSource.quasar import Quasar
 from lenstronomywrapper.Utilities.lensing_util import interpolate_ray_paths_system
 from copy import deepcopy
+import numpy as np
+from scipy.interpolate import interp1d
 
 class QuadLensSystem(LensBase):
 
-    def __init__(self, macromodel, z_source, background_quasar_class,
-                 substructure_realization=None, pyhalo_cosmology=None):
+    def __init__(self, macromodel, z_source, substructure_realization=None, pyhalo_cosmology=None):
 
         """
 
         :param macromodel: an instance of MacroLensModel (see LensSystem.macrolensmodel)
         :param z_source: source redshift
-        :param background_quasar_class: an instance of quasar (see LensSystem.BackgroundSource.quasar)
         :param substructure_realization: an instance of Realization (see pyhalo.single_realization)
         :param pyhalo_cosmology: an instance of Cosmology() from pyhalo
         """
@@ -23,13 +23,7 @@ class QuadLensSystem(LensBase):
             # the default cosmology in pyHalo, currently WMAP9
             pyhalo_cosmology = Cosmology()
 
-        if background_quasar_class is None:
-            kwargs_default = {'center_x': 0, 'center_y': 0, 'source_fwhm_pc': 10.}
-            background_quasar_class = Quasar(kwargs_default)
-
-        self.background_quasar = background_quasar_class
         self.pc_per_arcsec_zsource = 1000 * pyhalo_cosmology.astropy.arcsec_per_kpc_proper(z_source).value ** -1
-        self.background_quasar.setup(self.pc_per_arcsec_zsource)
 
         super(QuadLensSystem, self).__init__(macromodel, z_source, substructure_realization, pyhalo_cosmology)
 
@@ -37,27 +31,20 @@ class QuadLensSystem(LensBase):
     def fromArcQuadLens(cls, lens_system):
 
         macromodel = deepcopy(lens_system.macromodel)
-        background_source_class = deepcopy(lens_system.background_quasar)
         z_source = deepcopy(lens_system.zsource)
         substructure_realization, pyhalo_cosmology = deepcopy(lens_system.realization), \
                                                      deepcopy(lens_system.pyhalo_cosmology)
 
-        system = QuadLensSystem(macromodel, z_source, background_source_class, substructure_realization,
+        system = QuadLensSystem(macromodel, z_source, substructure_realization,
                                 pyhalo_cosmology)
 
         return system
 
     @classmethod
-    def fromkwargs(cls, lens_system, kwargs_macro_new):
-
-        system_copy = deepcopy(lens_system)
-        system_copy.update_kwargs_macro(kwargs_macro_new)
-        return system_copy
-
-    @classmethod
     def shift_background_auto(cls, lens_data_class, macromodel, zsource,
-                              background_quasar, realization, cosmo=None, particle_swarm_init=False,
-                              opt_routine='free_shear_powerlaw', constrain_params=None):
+                              realization, cosmo=None, particle_swarm_init=False,
+                              opt_routine='free_shear_powerlaw', constrain_params=None, verbose=False,
+                              centroid_convention='IMAGES'):
 
         """
         This method takes a macromodel and a substructure realization, fits a smooth model to the data
@@ -70,16 +57,22 @@ class QuadLensSystem(LensBase):
 
         :param macromodel: an instance of MacroLensModel (see LensSystem.macrolensmodel)
         :param z_source: source redshift
-        :param background_quasar_class: an instance of quasar (see LensSystem.BackgroundSource.quasar)
         :param substructure_realization: an instance of Realization (see pyhalo.single_realization)
         :param cosmo: an instance of Cosmology() from pyhalo
         :param particle_swarm_init: whether or not to use a particle swarm algorithm when fitting the macromodel.
         You should use a particle swarm routine if you're starting the lens model from scratch
+        :param opt_routine: the optimization routine to use... more documentation coming soon
+        :param constrain_params: keywords to be passed to optimization routine
+        :param verbose: whether to print stuff
+        :param centroid_convention: the definition of the lens cone "center". There are two options:
+        'IMAGES' - rendering area is taken to be the mean of the image coordinate at each lens plane
+        'DEFLECTOR' - rendering area is computed by performing a ray tracing computation through the deflector mass
+        centroid
 
         This routine can be immediately followed by doing a lens model fit to the data, for example:
 
         1st:
-        lens_system = QuadLensSystem.shift_background_auto(data, macromodel, zsource, background_quasar,
+        lens_system = QuadLensSystem.shift_background_auto(data, macromodel, zsource,
                             realization, particle_swarm_init=True)
 
         2nd:
@@ -90,26 +83,43 @@ class QuadLensSystem(LensBase):
 
         """
 
-        lens_system_init = QuadLensSystem(macromodel, zsource, background_quasar, None,
+        lens_system_init = QuadLensSystem(macromodel, zsource, None,
                                           pyhalo_cosmology=cosmo)
 
         lens_system_init.initialize(lens_data_class, opt_routine=opt_routine, constrain_params=constrain_params,
-                                    kwargs_optimizer={'particle_swarm': particle_swarm_init})
+                                    kwargs_optimizer={'particle_swarm': particle_swarm_init}, verbose=verbose)
 
         source_x, source_y = lens_system_init.source_centroid_x, lens_system_init.source_centroid_y
-        lens_center_x, lens_center_y = lens_system_init.macromodel.centroid
 
+        assert centroid_convention in ['IMAGES', 'DEFLECTOR']
         ray_interp_x, ray_interp_y = interpolate_ray_paths_system(
-            [lens_center_x], [lens_center_y], lens_system_init,
+            lens_data_class.x, lens_data_class.y, lens_system_init,
             include_substructure=False, terminate_at_source=True, source_x=source_x,
             source_y=source_y)
+
+        if centroid_convention == 'IMAGES':
+
+            ### Now compute the centroid of the light cone as the coordinate centroid of the individual images
+            z_range = np.linspace(0, lens_system_init.zsource, 100)
+            distances = [lens_system_init.pyhalo_cosmology.D_C_transverse(zi) for zi in z_range]
+            angular_coordinates_x = []
+            angular_coordinates_y = []
+            for di in distances:
+                x_coords = [ray_x(di) for i, ray_x in enumerate(ray_interp_x)]
+                y_coords = [ray_y(di) for i, ray_y in enumerate(ray_interp_y)]
+                x_center = np.mean(x_coords)
+                y_center = np.mean(y_coords)
+                angular_coordinates_x.append(x_center)
+                angular_coordinates_y.append(y_center)
+
+            ray_interp_x = [interp1d(distances, angular_coordinates_x)]
+            ray_interp_y = [interp1d(distances, angular_coordinates_y)]
 
         realization = realization.shift_background_to_source(ray_interp_x[0], ray_interp_y[0])
 
         macromodel = lens_system_init.macromodel
-        background_quasar = lens_system_init.background_quasar
 
-        lens_system = QuadLensSystem(macromodel, zsource, background_quasar,
+        lens_system = QuadLensSystem(macromodel, zsource,
                                           realization, lens_system_init.pyhalo_cosmology)
 
         lens_system.update_source_centroid(source_x, source_y)
@@ -125,19 +135,23 @@ class QuadLensSystem(LensBase):
         """
         macromodel = quad_lens_system.macromodel
         z_source = quad_lens_system.zsource
-        background_quasar = quad_lens_system.background_quasar
         pyhalo_cosmo = quad_lens_system.pyhalo_cosmology
-        new_quad = QuadLensSystem(macromodel, z_source, background_quasar, realization, pyhalo_cosmo)
-        source_x, source_y = quad_lens_system.source_centroid_x, quad_lens_system.source_centroid_y
-        new_quad.update_source_centroid(source_x, source_y)
+        new_quad = QuadLensSystem(macromodel, z_source, realization, pyhalo_cosmo)
+        if hasattr(quad_lens_system, 'source_centroid_x'):
+            source_x, source_y = quad_lens_system.source_centroid_x, quad_lens_system.source_centroid_y
+            new_quad.update_source_centroid(source_x, source_y)
         return new_quad
 
     def get_smooth_lens_system(self):
 
-        smooth_lens = QuadLensSystem(self.macromodel, self.zsource, self.background_quasar,
+        """
+        Returns a lens system with only the smooth component of the lens model (i.e. no substructure)
+        """
+        smooth_lens = QuadLensSystem(self.macromodel, self.zsource,
                                                   None, self.pyhalo_cosmology)
 
-        smooth_lens.update_source_centroid(self.source_centroid_x, self.source_centroid_y)
+        if hasattr(self, 'source_centroid_x'):
+            smooth_lens.update_source_centroid(self.source_centroid_x, self.source_centroid_y)
 
         return smooth_lens
 
@@ -163,22 +177,21 @@ class QuadLensSystem(LensBase):
 
         self.source_centroid_x = source_x
         self.source_centroid_y = source_y
-        self.background_quasar.update_position(source_x, source_y)
 
-    def quasar_magnification(self, x, y, lens_model=None,
-                             kwargs_lensmodel=None, normed=True,
+    def quasar_magnification(self, x, y, background_source,
+                             lens_model,
+                             kwargs_lensmodel, normed=True,
                              retry_if_blended=0,
                              enforce_unblended=False,
                              adaptive=False, verbose=False, point_source=False,
-                             source_size_pc=None,
-                             center_x=None,
-                             center_y=None):
+                             grid_axis_ratio=1):
 
         """
         Computes the magnifications (or flux ratios if normed=True)
 
         :param x: x image position
         :param y: y image position
+        :param background_quasar: an instance of the background source light profile
         :param lens_model: an instance of LensModel (see lenstronomy.lens_model)
         :param kwargs_lensmodel: key word arguments for the lens_model
         :param normed: if True returns flux ratios
@@ -186,8 +199,6 @@ class QuadLensSystem(LensBase):
         increasing the size of the ray tracing window if an image comes out blended together
         :param point_source: if True, computes the magnification of a point source
         """
-        if lens_model is None or kwargs_lensmodel is None:
-            lens_model, kwargs_lensmodel = self.get_lensmodel()
 
         if point_source:
             mags = lens_model.magnification(x, y, kwargs_lensmodel)
@@ -196,16 +207,21 @@ class QuadLensSystem(LensBase):
                 mags *= max(mags) ** -1
             return mags, False
 
-        if source_size_pc is not None:
-            self.background_quasar.setup(source_size_pc=source_size_pc, reset=True,
-                                         center_x=center_x, center_y=center_y)
+        background_source.setup(self.pc_per_arcsec_zsource)
+        if not hasattr(self, 'source_centroid_x') or self.source_centroid_x is None:
+            raise Exception('lens system must have a specified source coordinate in order to compute the magnification'
+                            'from an extended source.')
+        background_source.update_position(self.source_centroid_x, self.source_centroid_y)
+        relative_angles = [np.arctan2(-xi, yi) for (xi, yi) in zip(x, y)]
 
-        return self.background_quasar.magnification(x, y, lens_model,
+        return background_source.magnification(x, y, lens_model,
                                                     kwargs_lensmodel,
                                                     normed, retry_if_blended,
-                                                    enforce_unblended, adaptive, verbose)
+                                                    enforce_unblended, adaptive, verbose,
+                                                    grid_axis_ratio,
+                                                    relative_angles)
 
-    def plot_images(self, x, y, lens_model=None, kwargs_lensmodel=None, source_fwhm_pc=None,
+    def plot_images(self, x, y, background_source, lens_model=None, kwargs_lensmodel=None,
                     adaptive=False):
 
         if lens_model is None or kwargs_lensmodel is None:
@@ -215,19 +231,11 @@ class QuadLensSystem(LensBase):
                 raise Exception('must either specify the LensModel class instance and keywords,'
                                 'or have a precomputed static lens model instance saved in this class.')
 
-        if source_fwhm_pc is None:
+        background_source.setup(self.pc_per_arcsec_zsource)
+        if not hasattr(self, 'source_centroid_x') or self.source_centroid_x is None:
+            raise Exception('lens system must have a specified source coordinate in order to compute the magnification'
+                            'from an extended source.')
+        background_source.update_position(self.source_centroid_x, self.source_centroid_y)
 
-            return self.background_quasar.plot_images(x, y, lens_model, kwargs_lensmodel,
+        return background_source.plot_images(x, y, lens_model, kwargs_lensmodel,
                                                       adaptive=adaptive)
-
-        else:
-
-            source_x, source_y = self.source_centroid_x, self.source_centroid_y
-            kwargs_new = {'center_x': source_x, 'center_y': source_y, 'source_fwhm_pc': source_fwhm_pc}
-            quasar = Quasar(kwargs_new)
-            pc_per_arcsec_zsource = 1000 * self.pyhalo_cosmology.astropy.\
-                arcsec_per_kpc_proper(self.zsource).value ** -1
-            quasar.setup(pc_per_arcsec_zsource)
-
-            return quasar.plot_images(x, y, lens_model, kwargs_lensmodel)
-

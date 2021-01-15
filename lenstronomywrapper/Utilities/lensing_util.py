@@ -18,30 +18,6 @@ def flux_at_edge(image):
     else:
         return False
 
-def interpolate_ray_path_center(x_center, y_center, source_x, source_y, lens_system,
-                                include_substructure=False, realization=None):
-
-    # load the lens model and keywords for ray tracing
-    lens_model, kwargs_lens = lens_system.get_lensmodel(include_substructure, True, realization)
-    zsource = lens_system.zsource
-
-    # ray trace through the lens model
-    x, y, redshifts, tz = lens_model.lens_model.ray_shooting_partial_steps(
-        0., 0., x_center, y_center, 0, zsource, kwargs_lens)
-
-    # compute the angular coordinate of the ray at each lens plane
-    angle_x = [x_center] + [x_comoving / tzi for x_comoving, tzi in zip(x[1:], tz[1:])]
-    angle_y = [y_center] + [y_comoving / tzi for y_comoving, tzi in zip(y[1:], tz[1:])]
-
-    # replace the final angular coordinate with the source coordinate
-    angle_x[-1] = source_x
-    angle_y[-1] = source_y
-
-    # interpolate
-    ray_angles_x = interp1d(redshifts, angle_x)
-    ray_angles_y = interp1d(redshifts, angle_y)
-
-    return [ray_angles_x], [ray_angles_y]
 
 def interpolate_ray_paths(x_image, y_image, lens_model, kwargs_lens, zsource,
                           terminate_at_source=False, source_x=None, source_y=None):
@@ -61,6 +37,7 @@ def interpolate_ray_paths(x_image, y_image, lens_model, kwargs_lens, zsource,
 
     ray_angles_x = []
     ray_angles_y = []
+
     #print('coordinate: ', (x_image, y_image))
     for (xi, yi) in zip(x_image, y_image):
 
@@ -78,6 +55,10 @@ def interpolate_ray_paths(x_image, y_image, lens_model, kwargs_lens, zsource,
 def ray_angles(alpha_x, alpha_y, lens_model, kwargs_lens, zsource):
 
     redshift_list = lens_model.redshift_list + [zsource]
+    redshift_list_finely_sampled = np.arange(0.02, zsource, 0.02)
+
+    full_redshift_list = np.unique(np.append(redshift_list, redshift_list_finely_sampled))
+    full_redshift_list_sorted = full_redshift_list[np.argsort(full_redshift_list)]
 
     x_angle_list, y_angle_list, tz = [alpha_x], [alpha_y], [0.]
 
@@ -89,22 +70,23 @@ def ray_angles(alpha_x, alpha_y, lens_model, kwargs_lens, zsource):
     x0, y0 = 0., 0.
     zstart = 0.
 
-    unique_redshifts = np.unique(redshift_list)
-    sort = np.argsort(unique_redshifts)
-    unique_sorted_redshifts = unique_redshifts[sort]
-
-    for zi in unique_sorted_redshifts:
+    for zi in full_redshift_list_sorted:
 
         assert len(lens_model.lens_model_list) == len(kwargs_lens)
 
-        try:
+        if hasattr(lens_model, 'lens_model'):
+
             x0, y0, alpha_x, alpha_y = lens_model.lens_model.ray_shooting_partial(x0, y0, alpha_x, alpha_y, zstart, zi,
                                                                                kwargs_lens)
             d = cosmo_calc(0., zi)
-        except:
+
+        elif hasattr(lens_model, 'ray_shooting_partial'):
             x0, y0, alpha_x, alpha_y = lens_model.ray_shooting_partial(x0, y0, alpha_x, alpha_y, zstart, zi,
                                                                                kwargs_lens)
             d = cosmo_calc(zi).value
+
+        else:
+            raise Exception('the supplied lens model class does not have a ray shooting partial method')
 
         x_angle_list.append(x0/d)
         y_angle_list.append(y0/d)
@@ -118,7 +100,7 @@ def interpolate_ray_paths_system(x_image, y_image, lens_system,
                                  include_substructure=True, realization=None, terminate_at_source=False,
                                  source_x=None, source_y=None):
 
-    lens_model, kwargs_lens = lens_system.get_lensmodel(include_substructure, True, realization)
+    lens_model, kwargs_lens = lens_system.get_lensmodel(include_substructure, realization)
 
     zsource = lens_system.zsource
 
@@ -177,12 +159,11 @@ def solve_H0_from_Ddt(zlens, zsource, D_dt, astropy_instance_ref, interpolation_
                 out = minimize(_func_to_min, x0=73.3,
                           method='Nelder-Mead', args=D_dt)['x'][0]
 
-
     return out
 
 class RayShootingGrid(object):
 
-    def __init__(self, side_length, grid_res, rot):
+    def __init__(self, side_length, grid_res):
 
         N = int(2*side_length*grid_res**-1)
 
@@ -197,22 +178,18 @@ class RayShootingGrid(object):
 
         self.radius = side_length
 
-        self._rot = rot
-
     @property
     def grid_at_xy_unshifted(self):
         return self.x_grid_0, self.y_grid_0
 
-    def grid_at_xy(self, xloc, yloc):
-
-        theta = self._rot
+    def grid_at_xy(self, xloc, yloc, theta=0):
 
         cos_phi, sin_phi = np.cos(theta), np.sin(theta)
 
         gridx0, gridy0 = self.grid_at_xy_unshifted
 
         _xgrid, _ygrid = (cos_phi * gridx0 + sin_phi * gridy0), (-sin_phi * gridx0 + cos_phi * gridy0)
-        xgrid, ygrid = _xgrid + xloc, _ygrid + yloc
+        xgrid, ygrid = gridx0 + xloc, gridy0 + yloc
 
         xgrid, ygrid = xgrid.ravel(), ygrid.ravel()
 
@@ -220,19 +197,27 @@ class RayShootingGrid(object):
 
 class AdaptiveGrid(object):
 
-    def __init__(self, end_rmax, grid_resolution, theta, x_center, y_center):
+    def __init__(self, end_rmax, grid_resolution, theta, x_center, y_center, q=1.):
 
-        full_grid = RayShootingGrid(end_rmax, grid_resolution, theta)
+        full_grid = RayShootingGrid(end_rmax, grid_resolution)
 
         xgrid_0, ygrid_0 = full_grid.grid_at_xy_unshifted
-        self.r_base = np.sqrt(xgrid_0 ** 2 + ygrid_0 ** 2).ravel()
+        xgrid_0, ygrid_0 = self.rotate_grid(xgrid_0, ygrid_0, theta)
+        self.r_base = np.sqrt(xgrid_0 ** 2 + (ygrid_0/q) ** 2).ravel()
+
         self.rmax = end_rmax
         self.grid_res = grid_resolution
 
-        self.xgrid, self.ygrid = full_grid.grid_at_xy(x_center, y_center)
+        self.xgrid, self.ygrid = full_grid.grid_at_xy(x_center, y_center, theta)
 
         self._pixels_per_axis = int(len(self.xgrid) ** 0.5)
         self.flux_values = np.zeros_like(self.xgrid)
+
+    def rotate_grid(self, x, y, theta_rad):
+
+        cos, sin = np.cos(theta_rad), np.sin(theta_rad)
+
+        return x * cos + y * sin, -x * sin + y * cos
 
     def get_indicies(self, rmin, rmax):
 

@@ -4,9 +4,9 @@ from lenstronomywrapper.LensSystem.LensComponents.powerlawshear import PowerLawS
 from lenstronomywrapper.LensSystem.LensComponents.SIS import SISsatellite
 from lenstronomywrapper.LensSystem.LensComponents.multipole import Multipole
 
-from lenstronomy.LensModel.lens_model import LensModel
 from lenstronomywrapper.LensData.lensed_quasar import LensedQuasar
 from lenstronomywrapper.LensSystem.BackgroundSource.quasar import Quasar
+from lenstronomywrapper.LensSystem.BackgroundSource.double_gaussian import DoubleGaussian
 
 from lenstronomywrapper.Utilities.misc import write_fluxes, write_params, write_macro, write_sampling_rate, write_delta_hessian
 
@@ -15,7 +15,7 @@ from lenstronomywrapper.Sampler.prior_sample import PriorDistribution
 from copy import deepcopy
 
 def readout(readout_path, kwargs_macro, fluxes, parameters, header, write_header, write_mode,
-            sampling_rate, readout_macro, delta_hessian,
+            sampling_rate, readout_macro,
             readout_flux_only=False, flux_file_extension=''):
 
     if readout_flux_only:
@@ -28,10 +28,6 @@ def readout(readout_path, kwargs_macro, fluxes, parameters, header, write_header
         if readout_macro:
             write_macro(readout_path + 'macro.txt', kwargs_macro, mode=write_mode, write_header=write_header)
         write_sampling_rate(readout_path + 'sampling_rate.txt', sampling_rate)
-
-        if delta_hessian is not None:
-            write_delta_hessian(readout_path + 'delta_hessian.txt', delta_hessian, write_mode,
-                                write_header)
 
 def load_keywords(path_to_folder, job_index):
 
@@ -117,8 +113,10 @@ def build_priors(params_to_vary):
             prior_list_macromodel[param_name] = new
         elif prior_group == 'source':
             prior_list_source[param_name] = new
-        if prior_group == 'cosmo':
+        elif prior_group == 'cosmo':
             prior_list_cosmo[param_name] = new
+        else:
+            raise Exception('prior group '+str(prior_group)+' not recognized')
 
     return prior_list_realization, prior_list_macromodel, prior_list_source, prior_list_cosmo
 
@@ -128,6 +126,7 @@ def load_lens_source(prior_list_cosmo, keywords):
 
     if 'zlens' in prior_list_cosmo.keys():
         zlens = prior_list_cosmo['zlens']()
+        zlens = np.round(zlens, 2)
         samples['zlens'] = zlens
     else:
         zlens = keywords['zlens']
@@ -159,13 +158,9 @@ def build_kwargs_macro_powerlaw_ellipsoid(prior_list_macromodel):
 
     return kwargs_init, constrain_params, samples
 
-def load_background_quasar(prior_list_source, keywords):
+def load_background_source(prior_list_source, keywords):
 
     samples = {}
-
-    kwargs_quasar = {'center_x': 0., 'center_y': 0., 'source_fwhm_pc': None}
-
-    kwargs_quasar['source_fwhm_pc'] = prior_list_source['source_fwhm_pc']()
 
     if 'grid_rmax' in keywords.keys():
         grid_rmax = keywords['grid_rmax']
@@ -177,17 +172,35 @@ def load_background_quasar(prior_list_source, keywords):
     else:
         grid_rmax_scale = keywords['grid_rmax_scale']
 
-    quasar = Quasar(kwargs_quasar, grid_rmax=grid_rmax, grid_rmax_scale=grid_rmax_scale)
-    samples['source_fwhm_pc'] = kwargs_quasar['source_fwhm_pc']
+    assert 'source_model' in keywords.keys()
 
-    if 'dx_source_2' in prior_list_source.keys():
+    if keywords['source_model'] == 'GAUSSIAN':
+        assert 'source_fwhm_pc' in prior_list_source.keys()
+        kwargs_quasar = {'center_x': 0., 'center_y': 0.}
+        source_fwhm_pc = prior_list_source['source_fwhm_pc']()
+        kwargs_quasar['source_fwhm_pc'] = source_fwhm_pc
+        source_model = Quasar(kwargs_quasar, grid_rmax=grid_rmax, grid_rmax_scale=grid_rmax_scale)
+        samples['source_fwhm_pc'] = source_fwhm_pc
+
+    elif keywords['source_model'] == 'DOUBLE_GAUSSIAN':
+        assert 'source_fwhm_pc' in prior_list_source.keys()
+        assert 'dx_source_2' in prior_list_source.keys()
         assert 'dy_source_2' in prior_list_source.keys()
         assert 'size_scale_2' in prior_list_source.keys()
         assert 'amp_scale_2' in prior_list_source.keys()
-        for name in ['dx_source_2', 'dy_source_2', 'size_scale_2', 'amp_scale_2']:
-            samples[name] = prior_list_source[name]()
 
-    return quasar, samples
+        kwargs_quasar = {'center_x': 0., 'center_y': 0.}
+        name_out = ['source_fwhm_pc', 'dx', 'dy', 'size_scale', 'amp_scale']
+        for name, pname in zip(['source_fwhm_pc', 'dx_source_2', 'dy_source_2', 'size_scale_2', 'amp_scale_2'], name_out):
+            samples[name] = prior_list_source[name]()
+            kwargs_quasar[pname] = samples[name]
+
+        source_model = DoubleGaussian(kwargs_quasar, grid_rmax=grid_rmax)
+
+    else:
+        raise Exception('source model must be specifed and be either GAUSSIAN OR DOUBLE_GAUSSIAN')
+
+    return source_model, samples
 
 def load_double_background_quasar(prior_list_source, keywords):
 
@@ -207,25 +220,9 @@ def load_double_background_quasar(prior_list_source, keywords):
     else:
         raise Exception('only single sources implemented, not '+str(n_sources))
 
-def load_local_image_keywords(keywords_local_image, lens_system):
-
-    keywords_sampled = {}
-
-    macro_indicies_fixed = keywords_local_image['macro_indicies_fixed']
-    lensmodel, kwargs_lensmodel = lens_system.get_lensmodel(include_substructure=False)
-    kwargs_opt = keywords_local_image['keywords_optimization']
-
-    hessian_samples = keywords_local_image['hessian_samples']
-    assert len(hessian_samples) == 4, 'Need hessian samples for all four images'
-    for hi in hessian_samples:
-        assert hi[0].shape[0] == 3
-        assert hi[0].shape[1] >= 100, "Should have at least 100 samples in hessian_pdf"
-
-    return macro_indicies_fixed, hessian_samples, lensmodel, \
-           kwargs_lensmodel, keywords_sampled, kwargs_opt
-
 def load_powerlaw_ellipsoid_macromodel(zlens, prior_list_macromodel,
-                                       kwargs_macro_ref, secondary_lens_components):
+                                       kwargs_macro_ref, secondary_lens_components,
+                                       keywords):
 
     samples = {}
 
@@ -250,6 +247,9 @@ def load_powerlaw_ellipsoid_macromodel(zlens, prior_list_macromodel,
         kwargs_init[1]['gamma1'], kwargs_init[1]['gamma2'] = gamma1, gamma2
         constrain_params = {'shear': shear}
         samples['shear'] = shear
+
+    if 'q_min' in keywords.keys():
+        constrain_params['q_min'] = keywords['q_min']
 
     main_deflector = PowerLawShear(zlens, kwargs_init)
     component_list = [main_deflector]
@@ -310,7 +310,7 @@ def load_seccondary_lens_components(prior_list_macro,
                 assert output in component_kwargs.keys(), 'error: did not find expected parameter '+str(output)
                 kwargs_model[output] = component_kwargs[output]
 
-        z_name = 'z_' + str(idx)
+        z_name = 'z_' + str(idx + 1)
         if z_name in prior_list_macro.keys():
             z_comp = prior_list_macro[z_name]()
             params_sampled[z_name] = z_comp
@@ -375,11 +375,48 @@ def load_data_to_fit(keywords):
     x_image_sigma = np.random.normal(0, sigma)
     y_image_sigma = np.random.normal(0, sigma)
 
-    x_image += x_image_sigma
-    y_image += y_image_sigma
-
-    data_to_fit = LensedQuasar(x_image, y_image, flux_ratios)
+    data_to_fit = LensedQuasar(x_image + x_image_sigma, y_image + y_image_sigma, flux_ratios)
 
     return data_to_fit
+
+def simulation_setup(keyword_arguments, prior_list_realization, prior_list_cosmo, prior_list_macromodel,
+                     prior_list_source, kwargs_macro_ref=None):
+
+    params_sampled = {}
+
+    ######## Sample keyword arguments for the substructure realization ##########
+
+    kwargs_rendering, realization_samples = realization_keywords(keyword_arguments, prior_list_realization)
+    params_sampled.update(realization_samples)
+
+    ######## Sample keyword arguments for the lensing volume ##########
+    zlens, zsource, lens_source_sampled = load_lens_source(prior_list_cosmo, keyword_arguments)
+    params_sampled.update(lens_source_sampled)
+
+    ######## Sample keyword arguments for the macromodel ##########
+
+    macromodel, macro_samples, constrain_params = \
+        load_powerlaw_ellipsoid_macromodel(zlens, prior_list_macromodel, kwargs_macro_ref,
+                                           keyword_arguments['secondary_lens_components'], keyword_arguments)
+    params_sampled.update(macro_samples)
+
+    ######## Sample keyword arguments for the background source ##########
+    background_quasar, source_samples = load_background_source(prior_list_source,
+                                                               keyword_arguments)
+    params_sampled.update(source_samples)
+
+    ################## Set up the data to fit ####################
+    data_to_fit = load_data_to_fit(keyword_arguments)
+
+    ################ Get the optimization settings ################
+    optimization_settings = load_optimization_settings(keyword_arguments)
+
+    ################ Perform a fit with only a smooth model ################
+    optimization_routine = keyword_arguments['optimization_routine']
+
+    return kwargs_rendering, realization_samples, zlens, zsource, lens_source_sampled, \
+           macromodel, macro_samples, constrain_params, background_quasar, source_samples, data_to_fit, \
+           optimization_settings, optimization_routine, params_sampled
+
 
 

@@ -124,12 +124,12 @@ def run_1131(job_index, chain_ID, output_path, path_to_folder,
 
         macromodel, macro_samples, constrain_params = \
             load_powerlaw_ellipsoid_macromodel(zlens, prior_list_macromodel, kwargs_macro_ref,
-                                               keyword_arguments['secondary_lens_components'])
+                                               keyword_arguments['secondary_lens_components'], keyword_arguments)
         params_sampled.update(macro_samples)
 
         ######## Sample keyword arguments for the background source ##########
-        background_quasar, source_samples = load_background_quasar(prior_list_source,
-                                                                     keyword_arguments)
+        background_quasar, source_samples = load_background_source(prior_list_source,
+                                                                   keyword_arguments)
         params_sampled.update(source_samples)
         kwargs_quasar = {'center_x': 0., 'center_y': 0., 'source_fwhm_pc': 1.}
         background_quasar = Quasar(kwargs_quasar)

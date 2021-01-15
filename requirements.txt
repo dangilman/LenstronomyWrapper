@@ -8,3 +8,7 @@ coverage==4.5.4
 Sphinx==1.8.5
 twine==1.14.0
 Click==7.0
+numpy>=1.13
+astropy>=2.0
+scipy>=0.19.1
+lenstronomy>=1.7.0

@@ -33,7 +33,6 @@ class SourceReconstruction(object):
         kwargs_data_joint, kwargs_model, kwargs_constraints, kwargs_likelihood, kwargs_params, multi_band_list = \
             self._init.sampler_inputs(reoptimize)
 
-        print(multi_band_list[0][1].keys())
         fitting_seq = FittingSequence(kwargs_data_joint, kwargs_model, kwargs_constraints, kwargs_likelihood,
                                       kwargs_params)
 
@@ -57,6 +56,7 @@ class SourceReconstruction(object):
 
     def _update_lens_system(self, kwargs_lens, kwargs_source_light, kwargs_lens_light, kwargs_ps,
                             multi_band_list):
+
 
         self.lens_system.update_kwargs_macro(kwargs_lens)
 

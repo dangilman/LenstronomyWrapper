@@ -1,5 +1,4 @@
 from lenstronomywrapper.Sampler.run import run
-from lenstronomywrapper.Sampler.run_two_sources import run_two_sources
 import sys
 import os
 from time import time
@@ -7,7 +6,9 @@ from time import time
 #job_index = int(sys.argv[1])
 job_index = 1
 # the name of the folder containing paramdictionary files
-chain_ID = 'B2045_test_save_best'
+
+chain_ID = 'B1422'
+
 # where to generate output files
 #out_path = '/scratch/abenson/'
 out_path = os.getenv('HOME') + '/data/sims/'

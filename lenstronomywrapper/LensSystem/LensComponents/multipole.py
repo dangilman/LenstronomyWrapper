@@ -9,8 +9,7 @@ class Multipole(ComponentBase):
                  concentric_with_lens_model=None,
                  concentric_with_lens_light=None,
                  kwargs_fixed=None,
-                 custom_prior=None,
-                 amp_range_scale=1.):
+                 custom_prior=None):
 
 
         """
@@ -21,8 +20,7 @@ class Multipole(ComponentBase):
         self.reoptimize = reoptimize
 
         self._m = kwargs_init[0]['m']
-
-        self._amp_range_scale = amp_range_scale
+        self._am = kwargs_init[0]['a_m']
 
         self._concentric_with_lens_model = concentric_with_lens_model
         self._concentric_with_lens_light = concentric_with_lens_light
@@ -56,6 +54,8 @@ class Multipole(ComponentBase):
                     kw[keyword] = self.kwargs_fixed[keyword]
                 if 'm' not in self.kwargs_fixed.keys():
                     kw['m'] = self._m
+                if 'a_m' not in self.kwargs_fixed.keys():
+                    kw['a_m'] = self._am
 
                 return [kw]
 
@@ -95,23 +95,16 @@ class Multipole(ComponentBase):
     @property
     def amp_minmax(self):
 
-        if self._m == 2:
-            return 0.05
-        elif self._m == 3:
-            return 0.03
-        elif self._m == 4:
-            return 0.025
-        else:
-            return 0.02
+        return 0.04
 
     @property
     def param_lower(self):
-        lower = [{'m': 2, 'a_m': -self._amp_range_scale * self.amp_minmax, 'phi_m': -3.14159, 'center_x': -10, 'center_y': -10}]
+        lower = [{'m': 4, 'a_m': -self.amp_minmax, 'phi_m': -3.14159, 'center_x': -10, 'center_y': -10}]
         return lower
 
     @property
     def param_upper(self):
-        upper = [{'m': 10, 'a_m': self._amp_range_scale *self.amp_minmax, 'phi_m': 3.14159, 'center_x': 10, 'center_y': 10}]
+        upper = [{'m': 4, 'a_m': self.amp_minmax, 'phi_m': 3.14159, 'center_x': 10, 'center_y': 10}]
         return upper
 
     @property

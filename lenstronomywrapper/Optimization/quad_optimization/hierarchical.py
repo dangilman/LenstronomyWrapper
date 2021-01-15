@@ -1,7 +1,7 @@
 from lenstronomywrapper.Optimization.quad_optimization.brute import BruteOptimization
 from lenstronomywrapper.Optimization.quad_optimization.settings import *
 from lenstronomywrapper.Utilities.lensing_util import interpolate_ray_paths_system
-
+import numpy as np
 
 class HierarchicalOptimization(BruteOptimization):
 
@@ -10,12 +10,14 @@ class HierarchicalOptimization(BruteOptimization):
 
         if settings_class == 'default':
             settings_class = HierarchicalSettingsDefault()
-        elif settings_class == 'default_2':
-            settings_class = HierarchicalSettingsDefault2()
         elif settings_class == 'delta_function':
             settings_class = HierarchicalSettingsDeltaFunction(**settings_kwargs)
         elif settings_class == 'default_CDM':
             settings_class = HierarchicalSettingsCDM()
+        elif settings_class == 'default_CDM2':
+            settings_class = HierarchicalSettingsCDM2()
+        elif settings_class == 'default_CDM_MPC':
+            settings_class = HierarchicalSettingsCDM_Mpc()
         elif settings_class == 'custom':
             settings_class = SettingsClass(**kwargs_settings_class)
         else:
@@ -30,7 +32,8 @@ class HierarchicalOptimization(BruteOptimization):
 
         super(HierarchicalOptimization, self).__init__(lens_system, n_particles, simplex_n_iter)
 
-    def optimize(self, data_to_fit, param_class_name, constrain_params, verbose=False, threadCount=1):
+    def optimize(self, data_to_fit, param_class_name, constrain_params, verbose=False,
+                 threadCount=1, check_bad_fit=False):
 
         realization = self.realization_initial
 
@@ -42,6 +45,13 @@ class HierarchicalOptimization(BruteOptimization):
         lens_model_full, kwargs_lens_final, foreground_realization_filtered, [source_x, source_y] = \
             self._fit_foreground(data_to_fit, foreground_realization, param_class_name, constrain_params,
                                  threadCount, verbose)
+
+        if check_bad_fit:
+            sx, sy = lens_model_full.ray_shooting(data_to_fit.x, data_to_fit.y, kwargs_lens_final)
+            if np.std(sx) > 0.001 or np.std(sy) > 0.001:
+                if verbose:
+                    print('was not able to fit image positions, quitting...')
+                return None, None, None
 
         lens_model_full, kwargs_lens_final, realization_filtered, \
         [source_x, source_y], reoptimized_realizations = \
@@ -58,16 +68,19 @@ class HierarchicalOptimization(BruteOptimization):
     def _fit_foreground(self, data_to_fit, realization_foreground, param_class, constrain_params, threadCount, verbose=False):
 
         aperture_masses, globalmin_masses, window_sizes, scale, optimize_iteration, particle_swarm_reopt, \
-        re_optimize_iteration = self.settings.foreground_settings
+        re_optimize_iteration, aperture_units = self.settings.foreground_settings
 
         N_foreground_halos_last = 0
 
         lens_model_full, kwargs_lens_final = self.lens_system.get_lensmodel(include_substructure=False)
         source_x, source_y = None, None
 
+        z_mass_sheet_max = self.lens_system.zlens
+
         for run in range(0, self.settings.n_iterations_foreground):
 
             if run == 0:
+
                 ray_x_interp, ray_y_interp = interpolate_ray_paths_system(data_to_fit.x, data_to_fit.y, self.lens_system,
                                                                    include_substructure=False)
 
@@ -78,13 +91,14 @@ class HierarchicalOptimization(BruteOptimization):
 
             filter_kwargs = {'aperture_radius_front': window_sizes[run],
                              'aperture_radius_back': 0.,
-                             'mass_allowed_in_apperture_front': aperture_masses[run],
-                             'mass_allowed_in_apperture_back': 12,
-                             'mass_allowed_global_front': globalmin_masses[run],
-                             'mass_allowed_global_back': 10.,
+                             'log_mass_allowed_in_aperture_front': aperture_masses[run],
+                             'log_mass_allowed_in_aperture_back': 12,
+                             'log_mass_allowed_global_front': globalmin_masses[run],
+                             'log_mass_allowed_global_back': 10.,
                              'interpolated_x_angle': ray_x_interp,
                              'interpolated_y_angle': ray_y_interp,
-                             'zmax': self.lens_system.zlens
+                             'zmax': self.lens_system.zlens,
+                             'aperture_units': aperture_units
                              }
 
             if run == 0:
@@ -138,7 +152,7 @@ class HierarchicalOptimization(BruteOptimization):
                 kwargs_lens_final, lens_model_full, [source_x, source_y] = self.fit(data_to_fit, param_class, constrain_params, verbose=verbose,
                  include_substructure=True, realization=realization_filtered, re_optimize=re_optimize_iteration[run],
                                               re_optimize_scale=scale[run], particle_swarm=particle_swarm_reopt[run],
-                                                                                    threadCount=threadCount)
+                                             threadCount=threadCount, z_mass_sheet_max=z_mass_sheet_max)
 
                 N_foreground_halos_last = N_foreground_halos
 
@@ -164,7 +178,7 @@ class HierarchicalOptimization(BruteOptimization):
                                  threadCount, verbose):
 
         aperture_masses, globalmin_masses, window_sizes, scale, optimize_iteration, particle_swarm_reopt, \
-        re_optimize_iteration = self.settings.background_settings
+        re_optimize_iteration, aperture_units = self.settings.background_settings
 
         N_background_halos_last = 0
 
@@ -175,21 +189,24 @@ class HierarchicalOptimization(BruteOptimization):
         for run in range(0, self.settings.n_iterations_background):
 
             if run == 0:
+
                 ray_x_interp, ray_y_interp = interpolate_ray_paths_system(data_to_fit.x, data_to_fit.y, self.lens_system,
                                                                    realization=foreground_realization_filtered)
             else:
+
                 ray_x_interp, ray_y_interp = interpolate_ray_paths_system(data_to_fit.x, data_to_fit.y, self.lens_system,
                                                                    realization=realization_filtered)
 
             filter_kwargs = {'aperture_radius_front': 10.,
                              'aperture_radius_back': window_sizes[run],
-                             'mass_allowed_in_apperture_front': 10.,
-                             'mass_allowed_in_apperture_back': aperture_masses[run],
-                             'mass_allowed_global_front': 10.,
-                             'mass_allowed_global_back': globalmin_masses[run],
+                             'log_mass_allowed_in_aperture_front': 10.,
+                             'log_mass_allowed_in_aperture_back': aperture_masses[run],
+                             'log_mass_allowed_global_front': 10.,
+                             'log_mass_allowed_global_back': globalmin_masses[run],
                              'interpolated_x_angle': ray_x_interp,
                              'interpolated_y_angle': ray_y_interp,
-                             'zmin': self.lens_system.zlens
+                             'zmin': self.lens_system.zlens,
+                             'aperture_units': aperture_units
                              }
 
             if run == 0:

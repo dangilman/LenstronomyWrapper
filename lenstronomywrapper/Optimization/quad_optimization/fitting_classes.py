@@ -1,5 +1,50 @@
-import numpy as np
-from lenstronomy.Util.param_util import ellipticity2phi_q, phi_q2_ellipticity
+from lenstronomy.Util.param_util import phi_q2_ellipticity
+from lenstronomy.LensModel.QuadOptimizer.param_manager import *
+
+
+class PowerLawFreeShearMultipoleAxisRatioPen(PowerLawFreeShearMultipole):
+
+    """
+    This class implements a fit of EPL + external shear with every parameter except the power law slope allowed to vary
+    """
+
+    def __init__(self, kwargs_lens_init, q_min):
+
+        super(PowerLawFreeShearMultipoleAxisRatioPen, self).__init__(kwargs_lens_init)
+
+        self._qmin = q_min
+
+    def param_chi_square_penalty(self, args):
+
+        e1, e2 = args[3], args[4]
+        _, q = ellipticity2phi_q(e1, e2)
+
+        if q < self._qmin:
+            return np.inf
+        else:
+            return 0.
+
+class PowerLawFixedShearMultipoleAxisRatioPen(PowerLawFixedShearMultipole):
+
+    """
+    This class implements a fit of EPL + external shear with every parameter except the power law slope allowed to vary
+    """
+
+    def __init__(self, kwargs_lens_init, shear_strength, q_min):
+
+        super(PowerLawFixedShearMultipoleAxisRatioPen, self).__init__(kwargs_lens_init, shear_strength)
+
+        self._qmin = q_min
+
+    def param_chi_square_penalty(self, args):
+
+        e1, e2 = args[3], args[4]
+        _, q = ellipticity2phi_q(e1, e2)
+
+        if q < self._qmin:
+            return np.inf
+        else:
+            return 0.
 
 class FixedNFWShearBulgeDisk(object):
 
