@@ -180,7 +180,8 @@ def run(job_index, chain_ID, output_path, path_to_folder,
         magnification_function_kwargs = {'x': data_to_fit.x, 'y': data_to_fit.y,
                       'source_fwhm_pc': source_samples['source_fwhm_pc'],
                      'lens_model': lensModel_fit, 'kwargs_lensmodel': kwargs_lens_fit, 'normed': True,
-                         'grid_axis_ratio': grid_axis_ratio, 'grid_rmax': grid_rmax}
+                         'grid_axis_ratio': grid_axis_ratio, 'grid_rmax': grid_rmax,
+                                         'grid_resolution_rescale': 3}
 
         flux_ratios_fit = magnification_function(**magnification_function_kwargs)
 

@@ -183,7 +183,7 @@ class QuadLensSystem(LensBase):
                              kwargs_lensmodel, point_source=False,
                              grid_axis_ratio=0.5, grid_rmax=None,
                              grid_resolution=None,
-                             normed=True):
+                             normed=True, grid_resolution_rescale=1):
 
         """
         Computes the magnifications (or flux ratios if normed=True)
@@ -211,7 +211,7 @@ class QuadLensSystem(LensBase):
             if grid_resolution is None:
                 from lenstronomy.Util.magnification_finite_util import auto_raytracing_grid_resolution
                 grid_resolution = auto_raytracing_grid_resolution(source_fwhm_pc)
-
+            grid_resolution *= grid_resolution_rescale
             extension = LensModelExtensions(lens_model)
             source_x, source_y = self.source_centroid_x, self.source_centroid_y
             magnifications = extension.magnification_finite_adaptive(x, y,
@@ -226,7 +226,7 @@ class QuadLensSystem(LensBase):
         return magnifications
 
     def plot_images(self, x, y, source_fwhm_pc, lens_model=None, kwargs_lensmodel=None,
-                    grid_rmax=None, grid_resolution=None):
+                    grid_rmax=None, grid_resolution=None, grid_resolution_rescale=1.):
 
         if lens_model is None or kwargs_lensmodel is None:
             if self._static_lensmodel:
@@ -253,7 +253,7 @@ class QuadLensSystem(LensBase):
             grid_rmax = auto_raytracing_grid_size(source_fwhm_pc)
         if grid_resolution is None:
             grid_resolution = auto_raytracing_grid_resolution(source_fwhm_pc)
-
+        grid_resolution *= grid_resolution_rescale
         npix = int(2 * grid_rmax / grid_resolution)
 
         _x = np.linspace(-grid_rmax, grid_rmax, npix)
