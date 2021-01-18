@@ -97,7 +97,6 @@ def run(job_index, chain_ID, output_path, path_to_folder,
     else:
         save_best_realization = False
     readout_best = False
-    enforce_unblended = keywords_master['enforce_unblended']
 
     counter = 0
     while counter < n_run:
@@ -196,19 +195,19 @@ def run(job_index, chain_ID, output_path, path_to_folder,
             ax.set_aspect('equal')
             plt.show()
 
-            lens_system.plot_images(data_to_fit.x, data_to_fit.y, lensModel_fit,
-                                    kwargs_lens_fit, grid_rmax=grid_rmax)
+            lens_system.plot_images(data_to_fit.x, data_to_fit.y, source_samples['source_fwhm_pc'],
+                                    lensModel_fit, kwargs_lens_fit, grid_rmax=grid_rmax)
             plt.show()
 
-            _x = _y = np.linspace(-1.5, 1.5, 100)
-            xx, yy = np.meshgrid(_x, _y)
-            shape0 = xx.shape
-            mag_surface = lensModel_fit.magnification(xx.ravel(), yy.ravel(),
-                                        kwargs_lens_fit).reshape(shape0)
+            # _x = _y = np.linspace(-1.5, 1.5, 100)
+            # xx, yy = np.meshgrid(_x, _y)
 
-            plt.imshow(np.log10(mag_surface), extent=[-1.5, 1.5, -1.5, 1.5], origin='lower')
-            plt.scatter(data_to_fit.x, data_to_fit.y, color='k')
-            plt.show()
+            # mag_surface = lensModel_fit.magnification(xx.ravel(), yy.ravel(),
+            #                             kwargs_lens_fit).reshape(shape0)
+            #
+            # plt.imshow(np.log10(mag_surface), extent=[-1.5, 1.5, -1.5, 1.5], origin='lower')
+            # plt.scatter(data_to_fit.x, data_to_fit.y, color='k')
+            # plt.show()
 
             a = input('continue')
 
