@@ -171,16 +171,20 @@ def run(job_index, chain_ID, output_path, path_to_folder,
         if 'grid_axis_ratio' in keywords_master.keys():
             grid_axis_ratio = keywords_master['grid_axis_ratio']
         else:
-            grid_axis_ratio = 1.
+            grid_axis_ratio = 0.5
+
+        if 'grid_rmax' in keywords_master:
+            grid_rmax = keywords_master['grid_rmax']
+        else:
+            grid_rmax = None
 
         magnification_function = lens_system.quasar_magnification
         magnification_function_kwargs = {'x': data_to_fit.x, 'y': data_to_fit.y,
-                      'background_source': background_source,
+                      'source_fwhm_pc': source_samples['source_fwhm_pc'],
                      'lens_model': lensModel_fit, 'kwargs_lensmodel': kwargs_lens_fit, 'normed': True,
-                         'adaptive': adaptive_mag, 'verbose': keywords_master['verbose'],
-                                         'grid_axis_ratio': grid_axis_ratio}
+                         'grid_axis_ratio': grid_axis_ratio, 'grid_rmax': grid_rmax}
 
-        flux_ratios_fit, blended = magnification_function(**magnification_function_kwargs)
+        flux_ratios_fit = magnification_function(**magnification_function_kwargs)
 
         if test_mode:
             import matplotlib.pyplot as plt
@@ -192,8 +196,8 @@ def run(job_index, chain_ID, output_path, path_to_folder,
             ax.set_aspect('equal')
             plt.show()
 
-            lens_system.plot_images(data_to_fit.x, data_to_fit.y, background_source,
-                                    adaptive=adaptive_mag)
+            lens_system.plot_images(data_to_fit.x, data_to_fit.y, lensModel_fit,
+                                    kwargs_lens_fit, grid_rmax=grid_rmax)
             plt.show()
 
             _x = _y = np.linspace(-1.5, 1.5, 100)
@@ -207,10 +211,6 @@ def run(job_index, chain_ID, output_path, path_to_folder,
             plt.show()
 
             a = input('continue')
-
-        if blended and enforce_unblended:
-            print('images are blended together')
-            continue
 
         flux_ratios_fit = np.round(flux_ratios_fit, 5)
 

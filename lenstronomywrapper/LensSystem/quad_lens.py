@@ -1,7 +1,6 @@
 from lenstronomywrapper.Optimization.quad_optimization.brute import BruteOptimization
 from lenstronomywrapper.LensSystem.lens_base import LensBase
 from pyHalo.Cosmology.cosmology import Cosmology
-from lenstronomywrapper.LensSystem.BackgroundSource.quasar import Quasar
 from lenstronomy.LensModel.lens_model_extensions import LensModelExtensions
 from lenstronomywrapper.Utilities.lensing_util import interpolate_ray_paths_system
 from copy import deepcopy
