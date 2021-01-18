@@ -125,38 +125,18 @@ class TestQuadLensSystem(object):
     def test_quasar_magnification(self):
 
         data = LensedQuasar(self.x, self.y, np.ones_like(self.x))
-        kwargs_source = {'source_fwhm_pc': 20.}
-        background_quasar = Quasar(kwargs_source)
-
-        lensmodel, kwargs_lens = self.quad_lens.get_lensmodel()
-
-        npt.assert_raises(Exception, self.quad_lens.quasar_magnification, self.x, self.y, background_quasar,
-                                                           lensmodel, kwargs_lens)
 
         self.quad_lens.initialize(data_to_fit=data, include_substructure=True)
         lensmodel, kwargs_lens = self.quad_lens.get_lensmodel()
 
-        mag_slow, _ = self.quad_lens.quasar_magnification(self.x, self.y, background_quasar,
-                                                           lensmodel, kwargs_lens, normed=True)
+        mag = self.quad_lens.quasar_magnification(self.x, self.y, 30., lensmodel,
+                                                          kwargs_lens, point_source=False)
 
-        mag_adaptive_slow, _ = self.quad_lens.quasar_magnification(self.x, self.y, background_quasar,
-                                                           lensmodel, kwargs_lens, adaptive=True, normed=False)
-        mag_adaptive_slow *= np.max(mag_adaptive_slow) ** -1
+        mag_point_source = self.quad_lens.quasar_magnification(self.x, self.y, 30., lensmodel,
+                                                          kwargs_lens, point_source=True)
 
-        mag_adaptive_fast, _ = self.quad_lens.quasar_magnification(self.x, self.y, background_quasar,
-                                                                lensmodel, kwargs_lens, adaptive=True,
-                                                                grid_axis_ratio=0.25, normed=False)
-        mag_adaptive_fast *= np.max(mag_adaptive_fast) ** -1
-
-        mag_point_source, _ = self.quad_lens.quasar_magnification(self.x, self.y, background_quasar,
-                                                                   lensmodel, kwargs_lens, adaptive=True,
-                                                                   grid_axis_ratio=0.25, normed=True,
-                                                                  point_source=True)
-
-        for mag_p, mag_s, mag_as, mag_a in zip(mag_point_source, mag_slow, mag_adaptive_slow, mag_adaptive_fast):
-            npt.assert_almost_equal(mag_s, mag_p, 3)
-            npt.assert_almost_equal(mag_as, mag_p, 3)
-            npt.assert_almost_equal(mag_a, mag_p, 3)
+        for mag_p, m in zip(mag_point_source, mag):
+            npt.assert_almost_equal(m, mag_p, 3)
 
 if __name__ == '__main__':
 

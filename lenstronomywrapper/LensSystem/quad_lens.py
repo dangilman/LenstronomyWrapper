@@ -2,6 +2,7 @@ from lenstronomywrapper.Optimization.quad_optimization.brute import BruteOptimiz
 from lenstronomywrapper.LensSystem.lens_base import LensBase
 from pyHalo.Cosmology.cosmology import Cosmology
 from lenstronomywrapper.LensSystem.BackgroundSource.quasar import Quasar
+from lenstronomy.LensModel.lens_model_extensions import LensModelExtensions
 from lenstronomywrapper.Utilities.lensing_util import interpolate_ray_paths_system
 from copy import deepcopy
 import numpy as np
@@ -178,51 +179,55 @@ class QuadLensSystem(LensBase):
         self.source_centroid_x = source_x
         self.source_centroid_y = source_y
 
-    def quasar_magnification(self, x, y, background_source,
+    def quasar_magnification(self, x, y, source_fwhm_pc,
                              lens_model,
-                             kwargs_lensmodel, normed=True,
-                             retry_if_blended=0,
-                             enforce_unblended=False,
-                             adaptive=False, verbose=False, point_source=False,
-                             grid_axis_ratio=1):
+                             kwargs_lensmodel, point_source=False,
+                             grid_axis_ratio=0.5, grid_rmax=None,
+                             grid_resolution=None,
+                             normed=True):
 
         """
         Computes the magnifications (or flux ratios if normed=True)
 
         :param x: x image position
         :param y: y image position
-        :param background_quasar: an instance of the background source light profile
+        :param source_fwhm_pc: size of background quasar emission region in parcsec
         :param lens_model: an instance of LensModel (see lenstronomy.lens_model)
         :param kwargs_lensmodel: key word arguments for the lens_model
-        :param normed: if True returns flux ratios
-        :param retry_if_blended: a integer that specifies how many times to try
-        increasing the size of the ray tracing window if an image comes out blended together
-        :param point_source: if True, computes the magnification of a point source
+        :param point_source: computes the magnification of a point source
+        :param grid_axis_ratio: axis ratio of ray tracing ellipse
+        :param grid_rmax: sets the radius of the ray tracing aperture; if None, a default value will be estimated
+        from the source size
+        :param normed: If True, normalizes the magnifications such that the brightest image has a magnification of 1
         """
 
         if point_source:
             mags = lens_model.magnification(x, y, kwargs_lensmodel)
-            mags = abs(mags)
-            if normed:
-                mags *= max(mags) ** -1
-            return mags, False
+            magnifications = abs(mags)
 
-        background_source.setup(self.pc_per_arcsec_zsource)
-        if not hasattr(self, 'source_centroid_x') or self.source_centroid_x is None:
-            raise Exception('lens system must have a specified source coordinate in order to compute the magnification'
-                            'from an extended source.')
-        background_source.update_position(self.source_centroid_x, self.source_centroid_y)
-        relative_angles = [np.arctan2(-xi, yi) for (xi, yi) in zip(x, y)]
+        else:
+            if grid_rmax is None:
+                from lenstronomy.Util.magnification_finite_util import auto_raytracing_grid_size
+                grid_rmax = auto_raytracing_grid_size(source_fwhm_pc)
+            if grid_resolution is None:
+                from lenstronomy.Util.magnification_finite_util import auto_raytracing_grid_resolution
+                grid_resolution = auto_raytracing_grid_resolution(source_fwhm_pc)
 
-        return background_source.magnification(x, y, lens_model,
-                                                    kwargs_lensmodel,
-                                                    normed, retry_if_blended,
-                                                    enforce_unblended, adaptive, verbose,
-                                                    grid_axis_ratio,
-                                                    relative_angles)
+            extension = LensModelExtensions(lens_model)
+            source_x, source_y = self.source_centroid_x, self.source_centroid_y
+            magnifications = extension.magnification_finite_adaptive(x, y,
+                                                    source_x, source_y, kwargs_lensmodel, source_fwhm_pc,
+                                                                     self.zsource, self.astropy,
+                                                                     grid_radius_arcsec=grid_rmax,
+                                                                     grid_resolution=grid_resolution,
+                                                                     axis_ratio=grid_axis_ratio)
+        if normed:
+            magnifications *= max(magnifications) ** -1
 
-    def plot_images(self, x, y, background_source, lens_model=None, kwargs_lensmodel=None,
-                    adaptive=False):
+        return magnifications
+
+    def plot_images(self, x, y, source_fwhm_pc, lens_model=None, kwargs_lensmodel=None,
+                    grid_rmax=None, grid_resolution=None):
 
         if lens_model is None or kwargs_lensmodel is None:
             if self._static_lensmodel:
@@ -231,11 +236,47 @@ class QuadLensSystem(LensBase):
                 raise Exception('must either specify the LensModel class instance and keywords,'
                                 'or have a precomputed static lens model instance saved in this class.')
 
-        background_source.setup(self.pc_per_arcsec_zsource)
-        if not hasattr(self, 'source_centroid_x') or self.source_centroid_x is None:
-            raise Exception('lens system must have a specified source coordinate in order to compute the magnification'
-                            'from an extended source.')
-        background_source.update_position(self.source_centroid_x, self.source_centroid_y)
+        from lenstronomy.LightModel.light_model import LightModel
+        from lenstronomy.Util.magnification_finite_util import auto_raytracing_grid_size, auto_raytracing_grid_resolution
+        from lenstronomy.Util.util import fwhm2sigma
+        import matplotlib.pyplot as plt
 
-        return background_source.plot_images(x, y, lens_model, kwargs_lensmodel,
-                                                      adaptive=adaptive)
+        source_model = LightModel(['GAUSSIAN'])
+        source_x, source_y = self.source_centroid_x, self.source_centroid_y
+
+        pc_per_arcsec = 1000 / self.astropy.arcsec_per_kpc_proper(self.zsource).value
+        source_fwhm_arcsec = source_fwhm_pc / pc_per_arcsec
+        source_sigma_arcsec = fwhm2sigma(source_fwhm_arcsec)
+
+        kwargs_light = [{'amp': 1, 'center_x': source_x, 'center_y': source_y, 'sigma': source_sigma_arcsec}]
+
+        if grid_rmax is None:
+            grid_rmax = auto_raytracing_grid_size(source_fwhm_pc)
+        if grid_resolution is None:
+            grid_resolution = auto_raytracing_grid_resolution(source_fwhm_pc)
+
+        npix = int(2 * grid_rmax / grid_resolution)
+
+        _x = np.linspace(-grid_rmax, grid_rmax, npix)
+        _y = np.linspace(-grid_rmax, grid_rmax, npix)
+        res = 2 * grid_rmax / npix
+        xx, yy = np.meshgrid(_x, _y)
+        shape0 = xx.shape
+        xx = xx.ravel()
+        yy = yy.ravel()
+
+        sb_list = []
+        mag_list = []
+
+        for i, (xi, yi) in enumerate(zip(x, y)):
+            beta_x, beta_y = lens_model.ray_shooting(xx + xi, yy + yi, kwargs_lensmodel)
+            sb = source_model.surface_brightness(beta_x, beta_y, kwargs_light).reshape(shape0)
+            sb_list.append(sb)
+            mag_list.append(np.sum(sb) * res ** 2)
+
+        mag = np.array(mag_list) * max(mag_list) ** -1
+        for i in range(0, len(sb_list)):
+
+            plt.imshow(sb_list[i])
+            plt.annotate(str(np.round(mag[i], 3)), xy=(0.1, 0.9), xycoords='axes fraction', fontsize=12, color='w')
+            plt.show()
