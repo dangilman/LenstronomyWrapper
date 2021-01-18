@@ -5,7 +5,6 @@ from lenstronomywrapper.LensSystem.LensComponents.SIS import SISsatellite
 from lenstronomywrapper.LensSystem.LensComponents.multipole import Multipole
 
 from lenstronomywrapper.LensData.lensed_quasar import LensedQuasar
-from lenstronomywrapper.LensSystem.BackgroundSource.quasar import Quasar
 from lenstronomywrapper.LensSystem.BackgroundSource.double_gaussian import DoubleGaussian
 
 from lenstronomywrapper.Utilities.misc import write_fluxes, write_params, write_macro, write_sampling_rate, write_delta_hessian
@@ -162,27 +161,15 @@ def load_background_source(prior_list_source, keywords):
 
     samples = {}
 
-    if 'grid_rmax' in keywords.keys():
-        grid_rmax = keywords['grid_rmax']
-    else:
-        grid_rmax = None
-
-    if 'grid_rmax_scale' not in keywords.keys():
-        grid_rmax_scale = 1
-    else:
-        grid_rmax_scale = keywords['grid_rmax_scale']
-
     assert 'source_model' in keywords.keys()
 
     if keywords['source_model'] == 'GAUSSIAN':
         assert 'source_fwhm_pc' in prior_list_source.keys()
-        kwargs_quasar = {'center_x': 0., 'center_y': 0.}
         source_fwhm_pc = prior_list_source['source_fwhm_pc']()
-        kwargs_quasar['source_fwhm_pc'] = source_fwhm_pc
-        source_model = Quasar(kwargs_quasar, grid_rmax=grid_rmax, grid_rmax_scale=grid_rmax_scale)
         samples['source_fwhm_pc'] = source_fwhm_pc
 
     elif keywords['source_model'] == 'DOUBLE_GAUSSIAN':
+        raise Exception('not implemented')
         assert 'source_fwhm_pc' in prior_list_source.keys()
         assert 'dx_source_2' in prior_list_source.keys()
         assert 'dy_source_2' in prior_list_source.keys()
@@ -200,7 +187,7 @@ def load_background_source(prior_list_source, keywords):
     else:
         raise Exception('source model must be specifed and be either GAUSSIAN OR DOUBLE_GAUSSIAN')
 
-    return source_model, samples
+    return samples
 
 def load_double_background_quasar(prior_list_source, keywords):
 
@@ -401,7 +388,7 @@ def simulation_setup(keyword_arguments, prior_list_realization, prior_list_cosmo
     params_sampled.update(macro_samples)
 
     ######## Sample keyword arguments for the background source ##########
-    background_quasar, source_samples = load_background_source(prior_list_source,
+    source_samples = load_background_source(prior_list_source,
                                                                keyword_arguments)
     params_sampled.update(source_samples)
 
@@ -415,7 +402,7 @@ def simulation_setup(keyword_arguments, prior_list_realization, prior_list_cosmo
     optimization_routine = keyword_arguments['optimization_routine']
 
     return kwargs_rendering, realization_samples, zlens, zsource, lens_source_sampled, \
-           macromodel, macro_samples, constrain_params, background_quasar, source_samples, data_to_fit, \
+           macromodel, macro_samples, constrain_params, source_samples, data_to_fit, \
            optimization_settings, optimization_routine, params_sampled
 
 

@@ -112,7 +112,6 @@ def run(job_index, chain_ID, output_path, path_to_folder,
         macromodel,
          macro_samples,
          constrain_params,
-         background_source,
          source_samples,
          data_to_fit, \
         optimization_settings,
