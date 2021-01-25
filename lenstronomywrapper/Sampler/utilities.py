@@ -5,8 +5,7 @@ from lenstronomywrapper.LensSystem.LensComponents.SIS import SISsatellite
 from lenstronomywrapper.LensSystem.LensComponents.multipole import Multipole
 
 from lenstronomywrapper.LensData.lensed_quasar import LensedQuasar
-from lenstronomywrapper.LensSystem.BackgroundSource.double_gaussian import DoubleGaussian
-
+from lenstronomywrapper.Utilities.data_util import approx_theta_E
 from lenstronomywrapper.Utilities.misc import write_fluxes, write_params, write_macro, write_sampling_rate, write_delta_hessian
 
 from lenstronomywrapper.Sampler.prior_sample import PriorDistribution
@@ -132,31 +131,6 @@ def load_lens_source(prior_list_cosmo, keywords):
 
     return zlens, keywords['zsource'], samples
 
-def build_kwargs_macro_powerlaw_ellipsoid(prior_list_macromodel):
-
-    samples = {}
-
-    constrain_params = None
-
-    e1, e2 = np.random.uniform(-0.2, 0.2), np.random.uniform(-0.2, 0.2)
-
-    kwargs_init = [{'theta_E': 1., 'e1': e1, 'e2': e2, 'center_x': 0., 'center_y': 0.,
-                    'gamma': 2.}, {'gamma1': 0.04, 'gamma2': 0.02}]
-
-    if 'gamma_macro' in prior_list_macromodel.keys():
-        gamma_macro = prior_list_macromodel['gamma_macro']()
-        kwargs_init[0]['gamma'] = gamma_macro
-        samples['gamma'] = gamma_macro
-
-    if 'shear' in prior_list_macromodel.keys():
-        shear = prior_list_macromodel['shear']()
-        gamma1, gamma2 = shear/np.sqrt(2), shear/np.sqrt(2)
-        kwargs_init[1]['gamma1'], kwargs_init[1]['gamma2'] = gamma1, gamma2
-        constrain_params = {'shear': shear}
-        samples['shear'] = shear
-
-    return kwargs_init, constrain_params, samples
-
 def load_background_source(prior_list_source, keywords):
 
     samples = {}
@@ -169,20 +143,16 @@ def load_background_source(prior_list_source, keywords):
         samples['source_fwhm_pc'] = source_fwhm_pc
 
     elif keywords['source_model'] == 'DOUBLE_GAUSSIAN':
-        raise Exception('not implemented')
+
         assert 'source_fwhm_pc' in prior_list_source.keys()
         assert 'dx_source_2' in prior_list_source.keys()
         assert 'dy_source_2' in prior_list_source.keys()
         assert 'size_scale_2' in prior_list_source.keys()
         assert 'amp_scale_2' in prior_list_source.keys()
 
-        kwargs_quasar = {'center_x': 0., 'center_y': 0.}
         name_out = ['source_fwhm_pc', 'dx', 'dy', 'size_scale', 'amp_scale']
         for name, pname in zip(['source_fwhm_pc', 'dx_source_2', 'dy_source_2', 'size_scale_2', 'amp_scale_2'], name_out):
-            samples[name] = prior_list_source[name]()
-            kwargs_quasar[pname] = samples[name]
-
-        source_model = DoubleGaussian(kwargs_quasar, grid_rmax=grid_rmax)
+            samples[pname] = prior_list_source[name]()
 
     else:
         raise Exception('source model must be specifed and be either GAUSSIAN OR DOUBLE_GAUSSIAN')
@@ -209,19 +179,20 @@ def load_double_background_quasar(prior_list_source, keywords):
 
 def load_powerlaw_ellipsoid_macromodel(zlens, prior_list_macromodel,
                                        kwargs_macro_ref, secondary_lens_components,
-                                       keywords):
+                                       keywords, x_image, y_image):
 
     samples = {}
 
     constrain_params = None
 
+    theta_E_approx = approx_theta_E(x_image, y_image)
     e1, e2 = np.random.uniform(-0.2, 0.2), np.random.uniform(-0.2, 0.2)
 
     if kwargs_macro_ref is None:
-        kwargs_init = [{'theta_E': 1., 'e1': e1, 'e2': e2, 'center_x': 0., 'center_y': 0.,
+        kwargs_init = [{'theta_E': theta_E_approx, 'e1': e1, 'e2': e2, 'center_x': 0., 'center_y': 0.,
                     'gamma': 2.}, {'gamma1': 0.04, 'gamma2': 0.02}]
     else:
-        kwargs_init = deepcopy(kwargs_macro_ref)
+        kwargs_init = deepcopy(kwargs_macro_ref[0:2])
 
     if 'gamma_macro' in prior_list_macromodel.keys():
         gamma_macro = prior_list_macromodel['gamma_macro']()
@@ -380,13 +351,6 @@ def simulation_setup(keyword_arguments, prior_list_realization, prior_list_cosmo
     zlens, zsource, lens_source_sampled = load_lens_source(prior_list_cosmo, keyword_arguments)
     params_sampled.update(lens_source_sampled)
 
-    ######## Sample keyword arguments for the macromodel ##########
-
-    macromodel, macro_samples, constrain_params = \
-        load_powerlaw_ellipsoid_macromodel(zlens, prior_list_macromodel, kwargs_macro_ref,
-                                           keyword_arguments['secondary_lens_components'], keyword_arguments)
-    params_sampled.update(macro_samples)
-
     ######## Sample keyword arguments for the background source ##########
     source_samples = load_background_source(prior_list_source,
                                                                keyword_arguments)
@@ -394,6 +358,13 @@ def simulation_setup(keyword_arguments, prior_list_realization, prior_list_cosmo
 
     ################## Set up the data to fit ####################
     data_to_fit = load_data_to_fit(keyword_arguments)
+
+    ######## Sample keyword arguments for the macromodel ##########
+    macromodel, macro_samples, constrain_params = \
+        load_powerlaw_ellipsoid_macromodel(zlens, prior_list_macromodel, kwargs_macro_ref,
+                                           keyword_arguments['secondary_lens_components'],
+                                           keyword_arguments, data_to_fit.x, data_to_fit.y)
+    params_sampled.update(macro_samples)
 
     ################ Get the optimization settings ################
     optimization_settings = load_optimization_settings(keyword_arguments)

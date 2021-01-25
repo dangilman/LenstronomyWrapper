@@ -6,7 +6,6 @@ from lenstronomywrapper.LensSystem.quad_lens import QuadLensSystem
 from lenstronomywrapper.Utilities.data_util import approx_theta_E
 import dill
 from lenstronomywrapper.Utilities.parameter_util import kwargs_e1e2_to_polar, kwargs_gamma1gamma2_to_polar
-from pyHalo.pyhalo import pyHalo
 from time import time
 from lenstronomywrapper.Optimization.quad_optimization.hierarchical import HierarchicalOptimization
 from lenstronomywrapper.Utilities.misc import write_lensdata
@@ -72,14 +71,11 @@ def run(job_index, chain_ID, output_path, path_to_folder,
 
     ############################ EVERYTHING BELOW THIS IS SAMPLED IN A FOR LOOP ############################
 
-    pyhalo = None
     kwargs_macro = []
     initial_pso = True
     kwargs_macro_ref = None
     fluxes_computed = None
     parameters_sampled = None
-
-    adaptive_mag = keywords_master['adaptive_mag']
 
     if 'save_best_realization' in keywords_master.keys():
         assert 'fluxes' in keywords_master.keys(), "must specify target fluxes if saving best realizations"
@@ -176,42 +172,59 @@ def run(job_index, chain_ID, output_path, path_to_folder,
         else:
             grid_rmax = None
 
-        magnification_function = lens_system.quasar_magnification
-        magnification_function_kwargs = {'x': data_to_fit.x, 'y': data_to_fit.y,
-                      'source_fwhm_pc': source_samples['source_fwhm_pc'],
-                     'lens_model': lensModel_fit, 'kwargs_lensmodel': kwargs_lens_fit, 'normed': True,
-                         'grid_axis_ratio': grid_axis_ratio, 'grid_rmax': grid_rmax,
-                                         'grid_resolution_rescale': 3}
+        if keywords_master['source_model'] == 'GAUSSIAN':
+            if 'fixed_aperture_size' not in keywords_master.keys():
+                keywords_master['fixed_aperture_size'] = False
+
+            magnification_function = lens_system.quasar_magnification
+            magnification_function_kwargs = {'x': data_to_fit.x, 'y': data_to_fit.y,
+                          'source_fwhm_pc': source_samples['source_fwhm_pc'],
+                         'lens_model': lensModel_fit, 'kwargs_lensmodel': kwargs_lens_fit, 'normed': True,
+                             'grid_axis_ratio': grid_axis_ratio, 'grid_rmax': grid_rmax,
+                         'grid_resolution_rescale': 3., 'source_light_model': 'SINGLE_GAUSSIAN'}
+
+        elif keywords_master['source_model'] == 'DOUBLE_GAUSSIAN':
+
+            magnification_function = lens_system.quasar_magnification
+            magnification_function_kwargs = {'x': data_to_fit.x, 'y': data_to_fit.y,
+                                             'source_fwhm_pc': source_samples['source_fwhm_pc'],
+                                             'lens_model': lensModel_fit, 'kwargs_lensmodel': kwargs_lens_fit,
+                                             'grid_axis_ratio': grid_axis_ratio, 'grid_rmax': grid_rmax,
+                                             'normed': True, 'grid_resolution_rescale': 2., 'source_model': 'DOUBLE_GAUSSIAN',
+                                             'dx': source_samples['dx'], 'dy': source_samples['dy'],
+                                             'amp_scale': source_samples['amp_scale'],
+                                             'size_scale': source_samples['size_scale']}
+        else:
+            raise Exception('source model '+str(keywords_master['source_model']) + ' not recognized')
 
         flux_ratios_fit = magnification_function(**magnification_function_kwargs)
 
         if test_mode:
-            import matplotlib.pyplot as plt
 
-            ax = plt.gca()
-            ax.scatter(data_to_fit.x, data_to_fit.y)
-            ax.set_xlim(-1.9*theta_E_approx, 1.9*theta_E_approx)
-            ax.set_ylim(-1.9 * theta_E_approx, 1.9 * theta_E_approx)
-            ax.set_aspect('equal')
-            plt.show()
+            if 'grid_rmax' in keywords_master.keys():
+                grid_rmax = keywords_master['grid_rmax']
+            else:
+                grid_rmax = None
 
+            if keywords_master['source_model'] == 'DOUBLE_GAUSSIAN':
+                kwargs_magnification_finite = {'dx': source_samples['dx'], 'dy': source_samples['dy'],
+                                           'amp_scale': source_samples['amp_scale'],
+                                           'size_scale': source_samples['size_scale']}
+            else:
+                kwargs_magnification_finite = {}
+
+            print('flux ratios: ', flux_ratios_fit)
             lens_system.plot_images(data_to_fit.x, data_to_fit.y, source_samples['source_fwhm_pc'],
-                                    lensModel_fit, kwargs_lens_fit, grid_rmax=grid_rmax)
-            plt.show()
-
-            # _x = _y = np.linspace(-1.5, 1.5, 100)
-            # xx, yy = np.meshgrid(_x, _y)
-
-            # mag_surface = lensModel_fit.magnification(xx.ravel(), yy.ravel(),
-            #                             kwargs_lens_fit).reshape(shape0)
-            #
-            # plt.imshow(np.log10(mag_surface), extent=[-1.5, 1.5, -1.5, 1.5], origin='lower')
-            # plt.scatter(data_to_fit.x, data_to_fit.y, color='k')
-            # plt.show()
-
-            a = input('continue')
+                             lensModel_fit,
+                             kwargs_lens_fit,
+                             grid_resolution=None,
+                             grid_resolution_rescale=2,
+                             grid_rmax=grid_rmax,
+                             source_model=keywords_master['source_model'], **kwargs_magnification_finite)
+            a=input('continue')
 
         flux_ratios_fit = np.round(flux_ratios_fit, 5)
+        kwargs_macro_ref = lens_system.macromodel.kwargs
 
         if readout_macro:
             comp1 = kwargs_e1e2_to_polar(lens_system.macromodel.components[0].kwargs[0])
@@ -261,7 +274,6 @@ def run(job_index, chain_ID, output_path, path_to_folder,
             t_end = time()
             t_ellapsed = t_end - t_start
             sampling_rate = fluxes_computed.shape[0] / t_ellapsed
-
             readout(readout_path, kwargs_macro, fluxes_computed, parameters_sampled,
                     header, write_header, write_mode, sampling_rate, readout_macro)
             fluxes_computed, parameters_sampled = None, None

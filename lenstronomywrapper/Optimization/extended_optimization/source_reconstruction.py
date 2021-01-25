@@ -57,7 +57,6 @@ class SourceReconstruction(object):
     def _update_lens_system(self, kwargs_lens, kwargs_source_light, kwargs_lens_light, kwargs_ps,
                             multi_band_list):
 
-
         self.lens_system.update_kwargs_macro(kwargs_lens)
 
         light_x, light_y = kwargs_lens_light[0]['center_x'], kwargs_lens_light[0]['center_y']

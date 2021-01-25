@@ -2,15 +2,16 @@ from lenstronomywrapper.LensData.lensed_quasar import LensedQuasar
 import numpy as np
 from lenstronomy.Data.psf import PSF
 
-
 class BaseReducedHST(object):
 
-    def __init__(self, image_data, x_image, y_image, deflector_centroid,
+    def __init__(self, z_lens, z_source, image_data, x_image, y_image, deflector_centroid,
                  ra_at_xy_0, dec_at_xy_0, background_rms, transform_pix2angle, exposure_time,
                  mask, kernel_point_source, psf_error_map, psf_symmetry, satellite_centroid_list=None,
                  rescale_mag=100, magnifications=None, relative_arrival_times=None,
                  time_delay_sigma=None, image_sigma=0):
 
+        self.z_lens = z_lens
+        self.z_source = z_source
         self.image_data = image_data
         self.x = x_image
         self.y = y_image

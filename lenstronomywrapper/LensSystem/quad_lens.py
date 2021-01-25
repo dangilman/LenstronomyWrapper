@@ -183,7 +183,8 @@ class QuadLensSystem(LensBase):
                              kwargs_lensmodel, point_source=False,
                              grid_axis_ratio=0.5, grid_rmax=None,
                              grid_resolution=None,
-                             normed=True, grid_resolution_rescale=1):
+                             normed=True, grid_resolution_rescale=1,
+                             source_model='GAUSSIAN', **kwargs_magnification_finite):
 
         """
         Computes the magnifications (or flux ratios if normed=True)
@@ -214,68 +215,63 @@ class QuadLensSystem(LensBase):
             grid_resolution *= grid_resolution_rescale
             extension = LensModelExtensions(lens_model)
             source_x, source_y = self.source_centroid_x, self.source_centroid_y
-            magnifications = extension.magnification_finite_adaptive(x, y,
+
+            if source_model == 'GAUSSIAN':
+                magnifications = extension.magnification_finite_adaptive(x, y,
                                                     source_x, source_y, kwargs_lensmodel, source_fwhm_pc,
                                                                      self.zsource, self.astropy,
                                                                      grid_radius_arcsec=grid_rmax,
                                                                      grid_resolution=grid_resolution,
                                                                      axis_ratio=grid_axis_ratio)
+            elif source_model == 'DOUBLE_GAUSSIAN':
+                magnifications = extension.magnification_finite_adaptive(x, y,
+                                                                         source_x, source_y, kwargs_lensmodel,
+                                                                         source_fwhm_pc,
+                                                                         self.zsource, self.astropy,
+                                                                         grid_radius_arcsec=grid_rmax,
+                                                                         grid_resolution=grid_resolution,
+                                                                         axis_ratio=grid_axis_ratio,
+                                                                         source_light_model=source_model,
+                                                                         **kwargs_magnification_finite)
+            else:
+                raise Exception('source model '+str(source_model)+ ' not recognized')
+
         if normed:
             magnifications *= max(magnifications) ** -1
 
         return magnifications
 
-    def plot_images(self, x, y, source_fwhm_pc, lens_model=None, kwargs_lensmodel=None,
-                    grid_rmax=None, grid_resolution=None, grid_resolution_rescale=1.):
+    def plot_images(self, x, y, source_fwhm_pc,
+                             lens_model,
+                             kwargs_lensmodel,
+                             grid_rmax=None,
+                             grid_resolution=None,
+                             grid_resolution_rescale=1,
+                             source_model='GAUSSIAN', **kwargs_magnification_finite):
 
-        if lens_model is None or kwargs_lensmodel is None:
-            if self._static_lensmodel:
-                lens_model, kwargs_lensmodel = self._lensmodel_static, self._kwargs_static
-            else:
-                raise Exception('must either specify the LensModel class instance and keywords,'
-                                'or have a precomputed static lens model instance saved in this class.')
-
-        from lenstronomy.LightModel.light_model import LightModel
-        from lenstronomy.Util.magnification_finite_util import auto_raytracing_grid_size, auto_raytracing_grid_resolution
-        from lenstronomy.Util.util import fwhm2sigma
-        import matplotlib.pyplot as plt
-
-        source_model = LightModel(['GAUSSIAN'])
+        extension = LensModelExtensions(lens_model)
         source_x, source_y = self.source_centroid_x, self.source_centroid_y
 
-        pc_per_arcsec = 1000 / self.astropy.arcsec_per_kpc_proper(self.zsource).value
-        source_fwhm_arcsec = source_fwhm_pc / pc_per_arcsec
-        source_sigma_arcsec = fwhm2sigma(source_fwhm_arcsec)
-
-        kwargs_light = [{'amp': 1, 'center_x': source_x, 'center_y': source_y, 'sigma': source_sigma_arcsec}]
-
         if grid_rmax is None:
+            from lenstronomy.Util.magnification_finite_util import auto_raytracing_grid_size
             grid_rmax = auto_raytracing_grid_size(source_fwhm_pc)
         if grid_resolution is None:
+            from lenstronomy.Util.magnification_finite_util import auto_raytracing_grid_resolution
             grid_resolution = auto_raytracing_grid_resolution(source_fwhm_pc)
         grid_resolution *= grid_resolution_rescale
-        npix = int(2 * grid_rmax / grid_resolution)
 
-        _x = np.linspace(-grid_rmax, grid_rmax, npix)
-        _y = np.linspace(-grid_rmax, grid_rmax, npix)
-        res = 2 * grid_rmax / npix
-        xx, yy = np.meshgrid(_x, _y)
-        shape0 = xx.shape
-        xx = xx.ravel()
-        yy = yy.ravel()
+        if source_model == 'GAUSSIAN':
+            extension.plot_quasar_images(x, y, source_x, source_y, kwargs_lensmodel,
+                                                                     source_fwhm_pc,
+                                                                     self.zsource, self.astropy,
+                                                                     grid_radius_arcsec=grid_rmax,
+                                                                     grid_resolution=grid_resolution)
+        elif source_model == 'DOUBLE_GAUSSIAN':
 
-        sb_list = []
-        mag_list = []
-
-        for i, (xi, yi) in enumerate(zip(x, y)):
-            beta_x, beta_y = lens_model.ray_shooting(xx + xi, yy + yi, kwargs_lensmodel)
-            sb = source_model.surface_brightness(beta_x, beta_y, kwargs_light).reshape(shape0)
-            sb_list.append(sb)
-            mag_list.append(np.sum(sb) * res ** 2)
-
-        mag = np.array(mag_list) * max(mag_list) ** -1
-        for i in range(0, len(sb_list)):
-
-            plt.imshow(sb_list[i])
-            plt.annotate(str(np.round(mag[i], 3)), xy=(0.1, 0.9), xycoords='axes fraction', fontsize=12, color='w')
-            plt.show()
+            extension.plot_quasar_images(x, y, source_x, source_y, kwargs_lensmodel,
+                                                                     source_fwhm_pc,
+                                                                     self.zsource, self.astropy,
+                                                                     grid_radius_arcsec=grid_rmax,
+                                                                     grid_resolution=grid_resolution,
+                                                                     source_light_model=source_model,
+                                                                     **kwargs_magnification_finite)
