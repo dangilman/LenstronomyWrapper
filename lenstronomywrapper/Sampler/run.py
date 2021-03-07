@@ -214,6 +214,16 @@ def run(job_index, chain_ID, output_path, path_to_folder,
                 kwargs_magnification_finite = {}
 
             print('flux ratios: ', flux_ratios_fit)
+            print('flux ratios measured: ', np.array(keywords_master['fluxes']))
+            cols = ['k', 'r', 'm', 'g']
+
+            import matplotlib.pyplot as plt
+            for i in range(0, 4):
+                plt.scatter(data_to_fit.x[i], data_to_fit.y[i], color=cols[i], marker='+')
+                plt.annotate(flux_ratios_fit[i], color=cols[i], xy=(data_to_fit.x[i], data_to_fit.y[i]))
+                plt.annotate(np.array(keywords_master['fluxes'])[i], color=cols[i], xy=(data_to_fit.x[i], data_to_fit.y[i]-0.15))
+            plt.show()
+
             lens_system.plot_images(data_to_fit.x, data_to_fit.y, source_samples['source_fwhm_pc'],
                              lensModel_fit,
                              kwargs_lens_fit,

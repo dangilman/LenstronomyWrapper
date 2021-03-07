@@ -3,14 +3,16 @@ from lenstronomy.Workflow.fitting_sequence import FittingSequence
 
 class SourceReconstruction(object):
 
-    def __init__(self, lens_system, data_class, time_delay_likelihood=False, fix_D_dt=None):
+    def __init__(self, lens_system, data_class, time_delay_likelihood=False, fix_D_dt=None,
+                 solver_type='PROFILE_SHEAR'):
 
         if time_delay_likelihood:
             D_dt_true = lens_system.lens_cosmo.ddt
             self._init = SamplerInit(lens_system, data_class, time_delay_likelihood, D_dt_true,
-                                     data_class.relative_arrival_times, data_class.time_delay_sigma, fix_D_dt)
+                                     data_class.relative_arrival_times, data_class.time_delay_sigma,
+                                     fix_D_dt, solver_type=solver_type)
         else:
-            self._init = SamplerInit(lens_system, data_class, time_delay_likelihood)
+            self._init = SamplerInit(lens_system, data_class, time_delay_likelihood, solver_type=solver_type)
 
         self.lens_system = lens_system
 

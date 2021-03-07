@@ -113,19 +113,20 @@ class LensBase(object):
 
         if realization is not None and include_substructure:
 
-            halo_names, halo_redshifts, kwargs_halos, kwargs_lenstronomy = \
+            halo_names, halo_redshifts, kwargs_halos, numerical_alpha_class = \
                 realization.lensing_quantities(z_mass_sheet_max=z_mass_sheet_max)
+
         else:
-            halo_names, halo_redshifts, kwargs_halos, kwargs_lenstronomy = [], [], [], None
+            halo_names, halo_redshifts, kwargs_halos, numerical_alpha_class = [], [], [], None
 
         halo_redshifts = list(halo_redshifts)
         names = lens_model_names + halo_names
         redshifts = macro_redshifts + halo_redshifts
         kwargs = macro_kwargs + kwargs_halos
 
-        return names, redshifts, kwargs, kwargs_lenstronomy, convention_index
+        return names, redshifts, kwargs, numerical_alpha_class, convention_index
 
-    def solve_lens_equation(self, lensmodel, kwargs_lens, precision_limit=10**-4,
+    def solve_lens_equation(self, lensmodel, kwargs_lens, precision_limit=10**-5,
                             arrival_time_sort=False):
 
         solver = LensEquationSolver(lensmodel)

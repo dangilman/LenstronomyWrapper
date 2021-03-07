@@ -4,10 +4,11 @@ class SamplerInit(object):
 
     def __init__(self, lens_system_class, lens_data_class,
                  time_delay_likelihood=False, D_dt_true=None, dt_measured=None, dt_sigma=None,
-                 fix_D_dt=None):
+                 fix_D_dt=None, solver_type='PROFILE_SHEAR'):
 
         assert len(lens_data_class.x == 4)
         self.system = lens_system_class
+        self.solver_type = solver_type
         self.sourcelight_instance = lens_system_class.source_light_model
         self.lenslight_instance = lens_system_class.lens_light_model
         self.pointsource_instance = lens_data_class.point_source
@@ -399,20 +400,12 @@ class SamplerInit(object):
 
         joint_lens_light_with_lens_light = self.linked_parameters_lens_light_lens_light
 
-        if len(self.lens_data_class.x) == 4:
-            solver_type = 'PROFILE_SHEAR'
-            nimg = 4
-        elif len(self.lens_data_class.x) == 2:
-            raise Exception('two image lenses not yet implemented')
-        else:
-            raise Exception('only four image lenses currently implemented')
-
         if self._time_delay_likelihood:
             Ddt_sampling = True
         else:
             Ddt_sampling = False
 
-        kwargs = {'num_point_source_list': [nimg], 'solver_type': solver_type,
+        kwargs = {'num_point_source_list': [4], 'solver_type': self.solver_type,
                   'Ddt_sampling': Ddt_sampling}
 
         if len(joint_source_with_point_source) > 0:

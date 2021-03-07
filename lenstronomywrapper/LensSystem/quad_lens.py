@@ -1,6 +1,7 @@
 from lenstronomywrapper.Optimization.quad_optimization.brute import BruteOptimization
 from lenstronomywrapper.LensSystem.lens_base import LensBase
 from pyHalo.Cosmology.cosmology import Cosmology
+from lenstronomy.Plots.plot_quasar_images import plot_quasar_images
 from lenstronomy.LensModel.lens_model_extensions import LensModelExtensions
 from lenstronomywrapper.Utilities.lensing_util import interpolate_ray_paths_system
 from copy import deepcopy
@@ -171,6 +172,8 @@ class QuadLensSystem(LensBase):
             include_substructure, kwargs_optimizer
         )
 
+        self.clear_static_lensmodel()
+
         return
 
     def update_source_centroid(self, source_x, source_y):
@@ -209,9 +212,11 @@ class QuadLensSystem(LensBase):
             if grid_rmax is None:
                 from lenstronomy.Util.magnification_finite_util import auto_raytracing_grid_size
                 grid_rmax = auto_raytracing_grid_size(source_fwhm_pc)
+                print(grid_rmax)
             if grid_resolution is None:
                 from lenstronomy.Util.magnification_finite_util import auto_raytracing_grid_resolution
                 grid_resolution = auto_raytracing_grid_resolution(source_fwhm_pc)
+
             grid_resolution *= grid_resolution_rescale
             extension = LensModelExtensions(lens_model)
             source_x, source_y = self.source_centroid_x, self.source_centroid_y
@@ -249,7 +254,6 @@ class QuadLensSystem(LensBase):
                              grid_resolution_rescale=1,
                              source_model='GAUSSIAN', **kwargs_magnification_finite):
 
-        extension = LensModelExtensions(lens_model)
         source_x, source_y = self.source_centroid_x, self.source_centroid_y
 
         if grid_rmax is None:
@@ -261,14 +265,14 @@ class QuadLensSystem(LensBase):
         grid_resolution *= grid_resolution_rescale
 
         if source_model == 'GAUSSIAN':
-            extension.plot_quasar_images(x, y, source_x, source_y, kwargs_lensmodel,
+            plot_quasar_images(lens_model, x, y, source_x, source_y, kwargs_lensmodel,
                                                                      source_fwhm_pc,
                                                                      self.zsource, self.astropy,
                                                                      grid_radius_arcsec=grid_rmax,
                                                                      grid_resolution=grid_resolution)
         elif source_model == 'DOUBLE_GAUSSIAN':
 
-            extension.plot_quasar_images(x, y, source_x, source_y, kwargs_lensmodel,
+            plot_quasar_images(lens_model, x, y, source_x, source_y, kwargs_lensmodel,
                                                                      source_fwhm_pc,
                                                                      self.zsource, self.astropy,
                                                                      grid_radius_arcsec=grid_rmax,
