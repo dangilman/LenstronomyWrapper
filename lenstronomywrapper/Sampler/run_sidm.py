@@ -81,6 +81,7 @@ def run(job_index, chain_ID, output_path, path_to_folder,
     initial_pso = True
     kwargs_macro_ref = None
     fluxes_computed = None
+    fluxes_computed_2 = None
     parameters_sampled = None
 
     if 'save_best_realization' in keywords_master.keys():
@@ -199,9 +200,17 @@ def run(job_index, chain_ID, output_path, path_to_folder,
                       'source_fwhm_pc': source_samples['source_fwhm_pc'],
                      'lens_model': lensModel_fit, 'kwargs_lensmodel': kwargs_lens_fit, 'normed': True,
                          'grid_axis_ratio': grid_axis_ratio, 'grid_rmax': grid_rmax,
-                     'grid_resolution_rescale': 3., 'source_light_model': 'SINGLE_GAUSSIAN'}
-
+                     'grid_resolution_rescale': 2.5, 'source_light_model': 'SINGLE_GAUSSIAN'}
         flux_ratios_fit = magnification_function(**magnification_function_kwargs)
+
+        magnification_function = lens_system.quasar_magnification
+        magnification_function_kwargs = {'x': data_to_fit.x, 'y': data_to_fit.y,
+                                         'source_fwhm_pc': source_samples['source_fwhm_pc_2'],
+                                         'lens_model': lensModel_fit, 'kwargs_lensmodel': kwargs_lens_fit,
+                                         'normed': True,
+                                         'grid_axis_ratio': grid_axis_ratio, 'grid_rmax': grid_rmax,
+                                         'grid_resolution_rescale': 2.5, 'source_light_model': 'SINGLE_GAUSSIAN'}
+        flux_ratios_fit_2 = magnification_function(**magnification_function_kwargs)
 
         if test_mode:
 
@@ -282,12 +291,14 @@ def run(job_index, chain_ID, output_path, path_to_folder,
                 best_realization = SavedRealization(lensModel_fit, kwargs_lens_fit, flux_ratios_fit,
                                                     new_statistic, parameters)
 
-        if fluxes_computed is None and parameters_sampled is None:
+        if fluxes_computed is None and parameters_sampled is None and fluxes_computed_2 is None:
             fluxes_computed = flux_ratios_fit
+            fluxes_computed_2 = flux_ratios_fit_2
             parameters_sampled = parameters
 
         else:
             fluxes_computed = np.vstack((fluxes_computed, flux_ratios_fit))
+            fluxes_computed_2 = np.vstack((fluxes_computed_2, flux_ratios_fit_2))
             parameters_sampled = np.vstack((parameters_sampled, parameters))
 
         if fluxes_computed is not None and (counter+1) % readout_steps == 0:
@@ -296,7 +307,10 @@ def run(job_index, chain_ID, output_path, path_to_folder,
             sampling_rate = fluxes_computed.shape[0] / t_ellapsed
             readout(readout_path, kwargs_macro, fluxes_computed, parameters_sampled,
                     header, write_header, write_mode, sampling_rate, readout_macro)
-            fluxes_computed, parameters_sampled = None, None
+            readout(readout_path, kwargs_macro, fluxes_computed_2, parameters_sampled,
+                    header, write_header, write_mode, sampling_rate, readout_macro, readout_flux_only=True,
+                    flux_file_extension='_2')
+            fluxes_computed, fluxes_computed_2, parameters_sampled = None, None, None
             kwargs_macro = []
             write_mode = 'a'
             write_header = False
