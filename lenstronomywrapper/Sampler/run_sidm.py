@@ -202,7 +202,7 @@ def run(job_index, chain_ID, output_path, path_to_folder,
                          'grid_axis_ratio': grid_axis_ratio, 'grid_rmax': grid_rmax,
                      'grid_resolution_rescale': 2.5, 'source_light_model': 'SINGLE_GAUSSIAN'}
         flux_ratios_fit = magnification_function(**magnification_function_kwargs)
-
+     
         magnification_function = lens_system.quasar_magnification
         magnification_function_kwargs = {'x': data_to_fit.x, 'y': data_to_fit.y,
                                          'source_fwhm_pc': source_samples['source_fwhm_pc_2'],
@@ -219,7 +219,8 @@ def run(job_index, chain_ID, output_path, path_to_folder,
             else:
                 grid_rmax = None
 
-            print('flux ratios: ', flux_ratios_fit)
+            print('flux ratios NLR: ', flux_ratios_fit)
+            print('flux ratios mid IR: ', flux_ratios_fit_2)
             print('flux ratios measured: ', np.array(keywords_master['fluxes']))
             cols = ['k', 'r', 'm', 'g']
 
@@ -231,7 +232,7 @@ def run(job_index, chain_ID, output_path, path_to_folder,
             plt.show()
 
             ran = approx_theta_E(data_to_fit.x, data_to_fit.y)
-            _x = _y = np.linspace(-1.5 * ran, 1.5 * ran, 200)
+            _x = _y = np.linspace(-2 * ran, 2 * ran, 200)
             xx, yy = np.meshgrid(_x, _y)
             shape0 = xx.shape
             kappa = lensModel_fit.kappa(xx.ravel(), yy.ravel(), kwargs_lens_fit).reshape(shape0)
@@ -240,7 +241,7 @@ def run(job_index, chain_ID, output_path, path_to_folder,
             kappa_macro = lensmodel_macro.kappa(xx.ravel(), yy.ravel(), kwargs_macro).reshape(shape0)
             delta_kappa = kappa - kappa_macro
             plt.imshow(delta_kappa - np.mean(delta_kappa), vmin=-0.05, vmax=0.05, cmap='bwr', origin='lower',
-                       extent=[-1.5 * ran, 1.5 * ran, -1.5 * ran, 1.5 * ran])
+                       extent=[-2 * ran, 2 * ran, -2 * ran, 2 * ran])
             plt.scatter(data_to_fit.x, data_to_fit.y, color='k')
             plt.show()
             lens_system.plot_images(data_to_fit.x, data_to_fit.y, source_samples['source_fwhm_pc'],

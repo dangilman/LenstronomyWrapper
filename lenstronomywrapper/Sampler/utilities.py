@@ -141,6 +141,8 @@ def load_background_source(prior_list_source, keywords):
         assert 'source_fwhm_pc' in prior_list_source.keys()
         source_fwhm_pc = prior_list_source['source_fwhm_pc']()
         samples['source_fwhm_pc'] = source_fwhm_pc
+        if 'source_fwhm_pc_2' in prior_list_source.keys():
+            samples['source_fwhm_pc_2'] = prior_list_source['source_fwhm_pc_2']()
 
     elif keywords['source_model'] == 'DOUBLE_GAUSSIAN':
 
