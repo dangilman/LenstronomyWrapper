@@ -161,7 +161,8 @@ def run(job_index, chain_ID, output_path, path_to_folder,
         inds = ext.find_core_collapsed_halos(evolution_timescale_scattering_rate, solve_sigmav_with_interpolation,
                                              cross_section, t_sub=10, t_field=100)
         print('n halos core collapsed: ', len(inds)/len(realization_initial.halos))
-        realization_initial = ext.add_core_collapsed_halos(inds, log_slope_halo=3., x_core_halo=0.05)
+        realization_initial = ext.add_core_collapsed_halos(inds, log_slope_halo=kwargs_rendering['log_slope_halo'],
+                                                           x_core_halo=kwargs_rendering['x_core_halo'])
 
         lens_system = QuadLensSystem.shift_background_auto(data_to_fit, macromodel, zsource,
                                realization_initial, None, particle_swarm_init=True,
