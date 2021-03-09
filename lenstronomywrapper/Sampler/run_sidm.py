@@ -202,7 +202,7 @@ def run(job_index, chain_ID, output_path, path_to_folder,
                          'grid_axis_ratio': grid_axis_ratio, 'grid_rmax': grid_rmax,
                      'grid_resolution_rescale': 2.5, 'source_light_model': 'SINGLE_GAUSSIAN'}
         flux_ratios_fit = magnification_function(**magnification_function_kwargs)
-     
+
         magnification_function = lens_system.quasar_magnification
         magnification_function_kwargs = {'x': data_to_fit.x, 'y': data_to_fit.y,
                                          'source_fwhm_pc': source_samples['source_fwhm_pc_2'],
@@ -254,6 +254,7 @@ def run(job_index, chain_ID, output_path, path_to_folder,
             a=input('continue')
 
         flux_ratios_fit = np.round(flux_ratios_fit, 5)
+        flux_ratios_fit_2 = np.round(flux_ratios_fit_2, 5)
         kwargs_macro_ref = lens_system.macromodel.kwargs
 
         if readout_macro:
