@@ -212,7 +212,7 @@ class QuadLensSystem(LensBase):
             if grid_rmax is None:
                 from lenstronomy.Util.magnification_finite_util import auto_raytracing_grid_size
                 grid_rmax = auto_raytracing_grid_size(source_fwhm_pc)
-                print(grid_rmax)
+
             if grid_resolution is None:
                 from lenstronomy.Util.magnification_finite_util import auto_raytracing_grid_resolution
                 grid_resolution = auto_raytracing_grid_resolution(source_fwhm_pc)
