@@ -9,7 +9,13 @@ from lenstronomywrapper.Utilities.parameter_util import kwargs_e1e2_to_polar, kw
 from time import time
 from lenstronomywrapper.Optimization.quad_optimization.hierarchical import HierarchicalOptimization
 from lenstronomywrapper.Utilities.misc import write_lensdata
-from pyHalo.preset_models import WDMGeneral, CDM
+from pyHalo.preset_models import WDMLovell2020, CDM
+from sidmpy.Profiles.coreTNFW_deflection_angle import CoreTNFWDeflection
+from sidmpy.sidmpy import solve_rho_with_interpolation
+from pyHalo.realization_extensions import RealizationExtensions
+from sidmpy.CrossSections.tchannel import TChannel
+from sidmpy.core_collapse_timescale import evolution_timescale_scattering_rate
+from sidmpy.sidmpy import solve_sigmav_with_interpolation
 
 def run(job_index, chain_ID, output_path, path_to_folder,
         test_mode=False):
@@ -75,6 +81,7 @@ def run(job_index, chain_ID, output_path, path_to_folder,
     initial_pso = True
     kwargs_macro_ref = None
     fluxes_computed = None
+    fluxes_computed_2 = None
     parameters_sampled = None
 
     if 'save_best_realization' in keywords_master.keys():
@@ -116,6 +123,15 @@ def run(job_index, chain_ID, output_path, path_to_folder,
 
         kwargs_rendering['cone_opening_angle'] = kwargs_rendering['opening_angle_factor'] * \
                                                  theta_E_approx
+        cross_section_norm = kwargs_rendering['norm']
+        cross_section_v = kwargs_rendering['v0']
+        cross_section_type = 'TCHANNEL'
+        deflection_angle_computation = CoreTNFWDeflection()
+        kwargs_cross_section = {'norm': cross_section_norm, 'v_ref': cross_section_v}
+        kwargs_sidm = {'cross_section_type': cross_section_type, 'kwargs_cross_section': kwargs_cross_section,
+                       'SIDM_rhocentral_function': solve_rho_with_interpolation,
+                       'numerical_deflection_angle_class': deflection_angle_computation}
+        kwargs_rendering.update(kwargs_sidm)
 
         optimization_settings['initial_pso'] = initial_pso
 
@@ -132,13 +148,21 @@ def run(job_index, chain_ID, output_path, path_to_folder,
 
         if 'preset_model' in keywords_master.keys():
             if keywords_master['preset_model'] == 'WDMLovell2020':
-                realization_initial = WDMGeneral(zlens, zsource, **kwargs_rendering)
+                realization_initial = WDMLovell2020(zlens, zsource, **kwargs_rendering)
             elif keywords_master['preset_model'] == 'CDM':
                 realization_initial = CDM(zlens, zsource, **kwargs_rendering)
             else:
                 raise Exception('no other preset model recognized')
         else:
             raise Exception('must specify preset model')
+
+        ext = RealizationExtensions(realization_initial)
+        cross_section = TChannel(**kwargs_cross_section)
+        inds = ext.find_core_collapsed_halos(evolution_timescale_scattering_rate, solve_sigmav_with_interpolation,
+                                             cross_section, t_sub=10, t_field=100)
+        print('n halos core collapsed: ', len(inds)/len(realization_initial.halos))
+        realization_initial = ext.add_core_collapsed_halos(inds, log_slope_halo=kwargs_rendering['log_slope_halo'],
+                                                           x_core_halo=kwargs_rendering['x_core_halo'])
 
         lens_system = QuadLensSystem.shift_background_auto(data_to_fit, macromodel, zsource,
                                realization_initial, None, particle_swarm_init=True,
@@ -172,31 +196,12 @@ def run(job_index, chain_ID, output_path, path_to_folder,
         else:
             grid_rmax = None
 
-        if keywords_master['source_model'] == 'GAUSSIAN':
-            if 'fixed_aperture_size' not in keywords_master.keys():
-                keywords_master['fixed_aperture_size'] = False
-
-            magnification_function = lens_system.quasar_magnification
-            magnification_function_kwargs = {'x': data_to_fit.x, 'y': data_to_fit.y,
-                          'source_fwhm_pc': source_samples['source_fwhm_pc'],
-                         'lens_model': lensModel_fit, 'kwargs_lensmodel': kwargs_lens_fit, 'normed': True,
-                             'grid_axis_ratio': grid_axis_ratio, 'grid_rmax': grid_rmax,
-                         'grid_resolution_rescale': 3., 'source_light_model': 'SINGLE_GAUSSIAN'}
-
-        elif keywords_master['source_model'] == 'DOUBLE_GAUSSIAN':
-
-            magnification_function = lens_system.quasar_magnification
-            magnification_function_kwargs = {'x': data_to_fit.x, 'y': data_to_fit.y,
-                                             'source_fwhm_pc': source_samples['source_fwhm_pc'],
-                                             'lens_model': lensModel_fit, 'kwargs_lensmodel': kwargs_lens_fit,
-                                             'grid_axis_ratio': grid_axis_ratio, 'grid_rmax': grid_rmax,
-                                             'normed': True, 'grid_resolution_rescale': 2., 'source_model': 'DOUBLE_GAUSSIAN',
-                                             'dx': source_samples['dx'], 'dy': source_samples['dy'],
-                                             'amp_scale': source_samples['amp_scale'],
-                                             'size_scale': source_samples['size_scale']}
-        else:
-            raise Exception('source model '+str(keywords_master['source_model']) + ' not recognized')
-
+        magnification_function = lens_system.quasar_magnification
+        magnification_function_kwargs = {'x': data_to_fit.x, 'y': data_to_fit.y,
+                      'source_fwhm_pc': source_samples['source_fwhm_pc'],
+                     'lens_model': lensModel_fit, 'kwargs_lensmodel': kwargs_lens_fit, 'normed': True,
+                         'grid_axis_ratio': grid_axis_ratio, 'grid_rmax': grid_rmax,
+                     'grid_resolution_rescale': 1., 'source_light_model': 'SINGLE_GAUSSIAN'}
         flux_ratios_fit = magnification_function(**magnification_function_kwargs)
 
         if test_mode:
@@ -206,14 +211,7 @@ def run(job_index, chain_ID, output_path, path_to_folder,
             else:
                 grid_rmax = None
 
-            if keywords_master['source_model'] == 'DOUBLE_GAUSSIAN':
-                kwargs_magnification_finite = {'dx': source_samples['dx'], 'dy': source_samples['dy'],
-                                           'amp_scale': source_samples['amp_scale'],
-                                           'size_scale': source_samples['size_scale']}
-            else:
-                kwargs_magnification_finite = {}
-
-            print('flux ratios: ', flux_ratios_fit)
+            print('flux ratios NLR: ', flux_ratios_fit)
             print('flux ratios measured: ', np.array(keywords_master['fluxes']))
             cols = ['k', 'r', 'm', 'g']
 
@@ -224,13 +222,26 @@ def run(job_index, chain_ID, output_path, path_to_folder,
                 plt.annotate(np.array(keywords_master['fluxes'])[i], color=cols[i], xy=(data_to_fit.x[i], data_to_fit.y[i]-0.15))
             plt.show()
 
+            ran = approx_theta_E(data_to_fit.x, data_to_fit.y)
+            _x = _y = np.linspace(-2 * ran, 2 * ran, 200)
+            xx, yy = np.meshgrid(_x, _y)
+            shape0 = xx.shape
+            kappa = lensModel_fit.kappa(xx.ravel(), yy.ravel(), kwargs_lens_fit).reshape(shape0)
+            lensmodel_macro, kwargs_macro = lens_system.get_lensmodel(include_substructure=False)
+
+            kappa_macro = lensmodel_macro.kappa(xx.ravel(), yy.ravel(), kwargs_macro).reshape(shape0)
+            delta_kappa = kappa - kappa_macro
+            plt.imshow(delta_kappa - np.mean(delta_kappa), vmin=-0.05, vmax=0.05, cmap='bwr', origin='lower',
+                       extent=[-2 * ran, 2 * ran, -2 * ran, 2 * ran])
+            plt.scatter(data_to_fit.x, data_to_fit.y, color='k')
+            plt.show()
             lens_system.plot_images(data_to_fit.x, data_to_fit.y, source_samples['source_fwhm_pc'],
                              lensModel_fit,
                              kwargs_lens_fit,
                              grid_resolution=None,
                              grid_resolution_rescale=2,
                              grid_rmax=grid_rmax,
-                             source_model=keywords_master['source_model'], **kwargs_magnification_finite)
+                             source_model=keywords_master['source_model'])
             a=input('continue')
 
         flux_ratios_fit = np.round(flux_ratios_fit, 5)
@@ -272,7 +283,7 @@ def run(job_index, chain_ID, output_path, path_to_folder,
                 best_realization = SavedRealization(lensModel_fit, kwargs_lens_fit, flux_ratios_fit,
                                                     new_statistic, parameters)
 
-        if fluxes_computed is None and parameters_sampled is None:
+        if fluxes_computed is None and parameters_sampled is None and fluxes_computed_2 is None:
             fluxes_computed = flux_ratios_fit
             parameters_sampled = parameters
 
@@ -286,7 +297,8 @@ def run(job_index, chain_ID, output_path, path_to_folder,
             sampling_rate = fluxes_computed.shape[0] / t_ellapsed
             readout(readout_path, kwargs_macro, fluxes_computed, parameters_sampled,
                     header, write_header, write_mode, sampling_rate, readout_macro)
-            fluxes_computed, parameters_sampled = None, None
+
+            fluxes_computed, fluxes_computed_2, parameters_sampled = None, None, None
             kwargs_macro = []
             write_mode = 'a'
             write_header = False
