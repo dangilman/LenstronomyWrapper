@@ -280,7 +280,10 @@ def run(job_index, chain_ID, output_path, path_to_folder,
             fluxes_computed = np.vstack((fluxes_computed, flux_ratios_fit))
             parameters_sampled = np.vstack((parameters_sampled, parameters))
 
-        if fluxes_computed is not None and (counter+1) % readout_steps == 0:
+        readout_condition_1 = np.logical_and(fluxes_computed is not None, (counter+1) % readout_steps == 0)
+        readout_condition_2 = counter == n_run - 1
+
+        if readout_condition_1 or readout_condition_2:
             t_end = time()
             t_ellapsed = t_end - t_start
             sampling_rate = fluxes_computed.shape[0] / t_ellapsed
