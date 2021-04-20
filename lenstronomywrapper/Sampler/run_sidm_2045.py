@@ -272,6 +272,7 @@ def run(job_index, chain_ID, output_path, path_to_folder,
         parameters = np.array(parameters)
 
         if save_best_realization:
+
             fluxes_measured = np.array(keywords_master['fluxes'])
             df = flux_ratios_fit[1:]/flux_ratios_fit[0] - fluxes_measured[1:]/fluxes_measured[0]
             new_statistic = np.sum(np.sqrt(df ** 2))
@@ -282,7 +283,8 @@ def run(job_index, chain_ID, output_path, path_to_folder,
                 readout_best = True
                 print('storing new realization...')
                 current_best_statistic = new_statistic
-                best_realization = SavedRealization(lensModel_fit, kwargs_lens_fit, flux_ratios_fit,
+                best_realization = SavedRealization(data_to_fit.x, data_to_fit.y,
+                                                    lensModel_fit, kwargs_lens_fit, flux_ratios_fit,
                                                     new_statistic, parameters)
 
         if fluxes_computed is None and parameters_sampled is None and fluxes_computed_2 is None:
@@ -317,9 +319,10 @@ def run(job_index, chain_ID, output_path, path_to_folder,
 
 class SavedRealization(object):
 
-    def __init__(self, lensmodel_instance, kwargs_lens_fit, fluxes_modeled,
+    def __init__(self, image_x, image_y, lensmodel_instance, kwargs_lens_fit, fluxes_modeled,
                  statistic, params):
 
+        self.image_x, self.image_y = image_x, image_y
         self.lensmodel = lensmodel_instance
         self.kwargs = kwargs_lens_fit
         self.fluxes_modeled = fluxes_modeled
