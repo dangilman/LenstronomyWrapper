@@ -185,6 +185,8 @@ def run(job_index, chain_ID, output_path, path_to_folder,
 
         if kwargs_lens_fit is None:
             continue
+        if np.hypot(kwargs_lens_fit[0]['e1'], kwargs_lens_fit[0]['e2']) > 0.6:
+            continue
 
         if 'grid_axis_ratio' in keywords_master.keys():
             grid_axis_ratio = keywords_master['grid_axis_ratio']
