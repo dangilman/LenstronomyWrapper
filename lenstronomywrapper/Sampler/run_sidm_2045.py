@@ -144,8 +144,6 @@ def run(job_index, chain_ID, output_path, path_to_folder,
             print('zsource', zsource)
             print('Einstein radius', theta_E_approx)
 
-        readout_macro = True
-
         if 'preset_model' in keywords_master.keys():
             if keywords_master['preset_model'] == 'WDMLovell2020':
                 realization_initial = WDMLovell2020(zlens, zsource, **kwargs_rendering)
@@ -156,13 +154,16 @@ def run(job_index, chain_ID, output_path, path_to_folder,
         else:
             raise Exception('must specify preset model')
 
-        ext = RealizationExtensions(realization_initial)
-        cross_section = TChannel(**kwargs_cross_section)
-        inds = ext.find_core_collapsed_halos(evolution_timescale_scattering_rate, solve_sigmav_with_interpolation,
-                                             cross_section, t_sub=10, t_field=100)
-        print('n halos core collapsed: ', len(inds)/len(realization_initial.halos))
-        realization_initial = ext.add_core_collapsed_halos(inds, log_slope_halo=kwargs_rendering['log_slope_halo'],
-                                                           x_core_halo=kwargs_rendering['x_core_halo'])
+        if kwargs_rendering['mass_definition'] == 'coreTNFW':
+            ext = RealizationExtensions(realization_initial)
+            cross_section = TChannel(**kwargs_cross_section)
+            inds = ext.find_core_collapsed_halos(evolution_timescale_scattering_rate, solve_sigmav_with_interpolation,
+                                                 cross_section, t_sub=10, t_field=100)
+            print('n halos core collapsed: ', len(inds)/len(realization_initial.halos))
+            realization_initial = ext.add_core_collapsed_halos(inds, log_slope_halo=kwargs_rendering['log_slope_halo'],
+                                                               x_core_halo=kwargs_rendering['x_core_halo'])
+        else:
+            assert kwargs_rendering['mass_definition'] == 'TNFW'
 
         lens_system = QuadLensSystem.shift_background_auto(data_to_fit, macromodel, zsource,
                                realization_initial, None, particle_swarm_init=True,
