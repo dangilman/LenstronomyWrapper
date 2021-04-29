@@ -249,7 +249,7 @@ def run(job_index, chain_ID, output_path, path_to_folder,
 
         flux_ratios_fit = np.round(flux_ratios_fit, 5)
         kwargs_macro_ref = lens_system.macromodel.kwargs
-
+        readout_macro = True
         if readout_macro:
             comp1 = kwargs_e1e2_to_polar(lens_system.macromodel.components[0].kwargs[0])
             comp2 = kwargs_gamma1gamma2_to_polar(lens_system.macromodel.components[0].kwargs[1])
