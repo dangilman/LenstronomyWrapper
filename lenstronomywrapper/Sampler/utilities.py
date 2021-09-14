@@ -78,7 +78,7 @@ def realization_keywords(keywords_init, prior_list_realization):
             params = ['log10c0', 'zeta', 'beta']
         else:
             params = ['c0', 'zeta', 'beta']
-            
+
         for name in params:
             if name in keywords_sampled.keys():
                 mc_model[name] = keywords_sampled[name]

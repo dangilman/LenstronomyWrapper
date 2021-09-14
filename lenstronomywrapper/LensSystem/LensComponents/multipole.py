@@ -11,7 +11,6 @@ class Multipole(ComponentBase):
                  kwargs_fixed=None,
                  custom_prior=None):
 
-
         """
         kwargs_init include 'm', 'a_m', 'phi_m', 'center_x', 'center_y'
         """

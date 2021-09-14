@@ -2,44 +2,11 @@ from lenstronomywrapper.LensSystem.LensComponents.macromodel_base import Compone
 
 class SISsatellite(ComponentBase):
 
-    def __init__(self, redshift, kwargs_init=None,
-                 prior=[], convention_index=False, reoptimize=False,
-                 concentric_with_lens_model=None,
-                 concentric_with_lens_light=None,
-                 kwargs_fixed=None,
-                 custom_prior=None):
+    def __init__(self, redshift, kwargs_init=None):
 
         self._redshift = redshift
-        self._prior = prior
-        self.reoptimize = reoptimize
 
-        self._concentric_with_lens_model = concentric_with_lens_model
-        self._concentric_with_lens_light = concentric_with_lens_light
-        self.kwargs_fixed = kwargs_fixed
-
-        super(SISsatellite, self).__init__(self.lens_model_list, [redshift], kwargs_init,
-                                           convention_index, False, reoptimize, custom_prior)
-
-    @property
-    def concentric_with_lens_light(self):
-
-        return self._concentric_with_lens_light
-
-    @property
-    def concentric_with_lens_model(self):
-
-        return self._concentric_with_lens_model
-
-    @property
-    def fixed_models(self):
-
-        if self.fixed:
-            return self.kwargs
-        else:
-            if self.kwargs_fixed is None:
-                return [{}]
-            else:
-                return [self.kwargs_fixed]
+        super(SISsatellite, self).__init__(self.lens_model_list, [redshift], kwargs_init)
 
     @property
     def n_models(self):
