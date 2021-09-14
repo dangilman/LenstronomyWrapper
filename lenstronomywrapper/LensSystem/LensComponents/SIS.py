@@ -6,7 +6,8 @@ class SISsatellite(ComponentBase):
 
         self._redshift = redshift
 
-        super(SISsatellite, self).__init__(self.lens_model_list, [redshift], kwargs_init)
+        super(SISsatellite, self).__init__(self.lens_model_list,
+                                           [redshift], kwargs_init, None, True, True)
 
     @property
     def n_models(self):
