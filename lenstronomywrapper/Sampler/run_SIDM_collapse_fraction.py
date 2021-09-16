@@ -169,8 +169,7 @@ def run(job_index, chain_ID, output_path, path_to_folder,
                          'grid_resolution_rescale': 2.5, 'source_light_model': 'SINGLE_GAUSSIAN'}
 
         elif keywords_master['source_model'] == 'DOUBLE_GAUSSIAN':
-            print(source_samples)
-            a=input('continue')
+
             magnification_function = lens_system.quasar_magnification
             magnification_function_kwargs = {'x': data_to_fit.x, 'y': data_to_fit.y,
                                              'source_fwhm_pc': source_samples['source_fwhm_pc'],
@@ -216,7 +215,7 @@ def run(job_index, chain_ID, output_path, path_to_folder,
                        extent=[-2 * ran, 2 * ran, -2 * ran, 2 * ran])
             plt.scatter(data_to_fit.x, data_to_fit.y, color='k')
             plt.show()
-            
+
             a=input('continue')
 
         flux_ratios = np.round(flux_ratios, 5)
