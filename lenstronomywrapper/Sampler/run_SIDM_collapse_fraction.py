@@ -160,12 +160,29 @@ def run(job_index, chain_ID, output_path, path_to_folder,
         else:
             grid_rmax = None
 
-        magnification_function = lens_system.quasar_magnification
-        magnification_function_kwargs = {'x': data_to_fit.x, 'y': data_to_fit.y,
-                      'source_fwhm_pc': source_samples['source_fwhm_pc'],
-                     'lens_model': lensModel_fit, 'kwargs_lensmodel': kwargs_lens_fit, 'normed': True,
-                         'grid_axis_ratio': grid_axis_ratio, 'grid_rmax': grid_rmax,
-                     'grid_resolution_rescale': 2.5, 'source_light_model': 'SINGLE_GAUSSIAN'}
+        if keywords_master['source_model'] == 'GAUSSIAN':
+            magnification_function = lens_system.quasar_magnification
+            magnification_function_kwargs = {'x': data_to_fit.x, 'y': data_to_fit.y,
+                          'source_fwhm_pc': source_samples['source_fwhm_pc'],
+                         'lens_model': lensModel_fit, 'kwargs_lensmodel': kwargs_lens_fit, 'normed': True,
+                             'grid_axis_ratio': grid_axis_ratio, 'grid_rmax': grid_rmax,
+                         'grid_resolution_rescale': 2.5, 'source_light_model': 'SINGLE_GAUSSIAN'}
+
+        elif keywords_master['source_model'] == 'DOUBLE_GAUSSIAN':
+            print(source_samples)
+            a=input('continue')
+            magnification_function = lens_system.quasar_magnification
+            magnification_function_kwargs = {'x': data_to_fit.x, 'y': data_to_fit.y,
+                                             'source_fwhm_pc': source_samples['source_fwhm_pc'],
+                                             'lens_model': lensModel_fit, 'kwargs_lensmodel': kwargs_lens_fit,
+                                             'grid_axis_ratio': grid_axis_ratio, 'grid_rmax': grid_rmax,
+                                             'normed': True, 'grid_resolution_rescale': 2., 'source_model': 'DOUBLE_GAUSSIAN',
+                                             'dx': source_samples['dx'], 'dy': source_samples['dy'],
+                                             'amp_scale': source_samples['amp_scale'],
+                                             'size_scale': source_samples['size_scale']}
+        else:
+            raise Exception('no source model specified')
+
         flux_ratios = magnification_function(**magnification_function_kwargs)
 
         if test_mode:
@@ -199,13 +216,7 @@ def run(job_index, chain_ID, output_path, path_to_folder,
                        extent=[-2 * ran, 2 * ran, -2 * ran, 2 * ran])
             plt.scatter(data_to_fit.x, data_to_fit.y, color='k')
             plt.show()
-            lens_system.plot_images(data_to_fit.x, data_to_fit.y, source_samples['source_fwhm_pc'],
-                             lensModel_fit,
-                             kwargs_lens_fit,
-                             grid_resolution=None,
-                             grid_resolution_rescale=2,
-                             grid_rmax=grid_rmax,
-                             source_model=keywords_master['source_model'])
+            
             a=input('continue')
 
         flux_ratios = np.round(flux_ratios, 5)
