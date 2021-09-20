@@ -117,13 +117,12 @@ def run(job_index, chain_ID, output_path, path_to_folder,
 
         ext = RealizationExtensions(realization_initial)
 
-        mass_range_subs = [[6, 7], [7, 8], [8, 9], [9, 10]]
-        mass_range_field = [[6, 10]]
-        p_subs = [kwargs_rendering['f_6_7'], kwargs_rendering['f_7_8'],
-                  kwargs_rendering['f_8_9'], kwargs_rendering['f_9_10']]
-        p_field = [0.]
+        mass_range_subs = [[7.5, 8.5]]
+        mass_range_field = [[7.5, 8.5]]
+        p_subs = [kwargs_rendering['f_75_85_sub']]
+        p_field = [kwargs_rendering['f_75_85_field']]
         kwargs_halo = {'log_slope_halo': kwargs_rendering['log_slope_halo'],
-                       'x_core_halo': kwargs_rendering['x_core_halo']}
+                       'x_core_halo': kwargs_rendering['x_core_halo'], 'x_match': kwargs_rendering['x_match']}
         inds = ext.core_collapse_by_mass(mass_range_subs, mass_range_field,
                                                           p_subs, p_field)
         realization_initial = ext.add_core_collapsed_halos(inds, **kwargs_halo)
