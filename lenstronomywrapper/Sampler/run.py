@@ -9,7 +9,7 @@ from lenstronomywrapper.Utilities.parameter_util import kwargs_e1e2_to_polar, kw
 from time import time
 from lenstronomywrapper.Optimization.quad_optimization.hierarchical import HierarchicalOptimization
 from lenstronomywrapper.Utilities.misc import write_lensdata
-from pyHalo.preset_models import WDMGeneral, CDM
+from pyHalo.preset_models import CDM
 
 def run(job_index, chain_ID, output_path, path_to_folder,
         test_mode=False):
